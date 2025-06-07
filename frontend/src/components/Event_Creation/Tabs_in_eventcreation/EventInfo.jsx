@@ -88,6 +88,15 @@ const EventInfo = ({ loginName }) => {
     alert("Event Info Saved!");
     // Here you can send `eventData` to backend using fetch/axios
   };
+const [technicalSetup, setTechnicalSetup] = useState({
+  audioVisual: '',
+  speakerSystem: '',
+  airConditioningType: '',
+  airConditioningUnits: '',
+  presentationMaterials: '',
+  recording: [],
+  additional: ''
+});
 
   return (
     <form
@@ -394,6 +403,140 @@ const EventInfo = ({ loginName }) => {
           ))}
         </div>
       </section>
+    {/* Technical Setup Section */}
+<section className="bg-white p-6 rounded-lg shadow-md border border-gray-400">
+  <h2 className="text-2xl font-bold mb-4 text-gray-800 border-b border-gray-400 pb-2">
+    Technical Setup
+  </h2>
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+    {/* Audio-Visual Setup */}
+    <div>
+      <label className="block font-medium mb-1 text-gray-700">Audio-Visual Setup</label>
+      <select
+        value={technicalSetup.audioVisual}
+        onChange={(e) =>
+          setTechnicalSetup({ ...technicalSetup, audioVisual: e.target.value })
+        }
+        className="w-full border border-gray-400 p-2 rounded shadow-sm text-gray-700"
+      >
+        <option value="">Select</option>
+        <option>Projector</option>
+        <option>LED Display</option>
+        <option>Microphones</option>
+        <option>All of the above</option>
+      </select>
+    </div>
+
+    {/* Speaker System */}
+    <div>
+      <label className="block font-medium mb-1 text-gray-700">Speakers</label>
+      <select
+        value={technicalSetup.speakerSystem}
+        onChange={(e) =>
+          setTechnicalSetup({ ...technicalSetup, speakerSystem: e.target.value })
+        }
+        className="w-full border border-gray-400 p-2 rounded shadow-sm text-gray-700"
+      >
+        <option value="">Select</option>
+        <option>Mono</option>
+        <option>Stereo</option>
+        <option>Surround</option>
+      </select>
+    </div>
+
+    {/* Air Conditioner & Ventilation */}
+    <div className="col-span-1 lg:col-span-2">
+      <label className="block font-medium mb-1 text-gray-700">
+        Air Conditioner & Ventilation
+      </label>
+      <div className="flex gap-4">
+        <select
+          value={technicalSetup.airConditioningType}
+          onChange={(e) =>
+            setTechnicalSetup({ ...technicalSetup, airConditioningType: e.target.value })
+          }
+          className="w-full border border-gray-400 p-2 rounded shadow-sm text-gray-700"
+        >
+          <option value="">Select Type</option>
+          <option>Air Conditioner</option>
+          <option>Fans Only</option>
+          <option>Natural Ventilation</option>
+        </select>
+        <input
+          type="number"
+          placeholder="No. of Units"
+          min="0"
+          value={technicalSetup.airConditioningUnits || ''}
+          onChange={(e) =>
+            setTechnicalSetup({ ...technicalSetup, airConditioningUnits: e.target.value })
+          }
+          className="w-1/2 border border-gray-400 p-2 rounded shadow-sm text-gray-700"
+        />
+      </div>
+    </div>
+
+    {/* Presentation Materials */}
+    <div>
+      <label className="block font-medium mb-1 text-gray-700">
+        Presentation Materials
+      </label>
+      <select
+        value={technicalSetup.presentationMaterials}
+        onChange={(e) =>
+          setTechnicalSetup({ ...technicalSetup, presentationMaterials: e.target.value })
+        }
+        className="w-full border border-gray-400 p-2 rounded shadow-sm text-gray-700"
+      >
+        <option value="">Select</option>
+        <option>Projector & Screen</option>
+        <option>Whiteboard & Markers</option>
+        <option>All of the above</option>
+      </select>
+    </div>
+
+    {/* Recording & Documentation */}
+    <div className="lg:col-span-2">
+      <label className="block font-medium mb-1 text-gray-700">
+        Recording & Documentation
+      </label>
+      <div className="grid grid-cols-2 gap-2">
+        {['Photography', 'Videography', 'Professional Lighting', 'Live Stream'].map((option) => (
+          <label key={option} className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={technicalSetup.recording?.includes(option) || false}
+              onChange={(e) => {
+                const selected = technicalSetup.recording || [];
+                const updated = e.target.checked
+                  ? [...selected, option]
+                  : selected.filter((item) => item !== option);
+                setTechnicalSetup({ ...technicalSetup, recording: updated });
+              }}
+              className="accent-gray-700"
+            />
+            {option}
+          </label>
+        ))}
+      </div>
+    </div>
+
+    {/* Additional Needs */}
+    <div className="lg:col-span-3">
+      <label className="block font-medium mb-1 text-gray-700">Additional Technical Requirements</label>
+      <textarea
+        rows="3"
+        placeholder="Enter any additional setup required..."
+        value={technicalSetup.additional || ''}
+        onChange={(e) =>
+          setTechnicalSetup({ ...technicalSetup, additional: e.target.value })
+        }
+        className="w-full border border-gray-400 p-2 rounded shadow-sm text-gray-700"
+      />
+    </div>
+  </div>
+</section>
+
 
       {/* Submit Button */}
       <div className="text-center pt-4">

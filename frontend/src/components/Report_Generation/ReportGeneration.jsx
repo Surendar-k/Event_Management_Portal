@@ -1,417 +1,410 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
+import {
+  FaArrowLeft,
+  FaChalkboardTeacher,
+  FaCalendarAlt,
+  FaClipboardList,
+  FaUtensils,
+  FaMoneyBill,
+  FaImages,
+  FaFilePdf,
+  FaFileExcel,
+} from "react-icons/fa";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 const ReportGeneration = () => {
-    const [eventDetails, setEventDetails] = useState({
-        title: '',
-        organizingInstitution: '',
-        college: '',
-        department: '',
-        leadCoordinator: '',
-        facultyCoordinators: [],
-        startDate: '',
-        endDate: '',
-        noOfDays: '',
-        natureOfEvent: '',
-        venueType: '',
-        venue: '',
-        intendedAudience: '',
-        scope: '',
-        fundingSource: '',
-        speakers: [],
-        estimatedParticipation: {
-            student: '',
-            faculty: '',
-            total: '',
+  const events = [
+    {
+      id: 1,
+      title: "AI Symposium 2025",
+      institution: "RMD Engineering College",
+      college: "School of Computer Science",
+      department: "AI & DS",
+      leadCoordinator: "Dr. Raj Kumar",
+      facultyCoordinators: ["Prof. Anitha", "Prof. Karthik"],
+      startDate: "2025-07-20",
+      endDate: "2025-07-21",
+      noOfDays: 2,
+      natureOfEvent: "Symposium",
+      venueType: "Auditorium",
+      venue: "Main Block Auditorium",
+      audience: "Students",
+      scope: "National",
+      fundingSource: "College Sponsored",
+      speakers: [
+        {
+          name: "Dr. A.P. Ramesh",
+          designation: "Chief Data Scientist",
+          affiliation: "Infosys",
+          contact: "9876543210",
+          email: "ramesh@infosys.com",
         },
-        guestServices: {
-            accommodation: '',
-            transportation: '',
-            dining: '',
+      ],
+      estimatedParticipation: {
+        students: 150,
+        faculty: 20,
+        total: 170,
+      },
+      guestServices: {
+        accommodation: "Provided",
+        transportation: "Not Required",
+        dining: "Buffet Lunch & Tea",
+      },
+      technicalSetup: {
+        av: "Projector + Mic",
+        speakers: "2 Surround Speakers",
+        ac: "Central AC",
+        units: 4,
+        materials: "Laptop, Clicker",
+        photography: "Yes",
+        videography: "Yes",
+        lighting: "Standard Lighting",
+        liveStream: "YouTube",
+        additional: "Banner Backdrop",
+      },
+      objectives:
+        "The event aims to bring together industry leaders and students to discuss the latest trends in Artificial Intelligence.",
+      outcomes:
+        "Participants gained exposure to real-world AI applications and improved networking with professionals.",
+      sessionDetails: [
+        {
+          date: "2025-07-20",
+          from: "10:00 AM",
+          to: "11:30 AM",
+          topic: "Ethics in AI",
+          speaker: "Dr. Ramesh",
         },
-        technicalSetup: {
-            audioVisual: '',
-            speakers: '',
-            airConditioning: '',
-            presentationMaterials: '',
-            recording: {
-                photography: false,
-                videography: false,
-                lighting: false,
-                liveStream: false,
-            },
-            additionalRequirements: '',
+        {
+          date: "2025-07-21",
+          from: "11:45 AM",
+          to: "1:00 PM",
+          topic: "Future of Machine Learning",
+          speaker: "Dr. Ramesh",
         },
-        aboutEvent: {
-            objectives: '',
-            outcomes: '',
+      ],
+      financialPlanning: [
+        { source: "College Fund", amount: 20000, remarks: "Stage & Setup" },
+        { source: "Department Budget", amount: 10000, remarks: "Guest Gifts" },
+      ],
+      foodTravel: [
+        {
+          date: "2025-07-20",
+          mealType: "Lunch",
+          menu: "Rice, Curry, Sweets, Juice",
+          servedAt: "Seminar Hall",
+          note: "Pure Veg Only",
         },
-        technicalSessionDetails: {
-            date: '',
-            fromTime: '',
-            toTime: '',
-            topic: '',
-            speakerName: '',
-        },
-        financialPlanning: {
-            fundingSources: '',
-            estimatedBudget: '',
-            remarks: '',
-        },
-        foodTravelArrangements: {
-            meal: '',
-            refreshment: '',
-            travel: '',
-            mealArrangements: {
-                date: '',
-                time: '',
-                type: '',
-                category: '',
-                menu: '',
-                personCount: '',
-                servedAt: '',
-                specialNote: '',
-            },
-        },
-        eventChecklist: [],
-        eventImages: [],
+      ],
+      checklist: [
+        "Event Agenda Finalized",
+        "Guest Invitations Sent",
+        "Flex Banners Installed",
+        "AV Equipment Setup",
+        "Certificates Prepared",
+      ],
+      // removed static images from initial data
+    },
+  ];
+
+  // State for selected event with uploaded images array
+  const [selectedEvent, setSelectedEvent] = useState(null);
+
+  // Handle image uploads
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (!selectedEvent) return;
+    const updatedImages = selectedEvent.uploadedImages
+      ? [...selectedEvent.uploadedImages, ...files]
+      : files;
+    setSelectedEvent({ ...selectedEvent, uploadedImages: updatedImages });
+  };
+
+  // Convert image file to base64 for PDF embedding
+  const getBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  // Export event report to PDF with embedded images
+  const exportToPDF = async () => {
+    if (!selectedEvent) return;
+
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text(selectedEvent.title + " Report", 14, 20);
+
+    autoTable(doc, {
+      startY: 30,
+      head: [["Field", "Details"]],
+      body: [
+        ["Institution", selectedEvent.institution],
+        ["Department", selectedEvent.department],
+        ["Start Date", selectedEvent.startDate],
+        ["End Date", selectedEvent.endDate],
+        ["Venue", selectedEvent.venue],
+        ["Funding", selectedEvent.fundingSource],
+      ],
     });
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setEventDetails({
-            ...eventDetails,
-            [name]: value,
-        });
-    };
+    if (selectedEvent.uploadedImages && selectedEvent.uploadedImages.length > 0) {
+      let y = doc.autoTable.previous.finalY + 10;
+      doc.text("Uploaded Images:", 14, y);
+      y += 5;
 
-    const handleImageUpload = (e) => {
-        const files = Array.from(e.target.files);
-        setEventDetails({
-            ...eventDetails,
-            eventImages: [...eventDetails.eventImages, ...files],
-        });
-    };
+      for (const imgFile of selectedEvent.uploadedImages) {
+        const base64 = await getBase64(imgFile);
+        doc.addImage(base64, "JPEG", 14, y, 60, 45);
+        y += 50;
+        // Add page if close to bottom
+        if (y > 250) {
+          doc.addPage();
+          y = 20;
+        }
+      }
+    }
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        // Handle form submission logic here
-        console.log(eventDetails);
-    };
+    doc.save(`${selectedEvent.title}-report.pdf`);
+  };
 
+  // Export event report to Excel with image filenames
+  const exportToExcel = () => {
+    if (!selectedEvent) return;
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet([
+      {
+        Title: selectedEvent.title,
+        Institution: selectedEvent.institution,
+        Department: selectedEvent.department,
+        StartDate: selectedEvent.startDate,
+        EndDate: selectedEvent.endDate,
+        Venue: selectedEvent.venue,
+        Funding: selectedEvent.fundingSource,
+        UploadedImages: selectedEvent.uploadedImages
+          ? selectedEvent.uploadedImages.map((f) => f.name).join(", ")
+          : "",
+      },
+    ]);
+
+    XLSX.utils.book_append_sheet(wb, ws, "Event Report");
+    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    saveAs(new Blob([excelBuffer]), `${selectedEvent.title}-report.xlsx`);
+  };
+
+  if (!selectedEvent) {
     return (
-        <div>
-            <h1>Event Report Generation</h1>
-            <form onSubmit={handleSubmit}>
-                <h2>Event Details & Scheduling</h2>
-                <label>
-                    Title of the Event:
-                    <input type="text" name="title" onChange={handleChange} />
-                </label>
-                <label>
-                    Organizing Institution:
-                    <input type="text" name="organizingInstitution" onChange={handleChange} />
-                </label>
-                <label>
-                    Select College:
-                    <input type="text" name="college" onChange={handleChange} />
-                </label>
-                <label>
-                    Organizing Department:
-                    <input type="text" name="department" onChange={handleChange} />
-                </label>
-                <label>
-                    Lead Coordinator:
-                    <input type="text" name="leadCoordinator" onChange={handleChange} />
-                </label>
-                <label>
-                    Faculty Coordinators:
-                    <input type="text" name="facultyCoordinators" onChange={handleChange} />
-                </label>
-                <label>
-                    Start Date:
-                    <input type="date" name="startDate" onChange={handleChange} />
-                </label>
-                <label>
-                    End Date:
-                    <input type="date" name="endDate" onChange={handleChange} />
-                </label>
-                <label>
-                    No. of Days:
-                    <input type="number" name="noOfDays" onChange={handleChange} />
-                </label>
-                <label>
-                    Nature of Event:
-                    <select name="natureOfEvent" onChange={handleChange}>
-                        <option value="">Select</option>
-                        {/* Add options here */}
-                    </select>
-                </label>
-                <label>
-                    Venue Type:
-                    <select name="venueType" onChange={handleChange}>
-                        <option value="">Select</option>
-                        {/* Add options here */}
-                    </select>
-                </label>
-                <label>
-                    Venue:
-                    <select name="venue" onChange={handleChange}>
-                        <option value="">Select Venue</option>
-                        {/* Add options here */}
-                    </select>
-                </label>
-                <label>
-                    Intended Audience:
-                    <input type="text" name="intendedAudience" onChange={handleChange} />
-                </label>
-                <label>
-                    Scope:
-                    <select name="scope" onChange={handleChange}>
-                        <option value="">Select</option>
-                        {/* Add options here */}
-                    </select>
-                </label>
-                <label>
-                    Funding Source:
-                    <select name="fundingSource" onChange={handleChange}>
-                        <option value="">Select</option>
-                        {/* Add options here */}
-                    </select>
-                </label>
-
-                <h2>Speaker Details</h2>
-                {eventDetails.speakers.map((speaker, index) => (
-                    <div key={index}>
-                        <h3>Speaker {index + 1}</h3>
-                        <label>
-                            Name:
-                            <input type="text" name={`speakerName${index}`} onChange={handleChange} />
-                        </label>
-                        <label>
-                            Designation:
-                            <input type="text" name={`speakerDesignation${index}`} onChange={handleChange} />
-                        </label>
-                        <label>
-                            Affiliation:
-                            <input type="text" name={`speakerAffiliation${index}`} onChange={handleChange} />
-                        </label>
-                        <label>
-                            Contact:
-                            <input type="text" name={`speakerContact${index}`} onChange={handleChange} />
-                        </label>
-                        <label>
-                            Email:
-                            <input type="email" name={`speakerEmail${index}`} onChange={handleChange} />
-                        </label>
-                    </div>
-                ))}
-                <button type="button" onClick={() => setEventDetails({ ...eventDetails, speakers: [...eventDetails.speakers, {}] })}>
-                    + Add Speaker
-                </button>
-
-                <h2>Estimated Participation</h2>
-                <label>
-                    Student Participation:
-                    <input type="number" name="estimatedParticipation.student" onChange={handleChange} />
-                </label>
-                <label>
-                    Faculty Participation:
-                    <input type="number" name="estimatedParticipation.faculty" onChange={handleChange} />
-                </label>
-                <label>
-                    Total Attendees:
-                    <input type="number" name="estimatedParticipation.total" onChange={handleChange} />
-                </label>
-
-                <h2>Guest Services</h2>
-                <label>
-                    Guest Accommodation:
-                    <select name="guestServices.accommodation" onChange={handleChange}>
-                        <option value="">Select</option>
-                        {/* Add options here */}
-                    </select>
-                </label>
-                <label>
-                    Guest Transportation:
-                    <select name="guestServices.transportation" onChange={handleChange}>
-                        <option value="">Select</option>
-                        {/* Add options here */}
-                    </select>
-                </label>
-                <label>
-                    Dining Arrangements:
-                    <select name="guestServices.dining" onChange={handleChange}>
-                        <option value="">Select</option>
-                        {/* Add options here */}
-                    </select>
-                </label>
-
-                <h2>Technical Setup</h2>
-                <label>
-                    Audio-Visual Setup:
-                    <select name="technicalSetup.audioVisual" onChange={handleChange}>
-                        <option value="">Select</option>
-                        {/* Add options here */}
-                    </select>
-                </label>
-                <label>
-                    Speakers:
-                    <select name="technicalSetup.speakers" onChange={handleChange}>
-                        <option value="">Select</option>
-                        {/* Add options here */}
-                    </select>
-                </label>
-                <label>
-                    Air Conditioner & Ventilation:
-                    <select name="technicalSetup.airConditioning" onChange={handleChange}>
-                        <option value="">Select Type</option>
-                        {/* Add options here */}
-                    </select>
-                </label>
-                <label>
-                    No. of Units:
-                    <input type="number" name="technicalSetup.noOfUnits" onChange={handleChange} />
-                </label>
-                <label>
-                    Presentation Materials:
-                    <select name="technicalSetup.presentationMaterials" onChange={handleChange}>
-                        <option value="">Select</option>
-                        {/* Add options here */}
-                    </select>
-                </label>
-                <label>
-                    Recording & Documentation:
-                    <label>
-                        Photography:
-                        <input type="checkbox" name="technicalSetup.recording.photography" onChange={handleChange} />
-                    </label>
-                    <label>
-                        Videography:
-                        <input type="checkbox" name="technicalSetup.recording.videography" onChange={handleChange} />
-                    </label>
-                    <label>
-                        Professional Lighting:
-                        <input type="checkbox" name="technicalSetup.recording.lighting" onChange={handleChange} />
-                    </label>
-                    <label>
-                        Live Stream:
-                        <input type="checkbox" name="technicalSetup.recording.liveStream" onChange={handleChange} />
-                    </label>
-                </label>
-                <label>
-                    Additional Technical Requirements:
-                    <input type="text" name="technicalSetup.additionalRequirements" onChange={handleChange} />
-                </label>
-
-                <h2>About the Event</h2>
-                <label>
-                    Objectives of the Event (max 200 words):
-                    <textarea name="aboutEvent.objectives" maxLength="200" onChange={handleChange}></textarea>
-                </label>
-                <label>
-                    Outcomes of the Event (max 200 words):
-                    <textarea name="aboutEvent.outcomes" maxLength="200" onChange={handleChange}></textarea>
-                </label>
-                <label>
-                    Proposed Event Brochure/Poster (PDF upload):
-                    <input type="file" accept=".pdf" />
-                </label>
-
-                <h2>Technical Session Details</h2>
-                <label>
-                    Date:
-                    <input type="date" name="technicalSessionDetails.date" onChange={handleChange} />
-                </label>
-                <label>
-                    From Time:
-                    <input type="time" name="technicalSessionDetails.fromTime" onChange={handleChange} />
-                </label>
-                <label>
-                    To Time:
-                    <input type="time" name="technicalSessionDetails.toTime" onChange={handleChange} />
-                </label>
-                <label>
-                    Topic:
-                    <input type="text" name="technicalSessionDetails.topic" onChange={handleChange} />
-                </label>
-                <label>
-                    Speaker Name:
-                    <input type="text" name="technicalSessionDetails.speakerName" onChange={handleChange} />
-                </label>
-
-                <h2>Financial Planning</h2>
-                <label>
-                    Funding Sources:
-                    <select name="financialPlanning.fundingSources" onChange={handleChange}>
-                        <option value="">Select Funding Source</option>
-                        {/* Add options here */}
-                    </select>
-                </label>
-                <label>
-                    Estimated Budget:
-                    <input type="number" name="financialPlanning.estimatedBudget" onChange={handleChange} />
-                </label>
-                <label>
-                    Remarks:
-                    <input type="text" name="financialPlanning.remarks" onChange={handleChange} />
-                </label>
-
-                <h2>Food & Travel Arrangements</h2>
-                <label>
-                    Meal:
-                    <input type="text" name="foodTravelArrangements.meal" onChange={handleChange} />
-                </label>
-                <label>
-                    Refreshment:
-                    <input type="text" name="foodTravelArrangements.refreshment" onChange={handleChange} />
-                </label>
-                <label>
-                    Travel:
-                    <input type="text" name="foodTravelArrangements.travel" onChange={handleChange} />
-                </label>
-                <label>
-                    Meal Arrangements:
-                    <input type="text" name="foodTravelArrangements.mealArrangements.type" onChange={handleChange} />
-                </label>
-                <label>
-                    Meal Type:
-                    <input type="text" name="foodTravelArrangements.mealArrangements.category" onChange={handleChange} />
-                </label>
-                <label>
-                    Menu:
-                    <input type="text" name="foodTravelArrangements.mealArrangements.menu" onChange={handleChange} />
-                </label>
-                <label>
-                    Person Count:
-                    <input type="number" name="foodTravelArrangements.mealArrangements.personCount" onChange={handleChange} />
-                </label>
-                <label>
-                    Served At:
-                    <input type="text" name="foodTravelArrangements.mealArrangements.servedAt" onChange={handleChange} />
-                </label>
-                <label>
-                    Special Note:
-                    <input type="text" name="foodTravelArrangements.mealArrangements.specialNote" onChange={handleChange} />
-                </label>
-
-                <h2>Event Checklist</h2>
-                <label>
-                    Select Event Type:
-                    <select name="eventChecklist" onChange={handleChange}>
-                        <option value="">Online</option>
-                        {/* Add options here */}
-                    </select>
-                </label>
-                <button type="button" onClick={() => setEventDetails({ ...eventDetails, eventChecklist: [...eventDetails.eventChecklist, 'New Task'] })}>
-                    + Add Tasks
-                </button>
-
-                <h2>Upload Event Images</h2>
-                <input type="file" multiple accept="image/*" onChange={handleImageUpload} />
-                <button type="submit">Generate Report</button>
-            </form>
-        </div>
+      <div className="max-w-6xl mx-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        {events.map((event) => (
+          <div
+            key={event.id}
+            onClick={() => setSelectedEvent({ ...event, uploadedImages: [] })}
+            className="bg-white rounded-xl shadow-md hover:shadow-lg p-5 border-l-4 border-blue-500 transition-all cursor-pointer"
+          >
+            <h2 className="text-2xl font-semibold mb-2">{event.title}</h2>
+            <p className="text-sm">
+              <strong>Department:</strong> {event.department}
+            </p>
+            <p className="text-sm">
+              <strong>Dates:</strong> {event.startDate} → {event.endDate}
+            </p>
+            <p className="text-sm">
+              <strong>Venue:</strong> {event.venue}
+            </p>
+          </div>
+        ))}
+      </div>
     );
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto p-6 bg-gradient-to-br from-white via-blue-50 to-white shadow-xl rounded-xl">
+      <button
+        onClick={() => setSelectedEvent(null)}
+        className="mb-6 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 flex items-center gap-2 rounded"
+      >
+        <FaArrowLeft /> Back
+      </button>
+
+      <div className="flex justify-end gap-4 mb-6">
+        <button
+          onClick={exportToPDF}
+          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 flex items-center gap-2"
+        >
+          <FaFilePdf /> Export PDF
+        </button>
+        <button
+          onClick={exportToExcel}
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2"
+        >
+          <FaFileExcel /> Export Excel
+        </button>
+      </div>
+
+      <h1 className="text-3xl font-bold mb-8 text-center text-blue-900">
+        {selectedEvent.title} Report
+      </h1>
+
+      <Section title="Event Details" icon={<FaCalendarAlt />}>
+        <GridTwo>
+          <Item label="Institution" value={selectedEvent.institution} />
+          <Item label="College" value={selectedEvent.college} />
+          <Item label="Department" value={selectedEvent.department} />
+          <Item label="Lead Coordinator" value={selectedEvent.leadCoordinator} />
+          <Item
+            label="Faculty Coordinators"
+            value={selectedEvent.facultyCoordinators.join(", ")}
+          />
+          <Item label="Start Date" value={selectedEvent.startDate} />
+          <Item label="End Date" value={selectedEvent.endDate} />
+          <Item label="Days" value={selectedEvent.noOfDays} />
+          <Item label="Nature" value={selectedEvent.natureOfEvent} />
+          <Item label="Venue Type" value={selectedEvent.venueType} />
+          <Item label="Venue" value={selectedEvent.venue} />
+          <Item label="Audience" value={selectedEvent.audience} />
+          <Item label="Scope" value={selectedEvent.scope} />
+          <Item label="Funding" value={selectedEvent.fundingSource} />
+        </GridTwo>
+      </Section>
+
+      <Section title="Speakers" icon={<FaChalkboardTeacher />}>
+        {selectedEvent.speakers.map((s, i) => (
+          <Card key={i}>
+            <Item label="Name" value={s.name} />
+            <Item label="Designation" value={s.designation} />
+            <Item label="Affiliation" value={s.affiliation} />
+            <Item label="Contact" value={s.contact} />
+            <Item label="Email" value={s.email} />
+          </Card>
+        ))}
+      </Section>
+
+      <Section title="Guest Services" icon={<FaClipboardList />}>
+        <GridTwo>
+          <Item label="Accommodation" value={selectedEvent.guestServices.accommodation} />
+          <Item label="Transportation" value={selectedEvent.guestServices.transportation} />
+          <Item label="Dining" value={selectedEvent.guestServices.dining} />
+        </GridTwo>
+      </Section>
+
+      <Section title="Technical Setup">
+        {Object.entries(selectedEvent.technicalSetup).map(([key, val]) => (
+          <p key={key}>
+            <strong>{key.replace(/([A-Z])/g, " $1")}:</strong> {val}
+          </p>
+        ))}
+      </Section>
+
+      <Section title="Objectives & Outcomes">
+        <p className="mb-2">
+          <strong>Objectives:</strong> {selectedEvent.objectives}
+        </p>
+        <p>
+          <strong>Outcomes:</strong> {selectedEvent.outcomes}
+        </p>
+      </Section>
+
+      <Section title="Sessions">
+        {selectedEvent.sessionDetails.map((s, i) => (
+          <Card key={i}>
+            <Item label="Date" value={s.date} />
+            <Item label="From" value={s.from} />
+            <Item label="To" value={s.to} />
+            <Item label="Topic" value={s.topic} />
+            <Item label="Speaker" value={s.speaker} />
+          </Card>
+        ))}
+      </Section>
+
+      <Section title="Financial Planning" icon={<FaMoneyBill />}>
+        {selectedEvent.financialPlanning.map((f, i) => (
+          <Card key={i}>
+            <Item label="Source" value={f.source} />
+            <Item label="Amount" value={`₹${f.amount}`} />
+            <Item label="Remarks" value={f.remarks} />
+          </Card>
+        ))}
+      </Section>
+
+      <Section title="Food & Travel" icon={<FaUtensils />}>
+        {selectedEvent.foodTravel.map((f, i) => (
+          <Card key={i}>
+            <Item label="Date" value={f.date} />
+            <Item label="Meal" value={f.mealType} />
+            <Item label="Menu" value={f.menu} />
+            <Item label="Served At" value={f.servedAt} />
+            <Item label="Note" value={f.note} />
+          </Card>
+        ))}
+      </Section>
+
+      <Section title="Checklist">
+        <ul className="list-disc pl-6 space-y-1">
+          {selectedEvent.checklist.map((task, i) => (
+            <li key={i}>{task}</li>
+          ))}
+        </ul>
+      </Section>
+
+      <Section title="Images" icon={<FaImages />}>
+        {/* Image Upload */}
+        <input
+          type="file"
+          multiple
+          accept="image/*"
+          onChange={handleImageUpload}
+          className="mb-4"
+        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {selectedEvent.uploadedImages && selectedEvent.uploadedImages.length > 0 ? (
+            selectedEvent.uploadedImages.map((file, i) => (
+              <img
+                key={i}
+                src={URL.createObjectURL(file)}
+                alt={`Uploaded ${i + 1}`}
+                className="w-full h-44 object-cover rounded-md shadow-md hover:scale-105 transition-transform duration-300"
+              />
+            ))
+          ) : (
+            <p className="text-gray-500">No images uploaded yet.</p>
+          )}
+        </div>
+      </Section>
+    </div>
+  );
 };
+
+// Reusable Components
+const Section = ({ title, children, icon }) => (
+  <div className="mb-10 border-b pb-4">
+    <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2 text-blue-900 border-l-4 border-blue-500 pl-3">
+      {icon} {title}
+    </h2>
+    {children}
+  </div>
+);
+
+const GridTwo = ({ children }) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">{children}</div>
+);
+
+const Card = ({ children }) => (
+  <div className="bg-white p-5 border border-gray-200 rounded-lg mb-4 shadow-sm">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{children}</div>
+  </div>
+);
+
+const Item = ({ label, value }) => (
+  <div className="flex flex-col text-sm space-y-1">
+    <span className="text-gray-500 font-medium">{label}</span>
+    <span className="text-gray-900">{value}</span>
+  </div>
+);
 
 export default ReportGeneration;

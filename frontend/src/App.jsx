@@ -3,6 +3,7 @@ import Login from "./components/Login_Page/Login";
 import CreateEvent from "./components/Event_Creation/CreateEvent";
 import MainLayout from "./components/Layout/MainLayout";
 import ReportGeneration from "./components/Report_Generation/ReportGeneration";
+import EventLogs from "./components/EventLogs/EventLogs";
 // import other pages like Inbox, ReportGeneration, etc.
 
 function App() {
@@ -15,7 +16,7 @@ function App() {
         {/* Protected routes with Navbar */}
         <Route element={<MainLayout />}>
           <Route path="/create-event" element={<CreateEvent />} />
-          {/* Add other routes here */}
+          <Route path="/event-logs" element={<EventLogs />} />
           {/* <Route path="/inbox" element={<Inbox />} /> */}
            <Route path="/report-generation" element={<ReportGeneration />} /> 
         </Route>

@@ -107,6 +107,96 @@ const ReportGeneration = () => {
       ],
       // removed static images from initial data
     },
+     {
+      id: 2,
+      title: "AI Symposium 2025",
+      institution: "RMD Engineering College",
+      college: "School of Computer Science",
+      department: "AI & DS",
+      leadCoordinator: "Dr. Raj Kumar",
+      facultyCoordinators: ["Prof. Anitha", "Prof. Karthik"],
+      startDate: "2025-07-20",
+      endDate: "2025-07-21",
+      noOfDays: 2,
+      natureOfEvent: "Symposium",
+      venueType: "Auditorium",
+      venue: "Main Block Auditorium",
+      audience: "Students",
+      scope: "National",
+      fundingSource: "College Sponsored",
+      speakers: [
+        {
+          name: "Dr. A.P. Ramesh",
+          designation: "Chief Data Scientist",
+          affiliation: "Infosys",
+          contact: "9876543210",
+          email: "ramesh@infosys.com",
+        },
+      ],
+      estimatedParticipation: {
+        students: 150,
+        faculty: 20,
+        total: 170,
+      },
+      guestServices: {
+        accommodation: "Provided",
+        transportation: "Not Required",
+        dining: "Buffet Lunch & Tea",
+      },
+      technicalSetup: {
+        av: "Projector + Mic",
+        speakers: "2 Surround Speakers",
+        ac: "Central AC",
+        units: 4,
+        materials: "Laptop, Clicker",
+        photography: "Yes",
+        videography: "Yes",
+        lighting: "Standard Lighting",
+        liveStream: "YouTube",
+        additional: "Banner Backdrop",
+      },
+      objectives:
+        "The event aims to bring together industry leaders and students to discuss the latest trends in Artificial Intelligence.",
+      outcomes:
+        "Participants gained exposure to real-world AI applications and improved networking with professionals.",
+      sessionDetails: [
+        {
+          date: "2025-07-20",
+          from: "10:00 AM",
+          to: "11:30 AM",
+          topic: "Ethics in AI",
+          speaker: "Dr. Ramesh",
+        },
+        {
+          date: "2025-07-21",
+          from: "11:45 AM",
+          to: "1:00 PM",
+          topic: "Future of Machine Learning",
+          speaker: "Dr. Ramesh",
+        },
+      ],
+      financialPlanning: [
+        { source: "College Fund", amount: 20000, remarks: "Stage & Setup" },
+        { source: "Department Budget", amount: 10000, remarks: "Guest Gifts" },
+      ],
+      foodTravel: [
+        {
+          date: "2025-07-20",
+          mealType: "Lunch",
+          menu: "Rice, Curry, Sweets, Juice",
+          servedAt: "Seminar Hall",
+          note: "Pure Veg Only",
+        },
+      ],
+      checklist: [
+        "Event Agenda Finalized",
+        "Guest Invitations Sent",
+        "Flex Banners Installed",
+        "AV Equipment Setup",
+        "Certificates Prepared",
+      ],
+      // removed static images from initial data
+    },
   ];
 
   // State for selected event with uploaded images array

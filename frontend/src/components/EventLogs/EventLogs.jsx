@@ -1,4 +1,15 @@
 import React, { useState, useMemo } from "react";
+import {
+  FaEdit,
+  FaPaperPlane,
+  FaTimesCircle,
+  FaTrashAlt,
+  FaCheckCircle,
+  FaClock,
+  FaClipboardList,
+  FaUserCheck,
+  FaExclamationTriangle
+} from "react-icons/fa";
 
 // Static approvers list
 const staticApprovers = ["HOD", "CSO", "Principal"];
@@ -70,6 +81,7 @@ const EventLogs = ({ onEditEvent }) => {
     setSelectedApprovers([]);
     setShowApprovalPopup(false);
   };
+  
 
   const handleRequestApproval = () => {
     if (selectedApprovers.length === 0) {
@@ -93,13 +105,31 @@ const EventLogs = ({ onEditEvent }) => {
     setEvents(updatedEvents);
     closeApprovalPopup();
   };
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [eventToCancel, setEventToCancel] = useState(null);
+const handleCancelApprovalClick = (event) => {
+    setEventToCancel(event);
+    setShowCancelConfirm(true);
+  };
 
-  const handleCancelApproval = (id) => {
+  // Confirm cancellation
+  const confirmCancelApproval = () => {
+    if (!eventToCancel) return;
     const updatedEvents = events.map((ev) =>
-      ev.id === id ? { ...ev, status: "draft", approvals: {} } : ev
+      ev.id === eventToCancel.id ? { ...ev, status: "draft", approvals: {} } : ev
     );
     setEvents(updatedEvents);
+    setShowCancelConfirm(false);
+    setEventToCancel(null);
   };
+
+  // Cancel cancellation action
+  const cancelCancelApproval = () => {
+    setShowCancelConfirm(false);
+    setEventToCancel(null);
+  };
+
+
 
   const handleDeleteEvent = (id) => {
     if (window.confirm("Are you sure you want to delete this event?")) {
@@ -118,16 +148,21 @@ const EventLogs = ({ onEditEvent }) => {
 
   const getStatusAndColor = (ev) => {
     const formComplete = isFormComplete(ev.eventData);
-    if (!formComplete) return { label: "Draft", color: "bg-yellow-100 text-yellow-800" };
+    if (!formComplete)
+      return { label: "Draft", color: "bg-yellow-100 text-yellow-800", icon: <FaClock className="inline mr-2" /> };
     if (formComplete && ev.status === "draft")
-      return { label: "Pending Approval", color: "bg-purple-100 text-purple-800" };
+      return {
+        label: "Pending Approval",
+        color: " text-purple-800",
+        icon: <FaClipboardList className="inline mr-2" />,
+      };
     if (ev.status === "submitted") {
       const approvalsPending = Object.values(ev.approvals).some((val) => val === false);
       return approvalsPending
-        ? { label: "Approval Sent", color: "bg-blue-100 text-blue-800" }
-        : { label: "Approved", color: "bg-green-100 text-green-800" };
+        ? { label: "Approval Sent", color: "text-blue-800", icon: <FaPaperPlane className="inline mr-2" /> }
+        : { label: "Approved", color: " text-green-800", icon: <FaUserCheck className="inline mr-2" /> };
     }
-    return { label: "Unknown", color: "bg-gray-100 text-gray-800" };
+    return { label: "Unknown", color: " text-gray-800", icon: null };
   };
 
   // Filtered events based on status filter and search term
@@ -185,7 +220,7 @@ const EventLogs = ({ onEditEvent }) => {
           <section className="space-y-8">
             {filteredEvents.map((ev) => {
               const incompleteTab = getFirstIncompleteTab(ev.eventData);
-              const { label: status, color: statusColor } = getStatusAndColor(ev);
+              const { label: status, color: statusColor, icon: statusIcon } = getStatusAndColor(ev);
 
               return (
                 <article
@@ -193,7 +228,10 @@ const EventLogs = ({ onEditEvent }) => {
                   className="bg-[#d7d7d7] rounded-2xl shadow-md border px-6 py-6 md:px-10 md:py-8 flex flex-col md:flex-row justify-between items-center gap-6 hover:shadow-2xl transition duration-300"
                 >
                   <div className="flex-1 w-full">
-                    <h2 className="text-2xl md:text-3xl font-bold text-gray-800 truncate mb-2">
+                    <h2
+                      className="text-2xl md:text-3xl font-bold text-gray-800 truncate mb-2 flex items-center gap-2"
+                      title={ev.eventData.eventInfo.title || "Untitled Event"}
+                    >
                       {ev.eventData.eventInfo.title || "Untitled Event"}
                     </h2>
                     <dl className="text-gray-600 text-lg space-y-1">
@@ -206,11 +244,9 @@ const EventLogs = ({ onEditEvent }) => {
                         <dd className="inline">{ev.eventData.eventInfo.location || "-"}</dd>
                       </div>
                     </dl>
-                    <p className="mt-4">
-                      <span
-                        className={`inline-block px-4 py-1 rounded-full text-sm font-semibold tracking-wide ${statusColor}`}
-                      >
-                        {status}
+                    <p className="mt-4 inline-block px-4 py-1 rounded-full text-sm font-semibold tracking-wide cursor-default select-none">
+                      <span className={`${statusColor} flex items-center`}>
+                        {statusIcon} {status}
                       </span>
                     </p>
                   </div>
@@ -218,34 +254,39 @@ const EventLogs = ({ onEditEvent }) => {
                   <div className="flex flex-wrap gap-3 justify-end md:flex-col">
                     <button
                       onClick={() => onEditEvent(ev.id, incompleteTab)}
-                      className="rounded-xl bg-yellow-400 px-6 py-2 text-white font-semibold hover:bg-yellow-500 transition"
+                      className="rounded-xl bg-yellow-400 px-6 py-2 text-white font-semibold hover:bg-yellow-500 flex items-center gap-2 transition"
+                      aria-label={`Edit event ${ev.eventData.eventInfo.title}`}
                     >
-                      Edit
+                      <FaEdit /> Edit
                     </button>
 
                     {(status === "Draft" || status === "Pending Approval") && (
                       <button
                         onClick={() => openApprovalPopup(ev)}
-                        className="rounded-xl bg-indigo-600 px-6 py-2 text-white font-semibold hover:bg-indigo-700 transition"
+                        className="rounded-xl bg-indigo-600 px-6 py-2 text-white font-semibold hover:bg-indigo-700 flex items-center gap-2 transition"
+                        aria-label={`Request approval for event ${ev.eventData.eventInfo.title}`}
                       >
-                        Request Approval
+                        <FaPaperPlane /> Request Approval
                       </button>
                     )}
 
                     {status === "Approval Sent" && (
                       <button
-                        onClick={() => handleCancelApproval(ev.id)}
-                        className="rounded-xl bg-red-600 px-6 py-2 text-white font-semibold hover:bg-red-700 transition"
+                       onClick={() => handleCancelApprovalClick(ev)}
+
+                        className="rounded-xl bg-red-600 px-6 py-2 text-white font-semibold hover:bg-red-700 flex items-center gap-2 transition"
+                        aria-label={`Cancel approval for event ${ev.eventData.eventInfo.title}`}
                       >
-                        Cancel Approval
+                        <FaTimesCircle /> Cancel Approval
                       </button>
                     )}
 
                     <button
                       onClick={() => handleDeleteEvent(ev.id)}
-                      className="rounded-xl bg-gray-600 px-6 py-2 text-white font-semibold hover:bg-gray-700 transition"
+                      className="rounded-xl bg-gray-600 px-6 py-2 text-white font-semibold hover:bg-gray-700 flex items-center gap-2 transition"
+                      aria-label={`Delete event ${ev.eventData.eventInfo.title}`}
                     >
-                      Delete
+                      <FaTrashAlt /> Delete
                     </button>
                   </div>
                 </article>
@@ -259,16 +300,22 @@ const EventLogs = ({ onEditEvent }) => {
         <div
           className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-6"
           onClick={closeApprovalPopup}
+          aria-modal="true"
+          role="dialog"
+          aria-labelledby="approval-popup-title"
         >
           <div
             className="bg-white rounded-3xl p-8 sm:p-10 w-full max-w-lg shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-3xl font-extrabold mb-6 text-gray-900 border-b pb-4">
+            <h3
+              className="text-3xl font-extrabold mb-6 text-gray-900 border-b pb-4"
+              id="approval-popup-title"
+            >
               Request Approval
             </h3>
 
-            <div className="mb-6 max-h-60 overflow-y-auto space-y-4">
+            <div className="mb-6 max-h-60 overflow-y-auto space-y-4" role="list">
               {staticApprovers.map((approver) => (
                 <label
                   key={approver}
@@ -296,7 +343,7 @@ const EventLogs = ({ onEditEvent }) => {
             {selectedApprovers.length > 0 && (
               <div className="mb-6">
                 <h4 className="font-semibold text-lg mb-3 border-b pb-2">Selected Approvers:</h4>
-                <ul className="space-y-2 max-h-40 overflow-y-auto">
+                <ul className="space-y-2 max-h-40 overflow-y-auto" role="list">
                   {selectedApprovers.map((approver) => (
                     <li
                       key={approver}
@@ -335,6 +382,69 @@ const EventLogs = ({ onEditEvent }) => {
           </div>
         </div>
       )}
+      {/* NEW: Cancel Confirmation Popup */}
+     {showCancelConfirm && (
+  <div
+    className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50"
+    onClick={cancelCancelApproval}
+    aria-modal="true"
+    role="dialog"
+    aria-labelledby="cancel-approval-title"
+  >
+    <div
+      className="bg-white rounded-3xl p-8 sm:p-10 w-full max-w-lg shadow-2xl relative"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Warning Icon and Title */}
+      <div className="flex items-center gap-4 mb-6">
+        <div className="p-3 bg-yellow-100 rounded-full">
+          <FaExclamationTriangle className="text-yellow-600 text-3xl" />
+        </div>
+        <h3
+          id="cancel-approval-title"
+          className="text-2xl sm:text-3xl font-bold text-gray-900"
+        >
+          Cancel Approval Request
+        </h3>
+      </div>
+
+      {/* Confirmation Text */}
+      <p className="text-gray-700 text-lg leading-relaxed mb-8">
+        Are you sure you want to cancel the approval request for{" "}
+        <span className="font-semibold text-gray-900">
+          {eventToCancel?.eventData?.eventInfo?.title || "this event"}
+        </span>
+        ?
+      </p>
+
+      {/* Buttons */}
+      <div className="flex justify-end gap-4">
+        <button
+          onClick={cancelCancelApproval}
+          className="flex items-center gap-2 px-6 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold transition"
+        >
+          <span className="text-lg">❌</span> No, Keep
+        </button>
+        <button
+          onClick={confirmCancelApproval}
+          className="flex items-center gap-2 px-6 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold transition"
+        >
+          <span className="text-lg">✅</span> Yes, Cancel
+        </button>
+      </div>
+
+      {/* Close icon top-right (optional) */}
+      <button
+        onClick={cancelCancelApproval}
+        className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition text-xl"
+        aria-label="Close"
+      >
+        ×
+      </button>
+    </div>
+  </div>
+)}
+
     </>
   );
 };

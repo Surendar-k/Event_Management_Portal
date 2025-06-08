@@ -129,12 +129,22 @@ const handleCancelApprovalClick = (event) => {
     setEventToCancel(null);
   };
 
+const [showModal, setShowModal] = useState(false);
+  const [selectedEventId, setSelectedEventId] = useState(null);
 
+   const openModal = (id) => {
+    setSelectedEventId(id);
+    setShowModal(true);
+  };
 
-  const handleDeleteEvent = (id) => {
-    if (window.confirm("Are you sure you want to delete this event?")) {
-      setEvents(events.filter((ev) => ev.id !== id));
-    }
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedEventId(null);
+  };
+
+  const confirmDelete = () => {
+    setEvents(events.filter((ev) => ev.id !== selectedEventId));
+    closeModal();
   };
 
   const getFirstIncompleteTab = (data) => {
@@ -281,13 +291,13 @@ const handleCancelApprovalClick = (event) => {
                       </button>
                     )}
 
-                    <button
-                      onClick={() => handleDeleteEvent(ev.id)}
-                      className="rounded-xl bg-gray-600 px-6 py-2 text-white font-semibold hover:bg-gray-700 flex items-center gap-2 transition"
-                      aria-label={`Delete event ${ev.eventData.eventInfo.title}`}
-                    >
-                      <FaTrashAlt /> Delete
-                    </button>
+                   <button
+            onClick={() => openModal(ev.id)}
+            className="rounded-xl bg-gray-600 px-6 py-2 text-white font-semibold hover:bg-gray-700 flex items-center gap-2 transition"
+            aria-label={`Delete event ${ev.eventData.eventInfo.title}`}
+          >
+            <FaTrashAlt /> Delete
+          </button>
                   </div>
                 </article>
               );
@@ -298,7 +308,7 @@ const handleCancelApprovalClick = (event) => {
 
       {showApprovalPopup && selectedEvent && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-6"
+          className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-6"
           onClick={closeApprovalPopup}
           aria-modal="true"
           role="dialog"
@@ -306,10 +316,12 @@ const handleCancelApprovalClick = (event) => {
         >
           <div
             className="bg-white rounded-3xl p-8 sm:p-10 w-full max-w-lg shadow-2xl"
+            style={{ borderTop: "6px solid rgb(34, 105, 197)" }}
             onClick={(e) => e.stopPropagation()}
           >
             <h3
               className="text-3xl font-extrabold mb-6 text-gray-900 border-b pb-4"
+              
               id="approval-popup-title"
             >
               Request Approval
@@ -341,13 +353,16 @@ const handleCancelApprovalClick = (event) => {
             </div>
 
             {selectedApprovers.length > 0 && (
-              <div className="mb-6">
+              <div className="mb-6"
+              
+              >
                 <h4 className="font-semibold text-lg mb-3 border-b pb-2">Selected Approvers:</h4>
                 <ul className="space-y-2 max-h-40 overflow-y-auto" role="list">
                   {selectedApprovers.map((approver) => (
                     <li
                       key={approver}
                       className="flex justify-between items-center bg-indigo-100 text-indigo-900 px-4 py-2 rounded-lg"
+                      
                     >
                       <span className="font-medium">{approver}</span>
                       <button
@@ -365,7 +380,8 @@ const handleCancelApprovalClick = (event) => {
               </div>
             )}
 
-            <div className="flex justify-end gap-4 mt-6">
+            <div className="flex justify-end gap-4 mt-6"
+            >
               <button
                 onClick={closeApprovalPopup}
                 className="rounded-xl bg-gray-300 px-6 py-2 font-semibold text-gray-700 hover:bg-gray-400 transition"
@@ -386,6 +402,7 @@ const handleCancelApprovalClick = (event) => {
      {showCancelConfirm && (
   <div
     className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50"
+    
     onClick={cancelCancelApproval}
     aria-modal="true"
     role="dialog"
@@ -393,6 +410,7 @@ const handleCancelApprovalClick = (event) => {
   >
     <div
       className="bg-white rounded-3xl p-8 sm:p-10 w-full max-w-lg shadow-2xl relative"
+       style={{ borderTop: "6px solid rgb(197, 34, 34)" }}
       onClick={(e) => e.stopPropagation()}
     >
       {/* Warning Icon and Title */}
@@ -444,6 +462,33 @@ const handleCancelApprovalClick = (event) => {
     </div>
   </div>
 )}
+
+{/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+          <div  className="bg-white rounded-3xl p-8 sm:p-10 w-full max-w-lg shadow-2xl relative"
+           style={{ borderTop: "6px solid rgb(197, 34, 34)" }}>
+            <h2 className="text-lg font-bold mb-4">Confirm Deletion</h2>
+            <p className="mb-6">Are you sure you want to delete this event?</p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={closeModal}
+                className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
 
     </>
   );

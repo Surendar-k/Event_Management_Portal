@@ -4,7 +4,9 @@ import CreateEvent from "./components/Event_Creation/CreateEvent";
 import MainLayout from "./components/Layout/MainLayout";
 import ReportGeneration from "./components/Report_Generation/ReportGeneration";
 import EventLogs from "./components/EventLogs/EventLogs";
-import EventInbox from "./components/Event_Inbox/EventInbox";
+
+import FacultyInbox from "./components/Event_Inbox/Roles_Inbox/FacultyInbox";
+import HigherAuthorityInbox from "./components/Event_Inbox/Roles_Inbox/HighterAuthorityInbox";
 // import other pages like Inbox, ReportGeneration, etc.
 
 function App() {
@@ -18,7 +20,8 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/create-event" element={<CreateEvent />} />
           <Route path="/event-logs" element={<EventLogs />} />
-          <Route path="/inbox" element={<EventInbox />} />
+          <Route path="/faculty-inbox" element={<FacultyInbox />} />
+          <Route path="/higherauthority-inbox" element={<HigherAuthorityInbox />} />
            <Route path="/report-generation" element={<ReportGeneration />} /> 
         </Route>
       </Routes>

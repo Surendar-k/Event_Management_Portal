@@ -42,7 +42,8 @@ const Navbar = () => {
           { label: "Create Event", path: "/create-event" },
           { label: "Report Generation", path: "/report-generation" },
           { label: "Event Logs", path: "/event-logs" },
-          { label: "Inbox", path: "/inbox" },
+          { label: "Inbox", path: "/faculty-inbox" },
+          {label: "Inbox", path:"/higherauthority-inbox"}
         ].map(({ label, path }) => (
           <li key={path}>
             <button

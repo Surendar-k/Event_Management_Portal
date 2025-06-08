@@ -5,9 +5,7 @@ import ksrLogo from "../../assets/ksr-logo.png"; // Ensure this exists
 const users = [
     {email:"admin@gmail.com", role:"faculty"},
   { email: "nagarajan@shanmugha.edu.in", role: "faculty" },
-  { email: "sivakumar@shanmugha.edu.in", role: "faculty" },
   { email: "hod.ai_ds@shanmugha.edu.in", role: "hod" },
-  { email: "hod.cse@shanmugha.edu.in", role: "hod" },
   { email: "cso@shanmugha.edu.in", role: "cso" },
   { email: "principal@shanmugha.edu.in", role: "principal" },
 ];

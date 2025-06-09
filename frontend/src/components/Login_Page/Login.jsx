@@ -1,30 +1,43 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import ksrLogo from "../../assets/ksr-logo.png"; // Ensure this exists
-
-const users = [
-    {email:"admin@gmail.com", role:"faculty"},
-  { email: "nagarajan@shanmugha.edu.in", role: "faculty" },
-  { email: "hod.ai_ds@shanmugha.edu.in", role: "hod" },
-  { email: "cso@shanmugha.edu.in", role: "cso" },
-  { email: "principal@shanmugha.edu.in", role: "principal" },
-];
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import ksrLogo from "../../assets/ksr-logo.png";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    const user = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-    if (user) {
-      localStorage.setItem("email", user.email);
-      localStorage.setItem("role", user.role);
+    setError("");
+
+    try {
+      const response = await fetch("http://localhost:5000/api/login", {
+        method: "POST",
+        credentials: "include",  // IMPORTANT: include cookies in request
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        setError(err.error || "Login failed");
+        return;
+      }
+
+      const data = await response.json();
+
+      // Optionally save minimal user info to localStorage/sessionStorage if needed
+      localStorage.setItem("email", data.user.email);
+      localStorage.setItem("role", data.user.role);
+
+      // Redirect to protected route after login
       navigate("/create-event");
-    } else {
-      setError("Unauthorized email.");
+    } catch (err) {
+      setError("Server error: " + err.message);
     }
   };
 
@@ -34,8 +47,12 @@ const Login = () => {
         {/* Branding */}
         <div className="flex flex-col items-center mb-6">
           <img src={ksrLogo} alt="KSR Logo" className="w-20 h-20 mb-3" />
-          <h1 className="text-3xl font-bold text-[#333] text-center">K.S.R. Educational Institution</h1>
-          <p className="text-[#575757] text-sm text-center">Faculty & Admin Login Portal</p>
+          <h1 className="text-3xl font-bold text-[#333] text-center">
+            K.S.R. Educational Institution
+          </h1>
+          <p className="text-[#575757] text-sm text-center">
+            Faculty & Admin Login Portal
+          </p>
         </div>
 
         {/* Error Message */}
@@ -48,7 +65,10 @@ const Login = () => {
         {/* Form */}
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label htmlFor="email" className="block text-[#575757] text-sm font-medium mb-1">
+            <label
+              htmlFor="email"
+              className="block text-[#575757] text-sm font-medium mb-1"
+            >
               Institutional Email
             </label>
             <input
@@ -63,13 +83,16 @@ const Login = () => {
             />
           </div>
 
-          <div>
-            <label htmlFor="password" className="block text-[#575757] text-sm font-medium mb-1">
+          <div className="relative">
+            <label
+              htmlFor="password"
+              className="block text-[#575757] text-sm font-medium mb-1"
+            >
               Password
             </label>
             <input
               id="password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               className="w-full px-4 py-3 border border-[#ccc] rounded-lg text-[#333] placeholder-[#aaa] bg-white focus:outline-none focus:ring-2 focus:ring-[#aaa]"
               placeholder="••••••••"
               value={password}
@@ -77,6 +100,14 @@ const Login = () => {
               required
               autoComplete="current-password"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute right-3 top-12 transform -translate-y-1/2 text-[#575757] hover:text-[#333]"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <FaEye size={20} /> : <FaEyeSlash size={20} />}
+            </button>
           </div>
 
           <button
@@ -89,7 +120,8 @@ const Login = () => {
 
         {/* Footer */}
         <p className="mt-6 text-center text-sm text-[#aaa]">
-          &copy; {new Date().getFullYear()} K.S.R. Institutions. All rights reserved.
+          &copy; {new Date().getFullYear()} K.S.R. Institutions. All rights
+          reserved.
         </p>
       </div>
     </div>

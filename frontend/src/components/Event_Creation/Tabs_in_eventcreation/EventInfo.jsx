@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from "axios";
 
 const colleges = {
   'College A': ['Dept A1', 'Dept A2'],
@@ -11,12 +12,12 @@ const coordinators = [
   "Ms. K. Kavitha",
   "Mr. Arun Raj",
 ];
-const EventInfo = ({ loginName }) => {
+const EventInfo = ({ loginName,setEventId }) => {
   const [selectedCollege, setSelectedCollege] = useState('');
   const [departments, setDepartments] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [title, setTitle] = useState('');
-  const [facultyCoordinators] = useState('');
+
   const [eventNature, setEventNature] = useState('');
   const [otherNature, setOtherNature] = useState('');
   const [fundingSource, setFundingSource] = useState('');
@@ -67,33 +68,46 @@ const EventInfo = ({ loginName }) => {
     setSpeakers(updated);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
+  try {
+    // Step 1: Create base event (returns event_id)
+    const createRes = await axios.post("http://localhost:5000/api/events", { title });
+    const event_id = createRes.data.event_id;
+
+    // Step 2: Save all event info
     const eventData = {
       title,
-      selectedCollege,
-      selectedDepartment,
-      loginName,
-      facultyCoordinators,
-      startDate,
-      endDate,
-      numDays,
-      eventNature: eventNature === 'Others' ? otherNature : eventNature,
-      fundingSource: fundingSource === 'Others' ? otherFunding : fundingSource,
-      venueType,
+      selected_college: selectedCollege,
+      selected_department: selectedDepartment,
+      faculty_coordinators: selectedCoordinators,
+      start_date: startDate,
+      end_date: endDate,
+      num_days: numDays,
+      event_nature: eventNature === "Others" ? otherNature : eventNature,
+      other_nature: otherNature,
+      funding_source: fundingSource === "Others" ? otherFunding : fundingSource,
+      other_funding: otherFunding,
+      venue_type: venueType,
       venue,
       audience,
       scope,
       speakers,
       participants,
-      guestServices,
+      guest_services: guestServices,
     };
 
-    console.log("Saving Event Data:", eventData);
-    alert("Event Info Saved!");
-    // Here you can send `eventData` to backend using fetch/axios
-  };
+    await axios.post(`http://localhost:5000/api/events/${event_id}/event-info`, eventData);
+    if (setEventId) setEventId(event_id);
+    alert("Event Info Saved Successfully!");
+  } catch (error) {
+    console.error("Error saving event:", error);
+    alert("Failed to save event info.");
+    
+  }
+};
+
 const [technicalSetup, setTechnicalSetup] = useState({
   audioVisual: '',
   speakerSystem: '',

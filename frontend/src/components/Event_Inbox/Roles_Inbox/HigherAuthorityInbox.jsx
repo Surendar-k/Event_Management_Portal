@@ -148,10 +148,16 @@ const HigherAuthorityInbox = () => {
 
   return (
     <div
-      className="max-w-7xl mx-auto p-8 rounded-2xl min-h-screen"
-      style={{ backgroundColor: "#f0eaea", color: "#1a1a1a", fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}
+      className="max-w-7xl mx-auto p-6 rounded-2xl mt-10 shadow-xl border"
+      style={{
+        background: "linear-gradient(135deg, #f0eaea 0%, #fff 50%, #f0eaea 100%)",
+        borderColor: "#ddd",
+      }}
     >
-      <h1 className="text-center text-4xl font-extrabold mb-10" style={{ color: "#333" }}>
+      <h1
+        className="text-4xl font-extrabold mb-8 text-center"
+        style={{ color: "#575757", textShadow: "1px 1px 2px rgba(87,87,87,0.2)" }}
+      >
         {userRole.toUpperCase()} Inbox
       </h1>
 

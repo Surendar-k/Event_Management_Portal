@@ -339,15 +339,26 @@ const ReportGeneration = () => {
 
   if (!selectedEvent) {
     return (
-      <div className="max-w-6xl mx-auto p-6">
-        {/* Filters */}
-        <div className="mb-6 p-4  rounded-lg shadow flex flex-col md:flex-row md:items-center md:gap-4"
-        style={{
+      <div  className="max-w-7xl mx-auto p-6 rounded-2xl mt-10 shadow-xl border"
+
+      style={{
         background: "linear-gradient(135deg, #f0eaea 0%, #fff 50%, #f0eaea 100%)",
         borderColor: "#ddd",
       }}>
-          <div className="flex items-center border rounded px-3 py-2 flex-1 mb-4 md:mb-0">
-            <FaSearch className="text-gray-400 mr-2" />
+         <h1
+        className="text-4xl font-extrabold mb-8 text-center"
+        style={{ color: "#575757", textShadow: "1px 1px 2px rgba(87,87,87,0.2)" }}
+      >
+        Event Reports
+      </h1>
+        {/* Filters */}
+        <div className="mb-6 p-4  rounded-lg shadow flex flex-col md:flex-row md:items-center md:gap-4"
+        style={{
+        background: "linear-gradient(135deg,rgb(0, 0, 0) 0%,rgb(100, 99, 99) 50%  ,rgb(164, 161, 161) 100%)",
+        borderColor: "#ddd",
+      }}>
+          <div className="flex text-white items-center border rounded px-3 py-2 flex-1 mb-4 md:mb-0">
+            <FaSearch className="text-white mr-2" />
             <input
               type="text"
               placeholder="Search event title..."
@@ -358,29 +369,30 @@ const ReportGeneration = () => {
           </div>
 
           <select
-            className="border rounded px-3 py-2 mb-4 md:mb-0"
+            className="border text-white rounded px-3 py-2 mb-4 md:mb-0"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
-            <option value="all">All Statuses</option>
-            <option value="upcoming">Upcoming</option>
-            <option value="completed">Completed</option>
+            <option value="all" className="text-black">All Statuses</option>
+            <option value="upcoming"className="text-black">Upcoming</option>
+            <option value="completed"className="text-black">Completed</option>
           </select>
 
           <select
-            className="border rounded px-3 py-2 mb-4 md:mb-0"
+            className="border text-white  rounded px-3 py-2 mb-4 md:mb-0"
             value={collegeFilter}
+      
             onChange={(e) => setCollegeFilter(e.target.value)}
           >
-            <option value="">All Colleges</option>
+            <option value=""className="text-black">All Colleges</option>
             {colleges.map((col) => (
-              <option key={col} value={col}>
+              <option key={col} value={col}className="text-black">
                 {col}
               </option>
             ))}
           </select>
 
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 text-white  items-center">
             <label className="text-sm font-medium" htmlFor="startDateFilter">
               From:
             </label>
@@ -393,7 +405,7 @@ const ReportGeneration = () => {
             />
           </div>
 
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 text-white  items-center">
             <label className="text-sm font-medium" htmlFor="endDateFilter">
               To:
             </label>

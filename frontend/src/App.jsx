@@ -6,7 +6,7 @@ import ReportGeneration from "./components/Report_Generation/ReportGeneration";
 import EventLogs from "./components/EventLogs/EventLogs";
 
 import FacultyInbox from "./components/Event_Inbox/Roles_Inbox/FacultyInbox";
-import HigherAuthorityInbox from "./components/Event_Inbox/Roles_Inbox/HighterAuthorityInbox";
+import HigherAuthorityInbox from "./components/Event_Inbox/Roles_Inbox/HigherAuthorityInbox";
 // import other pages like Inbox, ReportGeneration, etc.
 
 function App() {

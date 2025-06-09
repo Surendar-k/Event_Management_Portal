@@ -4,13 +4,19 @@ const colleges = {
   'College A': ['Dept A1', 'Dept A2'],
   'College B': ['Dept B1', 'Dept B2'],
 };
-
+const coordinators = [
+  "Dr. S. Karthik",
+  "Prof. N. Priya",
+  "Dr. R. Balaji",
+  "Ms. K. Kavitha",
+  "Mr. Arun Raj",
+];
 const EventInfo = ({ loginName }) => {
   const [selectedCollege, setSelectedCollege] = useState('');
   const [departments, setDepartments] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [title, setTitle] = useState('');
-  const [facultyCoordinators, setFacultyCoordinators] = useState('');
+  const [facultyCoordinators] = useState('');
   const [eventNature, setEventNature] = useState('');
   const [otherNature, setOtherNature] = useState('');
   const [fundingSource, setFundingSource] = useState('');
@@ -97,7 +103,40 @@ const [technicalSetup, setTechnicalSetup] = useState({
   recording: [],
   additional: ''
 });
+const [filteredSuggestions, setFilteredSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedCoordinators, setSelectedCoordinators] = useState([]);
 
+  const handleChange = (e) => {
+    const value = e.target.value;
+    
+
+    if (value.trim()) {
+      const filtered = coordinators.filter(
+        (name) =>
+          name.toLowerCase().includes(value.toLowerCase()) &&
+          !selectedCoordinators.includes(name)
+      );
+      setFilteredSuggestions(filtered);
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSelect = (name) => {
+    if (!selectedCoordinators.includes(name)) {
+      setSelectedCoordinators([...selectedCoordinators, name]);
+    }
+    
+    setShowSuggestions(false);
+  };
+
+  const handleRemove = (nameToRemove) => {
+    setSelectedCoordinators(
+      selectedCoordinators.filter((name) => name !== nameToRemove)
+    );
+  };
   return (
     <form
       onSubmit={handleSubmit}
@@ -155,16 +194,53 @@ const [technicalSetup, setTechnicalSetup] = useState({
             />
           </div>
 
-          <div>
-            <label className="block font-medium mb-1 text-gray-700">Faculty Coordinators</label>
-            <input
-              type="text"
-              value={facultyCoordinators}
-              onChange={(e) => setFacultyCoordinators(e.target.value)}
-              placeholder="Faculty Coordinators"
-              className="w-full border border-gray-400 p-2 rounded shadow-sm text-gray-700"
-            />
-          </div>
+         <div className="relative">
+      <label className="block font-medium mb-1 text-gray-700">Faculty Coordinators</label>
+      
+      <div className="flex flex-wrap gap-2 mb-2">
+        {selectedCoordinators.map((name, idx) => (
+          <span
+            key={idx}
+            className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full flex items-center gap-2"
+          >
+            {name}
+            <button
+              type="button"
+              onClick={() => handleRemove(name)}
+              className="text-red-500 hover:text-red-700 font-bold"
+            >
+              ×
+            </button>
+          </span>
+        ))}
+      </div>
+
+      <input
+        type="text"
+        
+        onChange={handleChange}
+        className="w-full border border-gray-400 p-2 rounded text-gray-800"
+        placeholder="Type a name..."
+      />
+
+      {showSuggestions && (
+        <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded shadow mt-1 max-h-40 overflow-y-auto">
+          {filteredSuggestions.length > 0 ? (
+            filteredSuggestions.map((name, idx) => (
+              <li
+                key={idx}
+                onClick={() => handleSelect(name)}
+                className="p-2 hover:bg-gray-100 cursor-pointer"
+              >
+                {name}
+              </li>
+            ))
+          ) : (
+            <li className="p-2 text-gray-500">No matches found</li>
+          )}
+        </ul>
+      )}
+    </div>
 
           {/* Date and Time */}
           <div>

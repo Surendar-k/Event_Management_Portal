@@ -182,8 +182,15 @@ const [showModal, setShowModal] = useState(false);
   );
 
   return (
-    <div className="max-w-7xl mx-auto p-6 bg-gray-100 min-h-screen rounded-2xl">
-      <h1 className="text-5xl font-extrabold mb-8 text-center text-gray-800 tracking-wide">
+    <div className="max-w-7xl mx-auto p-6 rounded-2xl mt-10 shadow-xl border"
+      style={{
+        background: "linear-gradient(135deg, #f0eaea 0%, #fff 50%, #f0eaea 100%)",
+        borderColor: "#ddd",
+      }}>
+      <h1
+        className="text-4xl font-extrabold mb-8 text-center"
+        style={{ color: "#575757", textShadow: "1px 1px 2px rgba(87,87,87,0.2)" }}
+      >
         Event Inbox
       </h1>
 
@@ -191,7 +198,7 @@ const [showModal, setShowModal] = useState(false);
         <input
           type="text"
           placeholder="Search by event name..."
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow text-white bg-black"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />

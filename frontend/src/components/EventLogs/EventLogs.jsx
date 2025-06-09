@@ -190,10 +190,17 @@ const [showModal, setShowModal] = useState(false);
 
   return (
     <>
-      <div className="max-w-7xl mx-auto p-8 rounded-xl shadow-lg bg-[#f0eaea] backdrop-blur-md border border-white/20">
-        <h1 className="text-5xl font-extrabold text-gray-900 mb-8 text-center leading-tight tracking-tight">
-          My Created Events
-        </h1>
+      <div className="max-w-7xl mx-auto p-6 rounded-2xl mt-10 shadow-xl border"
+      style={{
+        background: "linear-gradient(135deg, #f0eaea 0%, #fff 50%, #f0eaea 100%)",
+        borderColor: "#ddd",
+      }}>
+        <h1
+        className="text-4xl font-extrabold mb-8 text-center"
+        style={{ color: "#575757", textShadow: "1px 1px 2px rgba(87,87,87,0.2)" }}
+      >
+        Logs of created Events
+      </h1>
 
         {/* Filter Controls */}
         <div className="flex flex-col md:flex-row justify-between mb-8 gap-4">
@@ -201,7 +208,7 @@ const [showModal, setShowModal] = useState(false);
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-lg font-medium"
+              className="rounded-lg border border-black-300 px-4 py-2 text-lg font-medium bg-black text-white"
               aria-label="Filter events by status"
             >
               <option value="all">All Statuses</option>
@@ -218,7 +225,7 @@ const [showModal, setShowModal] = useState(false);
               placeholder="Search by event name"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-lg font-medium w-full md:w-80"
+              className="rounded-lg border border-gray-300 px-4 py-2 text-white text-lg bg-black font-medium w-full md:w-80"
               aria-label="Search events by name"
             />
           </div>

@@ -12,7 +12,7 @@ const coordinators = [
   'Ms. K. Kavitha',
   'Mr. Arun Raj'
 ]
-const EventInfo = ({loginName, setEventId}) => {
+const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEndDate}) => {
   const [selectedCollege, setSelectedCollege] = useState('')
   const [departments, setDepartments] = useState([])
   const [selectedDepartment, setSelectedDepartment] = useState('')
@@ -25,8 +25,7 @@ const EventInfo = ({loginName, setEventId}) => {
   const [venue, setVenue] = useState('')
   const [audience, setAudience] = useState('')
   const [scope, setScope] = useState('')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
+ 
   const [numDays, setNumDays] = useState('')
   const [speakers, setSpeakers] = useState([
     {name: '', designation: '', affiliation: '', contact: '', email: ''}
@@ -283,6 +282,7 @@ const EventInfo = ({loginName, setEventId}) => {
             <input
               type='date'
               value={startDate}
+              min={startDate}
               onChange={e => setStartDate(e.target.value)}
               className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
             />
@@ -295,6 +295,7 @@ const EventInfo = ({loginName, setEventId}) => {
             <input
               type='date'
               value={endDate}
+              max={endDate}
               onChange={e => setEndDate(e.target.value)}
               className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
             />

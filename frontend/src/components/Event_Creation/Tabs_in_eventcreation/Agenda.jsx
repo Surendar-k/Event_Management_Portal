@@ -1,6 +1,6 @@
 import {useState, useEffect} from 'react'
 
-const Agenda = ({eventStartDate}) => {
+const Agenda = ({eventStartDate, eventEndDate}) => {
   const [objectives, setObjectives] = useState('')
   const [outcomes, setOutcomes] = useState('')
   const [brochure, setBrochure] = useState(null)
@@ -144,6 +144,8 @@ const Agenda = ({eventStartDate}) => {
             <input
               type='date'
               value={sessionDate}
+               min={eventStartDate}
+               max={eventEndDate}
               onChange={e => setSessionDate(e.target.value)}
               className='w-full rounded-lg border border-gray-300 p-3 focus:ring-2 focus:ring-black focus:outline-none'
             />
@@ -156,6 +158,7 @@ const Agenda = ({eventStartDate}) => {
             <input
               type='time'
               value={fromTime}
+             
               onChange={e => setFromTime(e.target.value)}
               className='w-full rounded-lg border border-gray-300 p-3 focus:ring-2 focus:ring-black focus:outline-none'
             />
@@ -168,6 +171,7 @@ const Agenda = ({eventStartDate}) => {
             <input
               type='time'
               value={toTime}
+              
               onChange={e => setToTime(e.target.value)}
               className='w-full rounded-lg border border-gray-300 p-3 focus:ring-2 focus:ring-black focus:outline-none'
             />

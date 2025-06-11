@@ -113,7 +113,11 @@ const CreateEvent = () => {
 
     switch (activeTab) {
       case 'eventInfo':
-        return <EventInfo data={eventData.eventInfo} onChange={data => updateSection('eventInfo', data)} setEventId={setEventId} />
+        return <EventInfo data={eventData.eventInfo} onChange={data => updateSection('eventInfo', data)}  setEventId={setEventId}
+      startDate={startDate}              // ✅ Add this
+      setStartDate={setStartDate}       // ✅ Add this
+      endDate={endDate}             // ✅ Add this
+      setEndDate={setEndDate}  />
       case 'agenda':
         return <Agenda data={eventData.agenda} onChange={data => updateSection('agenda', data)} eventId={eventId} eventStartDate={startDate} eventEndDate={endDate} />
       case 'financialPlanning':

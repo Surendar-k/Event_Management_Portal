@@ -32,12 +32,5 @@ router.post("/events", authMiddleware.isAuthenticated, eventController.createEve
 router.post("/events/:event_id/event-info", authMiddleware.isAuthenticated, eventController.saveEventInfo);
 router.get("/events/:event_id", authMiddleware.isAuthenticated, eventController.getFullEvent);
 
-// ========== Agenda Routes ==========
 
-router.get("/events/:event_id/agenda", agendaController.getAgenda);
-router.post(
-  "/events/:event_id/agenda",
-  agendaController.uploadMiddleware,
-  agendaController.postAgenda
-);
 module.exports = router;

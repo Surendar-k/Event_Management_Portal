@@ -31,7 +31,7 @@ exports.saveEventInfo = async (req, res) => {
       JSON.stringify(data.guest_services || {}),
       normalize(data.objectives),
       normalize(data.outcomes),
-      normalize(data.brochure_path),
+      // normalize(data.brochure_path),
       JSON.stringify(data.agenda_sessions || []),
       JSON.stringify(data.financial_data || {}),
       JSON.stringify(data.food_transport_data || {}),

@@ -1,4 +1,4 @@
-import {useState} from 'react'
+import { useState } from 'react'
 import {
   FaInfoCircle,
   FaCalendarAlt,
@@ -14,15 +14,15 @@ import FoodTravel from './Tabs_in_eventcreation/FoodTravel'
 import Checklist from './Tabs_in_eventcreation/Checklist'
 
 const tabs = [
-  {id: 'eventInfo', label: 'Event Info', icon: <FaInfoCircle size={18} />},
-  {id: 'agenda', label: 'Agenda', icon: <FaCalendarAlt size={18} />},
+  { id: 'eventInfo', label: 'Event Info', icon: <FaInfoCircle size={18} /> },
+  { id: 'agenda', label: 'Agenda', icon: <FaCalendarAlt size={18} /> },
   {
     id: 'financialPlanning',
     label: 'Financial Planning',
     icon: <FaDollarSign size={18} />
   },
-  {id: 'foodTravel', label: 'Food & Travel', icon: <FaUtensils size={18} />},
-  {id: 'checklist', label: 'Checklist', icon: <FaCheckCircle size={18} />}
+  { id: 'foodTravel', label: 'Food & Travel', icon: <FaUtensils size={18} /> },
+  { id: 'checklist', label: 'Checklist', icon: <FaCheckCircle size={18} /> }
 ]
 
 const CreateEvent = () => {
@@ -30,9 +30,20 @@ const CreateEvent = () => {
   const [eventId, setEventId] = useState(null)
 
   const [eventData, setEventData] = useState({
-    eventInfo: {title: '', date: '', location: '', startDate: '', endDate: ''},
-    agenda: [],
-    financialPlanning: {budget: '', expenses: [], startDate: '', endDate: ''},
+    eventInfo: {
+      title: '',
+      date: '',
+      location: '',
+      startDate: '',
+      endDate: ''
+    },
+    agenda: {
+      objectives: '',
+      outcomes: '',
+      brochure: null,
+      sessions: []
+    },
+    financialPlanning: { budget: '', expenses: [], startDate: '', endDate: '' },
     foodTravel: {
       foodArrangements: '',
       travelDetails: '',
@@ -57,16 +68,73 @@ const CreateEvent = () => {
     }
   }
 
-  const handleSaveAll = () => {
-    console.log('Saving all event data:', eventData)
-    localStorage.setItem('savedEvent', JSON.stringify(eventData))
-    alert('Event data saved successfully!')
+  const handleSaveAll = async () => {
+    if (!eventId) {
+      alert('Please fill and save Event Info first.')
+      return
+    }
+
+    try {
+      const formData = new FormData()
+
+      // Event Info
+      formData.append('title', eventData.eventInfo.title)
+      formData.append('date', eventData.eventInfo.date)
+      formData.append('location', eventData.eventInfo.location)
+      formData.append('startDate', eventData.eventInfo.startDate)
+      formData.append('endDate', eventData.eventInfo.endDate)
+
+      // Agenda
+      formData.append('objectives', eventData.agenda.objectives)
+      formData.append('outcomes', eventData.agenda.outcomes)
+      formData.append(
+        'agenda_sessions',
+        JSON.stringify(eventData.agenda.sessions || [])
+      )
+      if (eventData.agenda.brochure) {
+        formData.append('brochure', eventData.agenda.brochure)
+      }
+
+      // Financial Planning
+      formData.append(
+        'financial_data',
+        JSON.stringify(eventData.financialPlanning)
+      )
+
+      // Food & Travel
+      formData.append(
+        'food_transport_data',
+        JSON.stringify(eventData.foodTravel)
+      )
+
+      // Checklist
+      formData.append('checklist_data', JSON.stringify(eventData.checklist))
+
+      const response = await fetch(
+        `http://localhost:5000/api/events/${eventId}/save-info`,
+        {
+          method: 'POST',
+          body: formData
+        }
+      )
+
+      const result = await response.json()
+
+      if (response.ok) {
+        alert('Event data saved successfully!')
+      } else {
+        alert(`Save failed: ${result.error}`)
+      }
+    } catch (err) {
+      console.error('Error saving event:', err)
+      alert('An error occurred while saving the event.')
+    }
   }
 
   const renderActiveTab = () => {
     if (!eventId && activeTab !== 'eventInfo') {
       return (
-        <div className="text-center text-red-600 font-medium">
+        <div className='text-center text-red-600 font-medium'>
           Please complete and save Event Info before accessing other sections.
         </div>
       )
@@ -131,7 +199,7 @@ const CreateEvent = () => {
     >
       <h1
         className='mb-8 text-center text-4xl font-extrabold'
-        style={{color: '#575757', textShadow: '1px 1px 2px rgba(87,87,87,0.2)'}}
+        style={{ color: '#575757', textShadow: '1px 1px 2px rgba(87,87,87,0.2)' }}
       >
         Create New Event
       </h1>
@@ -141,9 +209,9 @@ const CreateEvent = () => {
         className='mb-10 flex flex-wrap justify-center gap-6 border-b-4 pb-4'
         role='tablist'
         aria-label='Event Creation Tabs'
-        style={{borderColor: '#ddd'}}
+        style={{ borderColor: '#ddd' }}
       >
-        {tabs.map(({id, label, icon}) => {
+        {tabs.map(({ id, label, icon }) => {
           const isActive = activeTab === id
           const isDisabled = id !== 'eventInfo' && !eventId
           return (

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useImperativeHandle, forwardRef } from 'react';
 import { FaTrash } from 'react-icons/fa';
 
 const fundingOptions = [
@@ -30,7 +30,8 @@ const budgetOptions = [
   'Miscellaneous / Contingency',
 ];
 
-const FinancialPlanning = () => {
+// Use forwardRef to expose a method to parent components
+const FinancialPlanning = forwardRef((props, ref) => {
   const [activeTab, setActiveTab] = useState('funding');
 
   const [fundingSource, setFundingSource] = useState('');
@@ -96,6 +97,14 @@ const FinancialPlanning = () => {
 
   const getFundingTotal = () =>
     fundingData.reduce((acc, item) => acc + item.amount, 0).toFixed(2);
+
+  // Expose data to parent via ref
+  useImperativeHandle(ref, () => ({
+    getFinancialData: () => ({
+      funding: fundingData,
+      budget: budgetData,
+    })
+  }));
 
   return (
     <div className='max-w-8xl mx-auto space-y-12 rounded-xl px-6 py-10'>
@@ -184,16 +193,15 @@ const FinancialPlanning = () => {
                       <td className='border p-2'>{item.source}</td>
                       <td className='border p-2'>₹{item.amount.toFixed(2)}</td>
                       <td className='border p-2'>{item.remark}</td>
-                     <td className='border p-2 text-center'>
-  <button
-    onClick={() => removeFunding(idx)} // or removeBudget(idx)
-    className='rounded-full p-2 transition-colors hover:bg-red-100'
-    title='Remove'
-  >
-    <FaTrash className='text-red-600 hover:text-red-800 text-lg' />
-  </button>
-</td>
-
+                      <td className='border p-2 text-center'>
+                        <button
+                          onClick={() => removeFunding(idx)}
+                          className='rounded-full p-2 transition-colors hover:bg-red-100'
+                          title='Remove'
+                        >
+                          <FaTrash className='text-red-600 hover:text-red-800 text-lg' />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                   <tr className='bg-gray-100 font-bold'>
@@ -201,8 +209,7 @@ const FinancialPlanning = () => {
                       Total Funding
                     </td>
                     <td className='border p-2'>₹{getFundingTotal()}</td>
-                    <td className='border p-2'></td>
-                    <td className='border p-2'></td>
+                    <td className='border p-2' colSpan={2}></td>
                   </tr>
                 </tbody>
               </table>
@@ -269,16 +276,15 @@ const FinancialPlanning = () => {
                       <td className='border p-2'>{item.particular}</td>
                       <td className='border p-2'>₹{item.amount.toFixed(2)}</td>
                       <td className='border p-2'>{item.remark}</td>
-                     <td className='border p-2 text-center'>
-  <button
-    onClick={() => removeBudget(idx)} // or removeBudget(idx)
-    className='rounded-full p-2 transition-colors hover:bg-red-100'
-    title='Remove'
-  >
-    <FaTrash className='text-red-600 hover:text-red-800 text-lg' />
-  </button>
-</td>
-
+                      <td className='border p-2 text-center'>
+                        <button
+                          onClick={() => removeBudget(idx)}
+                          className='rounded-full p-2 transition-colors hover:bg-red-100'
+                          title='Remove'
+                        >
+                          <FaTrash className='text-red-600 hover:text-red-800 text-lg' />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                   <tr className='bg-gray-100 font-bold'>
@@ -286,8 +292,7 @@ const FinancialPlanning = () => {
                       Total Estimated Budget
                     </td>
                     <td className='border p-2'>₹{getBudgetTotal()}</td>
-                    <td className='border p-2'></td>
-                    <td className='border p-2'></td>
+                    <td className='border p-2' colSpan={2}></td>
                   </tr>
                 </tbody>
               </table>
@@ -297,6 +302,6 @@ const FinancialPlanning = () => {
       )}
     </div>
   );
-};
+});
 
 export default FinancialPlanning;

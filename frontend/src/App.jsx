@@ -9,6 +9,7 @@ import FacultyInbox from "./components/Event_Inbox/Roles_Inbox/FacultyInbox";
 import HigherAuthorityInbox from "./components/Event_Inbox/Roles_Inbox/HigherAuthorityInbox";
 // import other pages like Inbox, ReportGeneration, etc.
 
+
 function App() {
   return (
     <BrowserRouter>

@@ -1,239 +1,239 @@
-import React, { useState } from "react";
+import {useState} from 'react'
 
 const FoodTravel = () => {
-  const [activeTab, setActiveTab] = useState("meal");
+  const [activeTab, setActiveTab] = useState('meal')
 
-  const [mealList, setMealList] = useState([]);
-  const [refreshmentList, setRefreshmentList] = useState([]);
-  const [travelList, setTravelList] = useState([]);
-  const [travelBy, setTravelBy] = useState("college");
+  const [mealList, setMealList] = useState([])
+  const [refreshmentList, setRefreshmentList] = useState([])
+  const [travelList, setTravelList] = useState([])
+  const [travelBy, setTravelBy] = useState('college')
 
   const [meal, setMeal] = useState({
-    from: "",
-    to: "",
-    time: "",
-    mealType: "",
-    category: "",
-    menu: "",
-    personCount: "",
-    servedAt: "",
-    note: "",
-  });
+    from: '',
+    to: '',
+    time: '',
+    mealType: '',
+    category: '',
+    menu: '',
+    personCount: '',
+    servedAt: '',
+    note: ''
+  })
 
   const [refreshment, setRefreshment] = useState({
-    from: "",
-    to: "",
-    time: "",
-    session: "",
-    category: "",
-    items: "",
-    personCount: "",
-    servedAt: "",
-    note: "",
-  });
+    from: '',
+    to: '',
+    time: '',
+    session: '',
+    category: '',
+    items: '',
+    personCount: '',
+    servedAt: '',
+    note: ''
+  })
 
   const [travel, setTravel] = useState({
-    category: "",
-    mode: "",
-    date: "",
-    time: "",
-    pickup: "",
-    drop: "",
-    remarks: "",
-  });
+    category: '',
+    mode: '',
+    date: '',
+    time: '',
+    pickup: '',
+    drop: '',
+    remarks: ''
+  })
 
   const handleMealAdd = () => {
-    setMealList([...mealList, meal]);
+    setMealList([...mealList, meal])
     setMeal({
-      from: "",
-      to: "",
-      time: "",
-      mealType: "",
-      category: "",
-      menu: "",
-      personCount: "",
-      servedAt: "",
-      note: "",
-    });
-  };
+      from: '',
+      to: '',
+      time: '',
+      mealType: '',
+      category: '',
+      menu: '',
+      personCount: '',
+      servedAt: '',
+      note: ''
+    })
+  }
 
   const handleRefreshmentAdd = () => {
-    setRefreshmentList([...refreshmentList, refreshment]);
+    setRefreshmentList([...refreshmentList, refreshment])
     setRefreshment({
-      from: "",
-      to: "",
-      time: "",
-      session: "",
-      category: "",
-      items: "",
-      personCount: "",
-      servedAt: "",
-      note: "",
-    });
-  };
+      from: '',
+      to: '',
+      time: '',
+      session: '',
+      category: '',
+      items: '',
+      personCount: '',
+      servedAt: '',
+      note: ''
+    })
+  }
 
   const handleTravelAdd = () => {
-    setTravelList([...travelList, travel]);
+    setTravelList([...travelList, travel])
     setTravel({
-      category: "",
-      mode: "",
-      date: "",
-      time: "",
-      pickup: "",
-      drop: "",
-      remarks: "",
-    });
-  };
+      category: '',
+      mode: '',
+      date: '',
+      time: '',
+      pickup: '',
+      drop: '',
+      remarks: ''
+    })
+  }
 
   const tabButton = (tab, label) => (
     <button
       onClick={() => setActiveTab(tab)}
-      className={`px-4 py-2 font-semibold rounded-t-md ${
-        activeTab === tab ? "bg-black text-white" : "bg-gray-200 text-black"
+      className={`rounded-t-md px-4 py-2 font-semibold ${
+        activeTab === tab ? 'bg-black text-white' : 'bg-gray-200 text-black'
       }`}
     >
       {label}
     </button>
-  );
+  )
 
   const handleSaveAll = () => {
     const fullData = {
       meals: mealList,
       refreshments: refreshmentList,
-      travels: travelList,
-    };
-    console.log("Saving data:", fullData);
-    alert("Data saved! Check console for output.");
+      travels: travelList
+    }
+    console.log('Saving data:', fullData)
+    alert('Data saved! Check console for output.')
 
     // Here you can do further saving like API call:
     // axios.post('/api/save-arrangements', fullData)
     //   .then(() => alert("Data saved successfully!"))
     //   .catch(err => console.error(err));
-  };
+  }
 
   return (
-    <div className="p-6 space-y-10">
-      <h2 className="text-3xl font-bold mb-4">Food & Travel Arrangements</h2>
+    <div className='space-y-10 p-6'>
+      <h2 className='mb-4 text-3xl font-bold'>Food & Travel Arrangements</h2>
 
       {/* Tabs */}
-      <div className="flex space-x-4 border-b">
-        {tabButton("meal", "Meal")}
-        {tabButton("refreshment", "Refreshment")}
-        {tabButton("travel", "Travel")}
+      <div className='flex space-x-4 border-b'>
+        {tabButton('meal', 'Meal')}
+        {tabButton('refreshment', 'Refreshment')}
+        {tabButton('travel', 'Travel')}
       </div>
 
       {/* Meal Arrangement */}
-      {activeTab === "meal" && (
-        <div className="border rounded p-6 shadow-md bg-white space-y-4">
-          <h3 className="text-xl font-bold mb-4">Meal Arrangements</h3>
-          <div className="grid md:grid-cols-4 gap-4">
+      {activeTab === 'meal' && (
+        <div className='space-y-4 rounded border bg-white p-6 shadow-md'>
+          <h3 className='mb-4 text-xl font-bold'>Meal Arrangements</h3>
+          <div className='grid gap-4 md:grid-cols-4'>
             <input
-              type="date"
+              type='date'
               value={meal.from}
-              onChange={(e) => setMeal({ ...meal, from: e.target.value })}
-              className="p-2 border rounded"
+              onChange={e => setMeal({...meal, from: e.target.value})}
+              className='rounded border p-2'
             />
             <input
-              type="date"
+              type='date'
               value={meal.to}
-              onChange={(e) => setMeal({ ...meal, to: e.target.value })}
-              className="p-2 border rounded"
+              onChange={e => setMeal({...meal, to: e.target.value})}
+              className='rounded border p-2'
             />
             <input
-              type="time"
+              type='time'
               value={meal.time}
-              onChange={(e) => setMeal({ ...meal, time: e.target.value })}
-              className="p-2 border rounded"
+              onChange={e => setMeal({...meal, time: e.target.value})}
+              className='rounded border p-2'
             />
             <select
               value={meal.mealType}
-              onChange={(e) => setMeal({ ...meal, mealType: e.target.value })}
-              className="p-2 border rounded"
+              onChange={e => setMeal({...meal, mealType: e.target.value})}
+              className='rounded border p-2'
             >
-              <option value="">Meal Type</option>
+              <option value=''>Meal Type</option>
               <option>Breakfast</option>
               <option>Lunch</option>
               <option>Dinner</option>
             </select>
             <select
               value={meal.category}
-              onChange={(e) => setMeal({ ...meal, category: e.target.value })}
-              className="p-2 border rounded"
+              onChange={e => setMeal({...meal, category: e.target.value})}
+              className='rounded border p-2'
             >
-              <option value="">Category</option>
+              <option value=''>Category</option>
               <option>Guest</option>
               <option>Student</option>
               <option>Staff</option>
             </select>
             <select
               value={meal.menu}
-              onChange={(e) => setMeal({ ...meal, menu: e.target.value })}
-              className="p-2 border rounded"
+              onChange={e => setMeal({...meal, menu: e.target.value})}
+              className='rounded border p-2'
             >
-              <option value="">Menu</option>
+              <option value=''>Menu</option>
               <option>Standard Veg</option>
               <option>Standard Nonveg</option>
               <option>Special Veg</option>
               <option>Special Nonveg</option>
             </select>
             <input
-              type="number"
+              type='number'
               value={meal.personCount}
-              onChange={(e) => setMeal({ ...meal, personCount: e.target.value })}
-              className="p-2 border rounded"
-              placeholder="Person Count"
+              onChange={e => setMeal({...meal, personCount: e.target.value})}
+              className='rounded border p-2'
+              placeholder='Person Count'
             />
             <select
               value={meal.servedAt}
-              onChange={(e) => setMeal({ ...meal, servedAt: e.target.value })}
-              className="p-2 border rounded"
+              onChange={e => setMeal({...meal, servedAt: e.target.value})}
+              className='rounded border p-2'
             >
-              <option value="">Served At</option>
+              <option value=''>Served At</option>
               <option>Dining Hall</option>
               <option>Venue</option>
             </select>
             <textarea
               value={meal.note}
-              onChange={(e) => setMeal({ ...meal, note: e.target.value })}
-              className="p-2 border rounded col-span-2"
-              placeholder="Special Note"
+              onChange={e => setMeal({...meal, note: e.target.value})}
+              className='col-span-2 rounded border p-2'
+              placeholder='Special Note'
             />
           </div>
           <button
             onClick={handleMealAdd}
-            className="bg-black text-white px-6 py-2 rounded mt-2"
+            className='mt-2 rounded bg-black px-6 py-2 text-white'
           >
             Add Meal
           </button>
 
           {mealList.length > 0 && (
-            <div className="overflow-x-auto mt-4">
-              <table className="w-full border text-sm">
-                <thead className="bg-gray-100">
+            <div className='mt-4 overflow-x-auto'>
+              <table className='w-full border text-sm'>
+                <thead className='bg-gray-100'>
                   <tr>
-                    <th className="border p-2">From - To</th>
-                    <th className="border p-2">Time</th>
-                    <th className="border p-2">Meal</th>
-                    <th className="border p-2">Category</th>
-                    <th className="border p-2">Menu</th>
-                    <th className="border p-2">Count</th>
-                    <th className="border p-2">Served At</th>
-                    <th className="border p-2">Note</th>
+                    <th className='border p-2'>From - To</th>
+                    <th className='border p-2'>Time</th>
+                    <th className='border p-2'>Meal</th>
+                    <th className='border p-2'>Category</th>
+                    <th className='border p-2'>Menu</th>
+                    <th className='border p-2'>Count</th>
+                    <th className='border p-2'>Served At</th>
+                    <th className='border p-2'>Note</th>
                   </tr>
                 </thead>
                 <tbody>
                   {mealList.map((item, i) => (
                     <tr key={i}>
-                      <td className="border p-2">
+                      <td className='border p-2'>
                         {item.from} - {item.to}
                       </td>
-                      <td className="border p-2">{item.time}</td>
-                      <td className="border p-2">{item.mealType}</td>
-                      <td className="border p-2">{item.category}</td>
-                      <td className="border p-2">{item.menu}</td>
-                      <td className="border p-2">{item.personCount}</td>
-                      <td className="border p-2">{item.servedAt}</td>
-                      <td className="border p-2">{item.note}</td>
+                      <td className='border p-2'>{item.time}</td>
+                      <td className='border p-2'>{item.mealType}</td>
+                      <td className='border p-2'>{item.category}</td>
+                      <td className='border p-2'>{item.menu}</td>
+                      <td className='border p-2'>{item.personCount}</td>
+                      <td className='border p-2'>{item.servedAt}</td>
+                      <td className='border p-2'>{item.note}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -244,112 +244,132 @@ const FoodTravel = () => {
       )}
 
       {/* Refreshment */}
-      {activeTab === "refreshment" && (
-        <div className="border rounded p-6 shadow-md bg-white space-y-4">
-          <h3 className="text-xl font-bold mb-4">Refreshment Arrangements</h3>
-          <div className="grid md:grid-cols-4 gap-4">
+      {activeTab === 'refreshment' && (
+        <div className='space-y-4 rounded border bg-white p-6 shadow-md'>
+          <h3 className='mb-4 text-xl font-bold'>Refreshment Arrangements</h3>
+          <div className='grid gap-4 md:grid-cols-4'>
             <input
-              type="date"
+              type='date'
               value={refreshment.from}
-              onChange={(e) => setRefreshment({ ...refreshment, from: e.target.value })}
-              className="p-2 border rounded"
+              onChange={e =>
+                setRefreshment({...refreshment, from: e.target.value})
+              }
+              className='rounded border p-2'
             />
             <input
-              type="date"
+              type='date'
               value={refreshment.to}
-              onChange={(e) => setRefreshment({ ...refreshment, to: e.target.value })}
-              className="p-2 border rounded"
+              onChange={e =>
+                setRefreshment({...refreshment, to: e.target.value})
+              }
+              className='rounded border p-2'
             />
             <input
-              type="time"
+              type='time'
               value={refreshment.time}
-              onChange={(e) => setRefreshment({ ...refreshment, time: e.target.value })}
-              className="p-2 border rounded"
+              onChange={e =>
+                setRefreshment({...refreshment, time: e.target.value})
+              }
+              className='rounded border p-2'
             />
             <select
               value={refreshment.session}
-              onChange={(e) => setRefreshment({ ...refreshment, session: e.target.value })}
-              className="p-2 border rounded"
+              onChange={e =>
+                setRefreshment({...refreshment, session: e.target.value})
+              }
+              className='rounded border p-2'
             >
-              <option value="">Session</option>
+              <option value=''>Session</option>
               <option>Forenoon</option>
               <option>Afternoon</option>
             </select>
             <select
               value={refreshment.category}
-              onChange={(e) => setRefreshment({ ...refreshment, category: e.target.value })}
-              className="p-2 border rounded"
+              onChange={e =>
+                setRefreshment({...refreshment, category: e.target.value})
+              }
+              className='rounded border p-2'
             >
-              <option value="">Category</option>
+              <option value=''>Category</option>
               <option>Guest</option>
               <option>Student</option>
               <option>Staff</option>
             </select>
             <select
               value={refreshment.items}
-              onChange={(e) => setRefreshment({ ...refreshment, items: e.target.value })}
-              className="p-2 border rounded"
+              onChange={e =>
+                setRefreshment({...refreshment, items: e.target.value})
+              }
+              className='rounded border p-2'
             >
-              <option value="">Items</option>
+              <option value=''>Items</option>
               <option>Tea/Coffee</option>
               <option>Tea/Coffee with Biscuits</option>
             </select>
             <input
-              type="number"
+              type='number'
               value={refreshment.personCount}
-              onChange={(e) => setRefreshment({ ...refreshment, personCount: e.target.value })}
-              className="p-2 border rounded"
-              placeholder="Person Count"
+              onChange={e =>
+                setRefreshment({...refreshment, personCount: e.target.value})
+              }
+              className='rounded border p-2'
+              placeholder='Person Count'
             />
             <select
               value={refreshment.servedAt}
-              onChange={(e) => setRefreshment({ ...refreshment, servedAt: e.target.value })}
-              className="p-2 border rounded"
+              onChange={e =>
+                setRefreshment({...refreshment, servedAt: e.target.value})
+              }
+              className='rounded border p-2'
             >
-              <option value="">Served At</option>
+              <option value=''>Served At</option>
               <option>Dining Hall</option>
               <option>Venue</option>
             </select>
             <textarea
               value={refreshment.note}
-              onChange={(e) => setRefreshment({ ...refreshment, note: e.target.value })}
-              className="p-2 border rounded col-span-2"
-              placeholder="Special Note"
+              onChange={e =>
+                setRefreshment({...refreshment, note: e.target.value})
+              }
+              className='col-span-2 rounded border p-2'
+              placeholder='Special Note'
             />
           </div>
           <button
             onClick={handleRefreshmentAdd}
-            className="bg-black text-white px-6 py-2 rounded mt-2"
+            className='mt-2 rounded bg-black px-6 py-2 text-white'
           >
             Add Refreshment
           </button>
 
           {refreshmentList.length > 0 && (
-            <div className="overflow-x-auto mt-4">
-              <table className="w-full border text-sm">
-                <thead className="bg-gray-100">
+            <div className='mt-4 overflow-x-auto'>
+              <table className='w-full border text-sm'>
+                <thead className='bg-gray-100'>
                   <tr>
-                    <th className="p-2 border">From - To</th>
-                    <th className="p-2 border">Time</th>
-                    <th className="p-2 border">Session</th>
-                    <th className="p-2 border">Category</th>
-                    <th className="p-2 border">Items</th>
-                    <th className="p-2 border">Count</th>
-                    <th className="p-2 border">Served At</th>
-                    <th className="p-2 border">Note</th>
+                    <th className='border p-2'>From - To</th>
+                    <th className='border p-2'>Time</th>
+                    <th className='border p-2'>Session</th>
+                    <th className='border p-2'>Category</th>
+                    <th className='border p-2'>Items</th>
+                    <th className='border p-2'>Count</th>
+                    <th className='border p-2'>Served At</th>
+                    <th className='border p-2'>Note</th>
                   </tr>
                 </thead>
                 <tbody>
                   {refreshmentList.map((item, i) => (
                     <tr key={i}>
-                      <td className="p-2 border">{item.from} - {item.to}</td>
-                      <td className="p-2 border">{item.time}</td>
-                      <td className="p-2 border">{item.session}</td>
-                      <td className="p-2 border">{item.category}</td>
-                      <td className="p-2 border">{item.items}</td>
-                      <td className="p-2 border">{item.personCount}</td>
-                      <td className="p-2 border">{item.servedAt}</td>
-                      <td className="p-2 border">{item.note}</td>
+                      <td className='border p-2'>
+                        {item.from} - {item.to}
+                      </td>
+                      <td className='border p-2'>{item.time}</td>
+                      <td className='border p-2'>{item.session}</td>
+                      <td className='border p-2'>{item.category}</td>
+                      <td className='border p-2'>{item.items}</td>
+                      <td className='border p-2'>{item.personCount}</td>
+                      <td className='border p-2'>{item.servedAt}</td>
+                      <td className='border p-2'>{item.note}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -360,131 +380,135 @@ const FoodTravel = () => {
       )}
 
       {/* Travel */}
-      {activeTab === "travel" && (
-        <div className="border rounded p-6 shadow-md bg-white space-y-4">
-          <h3 className="text-xl font-bold mb-4">Travel Arrangements</h3>
+      {activeTab === 'travel' && (
+        <div className='space-y-4 rounded border bg-white p-6 shadow-md'>
+          <h3 className='mb-4 text-xl font-bold'>Travel Arrangements</h3>
 
-          <div className="flex gap-6">
-            <label className="flex gap-2 items-center">
+          <div className='flex gap-6'>
+            <label className='flex items-center gap-2'>
               <input
-                type="radio"
-                value="college"
-                checked={travelBy === "college"}
-                onChange={() => setTravelBy("college")}
+                type='radio'
+                value='college'
+                checked={travelBy === 'college'}
+                onChange={() => setTravelBy('college')}
               />
               By College Management
             </label>
-            <label className="flex gap-2 items-center">
+            <label className='flex items-center gap-2'>
               <input
-                type="radio"
-                value="own"
-                checked={travelBy === "own"}
-                onChange={() => setTravelBy("own")}
+                type='radio'
+                value='own'
+                checked={travelBy === 'own'}
+                onChange={() => setTravelBy('own')}
               />
               By Own
             </label>
           </div>
 
-          {travelBy === "own" ? (
-            <p className="italic text-gray-600">
+          {travelBy === 'own' ? (
+            <p className='text-gray-600 italic'>
               Travel arranged by individual (no travel form required).
             </p>
           ) : (
             <>
-              <div className="grid md:grid-cols-4 gap-4">
+              <div className='grid gap-4 md:grid-cols-4'>
                 <select
                   value={travel.category}
-                  onChange={(e) => setTravel({ ...travel, category: e.target.value })}
-                  className="p-2 border rounded"
+                  onChange={e =>
+                    setTravel({...travel, category: e.target.value})
+                  }
+                  className='rounded border p-2'
                 >
-                  <option value="">Category</option>
+                  <option value=''>Category</option>
                   <option>Guest</option>
                   <option>Student</option>
                   <option>Staff</option>
                 </select>
                 <select
                   value={travel.mode}
-                  onChange={(e) => setTravel({ ...travel, mode: e.target.value })}
-                  className="p-2 border rounded"
+                  onChange={e => setTravel({...travel, mode: e.target.value})}
+                  className='rounded border p-2'
                 >
-                  <option value="">Mode</option>
+                  <option value=''>Mode</option>
                   <option>Car</option>
                   <option>Bus</option>
                   <option>Train</option>
                   <option>Flight</option>
                 </select>
                 <input
-                  type="date"
+                  type='date'
                   value={travel.date}
-                  onChange={(e) => setTravel({ ...travel, date: e.target.value })}
-                  className="p-2 border rounded"
+                  onChange={e => setTravel({...travel, date: e.target.value})}
+                  className='rounded border p-2'
                 />
                 <input
-                  type="time"
+                  type='time'
                   value={travel.time}
-                  onChange={(e) => setTravel({ ...travel, time: e.target.value })}
-                  className="p-2 border rounded"
+                  onChange={e => setTravel({...travel, time: e.target.value})}
+                  className='rounded border p-2'
                 />
                 <input
-                  type="text"
-                  placeholder="Pickup Location"
+                  type='text'
+                  placeholder='Pickup Location'
                   value={travel.pickup}
-                  onChange={(e) => setTravel({ ...travel, pickup: e.target.value })}
-                  className="p-2 border rounded"
+                  onChange={e => setTravel({...travel, pickup: e.target.value})}
+                  className='rounded border p-2'
                 />
                 <input
-                  type="text"
-                  placeholder="Drop Location"
+                  type='text'
+                  placeholder='Drop Location'
                   value={travel.drop}
-                  onChange={(e) => setTravel({ ...travel, drop: e.target.value })}
-                  className="p-2 border rounded"
+                  onChange={e => setTravel({...travel, drop: e.target.value})}
+                  className='rounded border p-2'
                 />
                 <input
-                  type="text"
-                  placeholder="Remarks"
+                  type='text'
+                  placeholder='Remarks'
                   value={travel.remarks}
-                  onChange={(e) => setTravel({ ...travel, remarks: e.target.value })}
-                  className="p-2 border rounded col-span-2"
+                  onChange={e =>
+                    setTravel({...travel, remarks: e.target.value})
+                  }
+                  className='col-span-2 rounded border p-2'
                 />
               </div>
               <button
                 onClick={handleTravelAdd}
-                className="bg-black text-white px-6 py-2 rounded mt-2"
+                className='mt-2 rounded bg-black px-6 py-2 text-white'
               >
                 Add Travel
               </button>
 
               {travelList.length > 0 && (
-                <div className="overflow-x-auto mt-4">
-                  <table className="w-full border text-sm">
-                    <thead className="bg-gray-100">
+                <div className='mt-4 overflow-x-auto'>
+                  <table className='w-full border text-sm'>
+                    <thead className='bg-gray-100'>
                       <tr>
-                        <th className="p-2 border">Category</th>
-                        <th className="p-2 border">Mode</th>
-                        <th className="p-2 border">Date</th>
-                        <th className="p-2 border">Time</th>
-                        <th className="p-2 border">Pickup</th>
-                        <th className="p-2 border">Drop</th>
-                        <th className="p-2 border">Remarks</th>
+                        <th className='border p-2'>Category</th>
+                        <th className='border p-2'>Mode</th>
+                        <th className='border p-2'>Date</th>
+                        <th className='border p-2'>Time</th>
+                        <th className='border p-2'>Pickup</th>
+                        <th className='border p-2'>Drop</th>
+                        <th className='border p-2'>Remarks</th>
                       </tr>
                     </thead>
                     <tbody>
                       {travelList.map((item, i) => (
                         <tr key={i}>
-                          <td className="p-2 border">{item.category}</td>
-                          <td className="p-2 border">{item.mode}</td>
-                          <td className="p-2 border">{item.date}</td>
-                          <td className="p-2 border">{item.time}</td>
-                          <td className="p-2 border">{item.pickup}</td>
-                          <td className="p-2 border">{item.drop}</td>
-                          <td className="p-2 border">{item.remarks}</td>
+                          <td className='border p-2'>{item.category}</td>
+                          <td className='border p-2'>{item.mode}</td>
+                          <td className='border p-2'>{item.date}</td>
+                          <td className='border p-2'>{item.time}</td>
+                          <td className='border p-2'>{item.pickup}</td>
+                          <td className='border p-2'>{item.drop}</td>
+                          <td className='border p-2'>{item.remarks}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                   <button
                     onClick={handleSaveAll}
-                    className="mt-6 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded shadow-lg"
+                    className='mt-6 rounded bg-green-600 px-6 py-3 text-white shadow-lg hover:bg-green-700'
                   >
                     Save All Arrangements
                   </button>
@@ -495,7 +519,7 @@ const FoodTravel = () => {
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default FoodTravel;
+export default FoodTravel

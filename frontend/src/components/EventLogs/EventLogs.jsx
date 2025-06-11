@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, {useState, useMemo} from 'react'
 import {
   FaEdit,
   FaPaperPlane,
@@ -9,43 +9,51 @@ import {
   FaClipboardList,
   FaUserCheck,
   FaExclamationTriangle
-} from "react-icons/fa";
+} from 'react-icons/fa'
 
 // Static approvers list
-const staticApprovers = ["HOD", "CSO", "Principal"];
+const staticApprovers = ['HOD', 'CSO', 'Principal']
 
 // Sample event data
 const sampleEvents = [
   {
-    id: "event1",
-    creatorEmail: "sivakumar@shanmugha.edu.in",
-    status: "draft",
+    id: 'event1',
+    creatorEmail: 'sivakumar@shanmugha.edu.in',
+    status: 'draft',
     approvals: {},
     eventData: {
-      eventInfo: { title: "AI Seminar", date: "2025-07-20", location: "Auditorium" },
-      agenda: [{ time: "10:00 AM", topic: "Intro to AI" }],
-      financialPlanning: { budget: 5000, expenses: [] },
-      foodTravel: { foodArrangements: "Snacks", travelDetails: "" },
-      checklist: ["Projector", "Seating arranged"],
-    },
+      eventInfo: {
+        title: 'AI Seminar',
+        date: '2025-07-20',
+        location: 'Auditorium'
+      },
+      agenda: [{time: '10:00 AM', topic: 'Intro to AI'}],
+      financialPlanning: {budget: 5000, expenses: []},
+      foodTravel: {foodArrangements: 'Snacks', travelDetails: ''},
+      checklist: ['Projector', 'Seating arranged']
+    }
   },
   {
-    id: "event2",
-    creatorEmail: "hod.ai_ds@shanmugha.edu.in",
-    status: "submitted",
-    approvals: { principal: false },
+    id: 'event2',
+    creatorEmail: 'hod.ai_ds@shanmugha.edu.in',
+    status: 'submitted',
+    approvals: {principal: false},
     eventData: {
-      eventInfo: { title: "Data Science Workshop", date: "2025-07-25", location: "Lab 3" },
-      agenda: [{ time: "09:00 AM", topic: "Python Basics" }],
-      financialPlanning: { budget: 7000, expenses: [] },
-      foodTravel: { foodArrangements: "Lunch", travelDetails: "Bus arranged" },
-      checklist: ["Laptops", "WiFi"],
-    },
-  },
-];
+      eventInfo: {
+        title: 'Data Science Workshop',
+        date: '2025-07-25',
+        location: 'Lab 3'
+      },
+      agenda: [{time: '09:00 AM', topic: 'Python Basics'}],
+      financialPlanning: {budget: 7000, expenses: []},
+      foodTravel: {foodArrangements: 'Lunch', travelDetails: 'Bus arranged'},
+      checklist: ['Laptops', 'WiFi']
+    }
+  }
+]
 
 // Check if form is complete
-const isFormComplete = (data) => {
+const isFormComplete = data => {
   if (
     !data.eventInfo.title ||
     !data.eventInfo.date ||
@@ -55,259 +63,294 @@ const isFormComplete = (data) => {
     !data.foodTravel.foodArrangements ||
     !data.checklist?.length
   ) {
-    return false;
+    return false
   }
-  return true;
-};
+  return true
+}
 
-const EventLogs = ({ onEditEvent }) => {
-  const [events, setEvents] = useState(sampleEvents);
-  const [showApprovalPopup, setShowApprovalPopup] = useState(false);
-  const [selectedApprovers, setSelectedApprovers] = useState([]);
-  const [selectedEvent, setSelectedEvent] = useState(null);
+const EventLogs = ({onEditEvent}) => {
+  const [events, setEvents] = useState(sampleEvents)
+  const [showApprovalPopup, setShowApprovalPopup] = useState(false)
+  const [selectedApprovers, setSelectedApprovers] = useState([])
+  const [selectedEvent, setSelectedEvent] = useState(null)
 
   // Filter states
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [searchTerm, setSearchTerm] = useState('')
 
-  const openApprovalPopup = (event) => {
-    setSelectedEvent(event);
-    setSelectedApprovers([]);
-    setShowApprovalPopup(true);
-  };
+  const openApprovalPopup = event => {
+    setSelectedEvent(event)
+    setSelectedApprovers([])
+    setShowApprovalPopup(true)
+  }
 
   const closeApprovalPopup = () => {
-    setSelectedEvent(null);
-    setSelectedApprovers([]);
-    setShowApprovalPopup(false);
-  };
-  
+    setSelectedEvent(null)
+    setSelectedApprovers([])
+    setShowApprovalPopup(false)
+  }
 
   const handleRequestApproval = () => {
     if (selectedApprovers.length === 0) {
-      alert("Please select at least one approver");
-      return;
+      alert('Please select at least one approver')
+      return
     }
 
-    const updatedEvents = events.map((ev) =>
+    const updatedEvents = events.map(ev =>
       ev.id === selectedEvent.id
         ? {
             ...ev,
-            status: "submitted",
+            status: 'submitted',
             approvals: selectedApprovers.reduce((acc, role) => {
-              acc[role.toLowerCase()] = false;
-              return acc;
-            }, {}),
+              acc[role.toLowerCase()] = false
+              return acc
+            }, {})
           }
         : ev
-    );
+    )
 
-    setEvents(updatedEvents);
-    closeApprovalPopup();
-  };
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [eventToCancel, setEventToCancel] = useState(null);
-const handleCancelApprovalClick = (event) => {
-    setEventToCancel(event);
-    setShowCancelConfirm(true);
-  };
+    setEvents(updatedEvents)
+    closeApprovalPopup()
+  }
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [eventToCancel, setEventToCancel] = useState(null)
+  const handleCancelApprovalClick = event => {
+    setEventToCancel(event)
+    setShowCancelConfirm(true)
+  }
 
   // Confirm cancellation
   const confirmCancelApproval = () => {
-    if (!eventToCancel) return;
-    const updatedEvents = events.map((ev) =>
-      ev.id === eventToCancel.id ? { ...ev, status: "draft", approvals: {} } : ev
-    );
-    setEvents(updatedEvents);
-    setShowCancelConfirm(false);
-    setEventToCancel(null);
-  };
+    if (!eventToCancel) return
+    const updatedEvents = events.map(ev =>
+      ev.id === eventToCancel.id ? {...ev, status: 'draft', approvals: {}} : ev
+    )
+    setEvents(updatedEvents)
+    setShowCancelConfirm(false)
+    setEventToCancel(null)
+  }
 
   // Cancel cancellation action
   const cancelCancelApproval = () => {
-    setShowCancelConfirm(false);
-    setEventToCancel(null);
-  };
+    setShowCancelConfirm(false)
+    setEventToCancel(null)
+  }
 
-const [showModal, setShowModal] = useState(false);
-  const [selectedEventId, setSelectedEventId] = useState(null);
+  const [showModal, setShowModal] = useState(false)
+  const [selectedEventId, setSelectedEventId] = useState(null)
 
-   const openModal = (id) => {
-    setSelectedEventId(id);
-    setShowModal(true);
-  };
+  const openModal = id => {
+    setSelectedEventId(id)
+    setShowModal(true)
+  }
 
   const closeModal = () => {
-    setShowModal(false);
-    setSelectedEventId(null);
-  };
+    setShowModal(false)
+    setSelectedEventId(null)
+  }
 
   const confirmDelete = () => {
-    setEvents(events.filter((ev) => ev.id !== selectedEventId));
-    closeModal();
-  };
+    setEvents(events.filter(ev => ev.id !== selectedEventId))
+    closeModal()
+  }
 
-  const getFirstIncompleteTab = (data) => {
-    if (!data.eventInfo.title || !data.eventInfo.date || !data.eventInfo.location) return "eventInfo";
-    if (!data.agenda?.length) return "agenda";
-    if (!data.financialPlanning.budget) return "financialPlanning";
-    if (!data.foodTravel.foodArrangements) return "foodTravel";
-    if (!data.checklist?.length) return "checklist";
-    return null;
-  };
+  const getFirstIncompleteTab = data => {
+    if (
+      !data.eventInfo.title ||
+      !data.eventInfo.date ||
+      !data.eventInfo.location
+    )
+      return 'eventInfo'
+    if (!data.agenda?.length) return 'agenda'
+    if (!data.financialPlanning.budget) return 'financialPlanning'
+    if (!data.foodTravel.foodArrangements) return 'foodTravel'
+    if (!data.checklist?.length) return 'checklist'
+    return null
+  }
 
-  const getStatusAndColor = (ev) => {
-    const formComplete = isFormComplete(ev.eventData);
+  const getStatusAndColor = ev => {
+    const formComplete = isFormComplete(ev.eventData)
     if (!formComplete)
-      return { label: "Draft", color: "bg-yellow-100 text-yellow-800", icon: <FaClock className="inline mr-2" /> };
-    if (formComplete && ev.status === "draft")
       return {
-        label: "Pending Approval",
-        color: " text-purple-800",
-        icon: <FaClipboardList className="inline mr-2" />,
-      };
-    if (ev.status === "submitted") {
-      const approvalsPending = Object.values(ev.approvals).some((val) => val === false);
+        label: 'Draft',
+        color: 'bg-yellow-100 text-yellow-800',
+        icon: <FaClock className='mr-2 inline' />
+      }
+    if (formComplete && ev.status === 'draft')
+      return {
+        label: 'Pending Approval',
+        color: ' text-purple-800',
+        icon: <FaClipboardList className='mr-2 inline' />
+      }
+    if (ev.status === 'submitted') {
+      const approvalsPending = Object.values(ev.approvals).some(
+        val => val === false
+      )
       return approvalsPending
-        ? { label: "Approval Sent", color: "text-blue-800", icon: <FaPaperPlane className="inline mr-2" /> }
-        : { label: "Approved", color: " text-green-800", icon: <FaUserCheck className="inline mr-2" /> };
+        ? {
+            label: 'Approval Sent',
+            color: 'text-blue-800',
+            icon: <FaPaperPlane className='mr-2 inline' />
+          }
+        : {
+            label: 'Approved',
+            color: ' text-green-800',
+            icon: <FaUserCheck className='mr-2 inline' />
+          }
     }
-    return { label: "Unknown", color: " text-gray-800", icon: null };
-  };
+    return {label: 'Unknown', color: ' text-gray-800', icon: null}
+  }
 
   // Filtered events based on status filter and search term
   const filteredEvents = useMemo(() => {
-    return events.filter((ev) => {
-      const { label: statusLabel } = getStatusAndColor(ev);
+    return events.filter(ev => {
+      const {label: statusLabel} = getStatusAndColor(ev)
       const matchesStatus =
-        statusFilter === "all" ? true : statusLabel.toLowerCase() === statusFilter.toLowerCase();
+        statusFilter === 'all'
+          ? true
+          : statusLabel.toLowerCase() === statusFilter.toLowerCase()
       const matchesSearch = ev.eventData.eventInfo.title
         .toLowerCase()
-        .includes(searchTerm.toLowerCase());
-      return matchesStatus && matchesSearch;
-    });
-  }, [events, statusFilter, searchTerm]);
+        .includes(searchTerm.toLowerCase())
+      return matchesStatus && matchesSearch
+    })
+  }, [events, statusFilter, searchTerm])
 
   return (
     <>
-      <div className="max-w-7xl mx-auto p-6 rounded-2xl mt-10 shadow-xl border"
-      style={{
-        background: "linear-gradient(135deg, #f0eaea 0%, #fff 50%, #f0eaea 100%)",
-        borderColor: "#ddd",
-      }}>
-        <h1
-        className="text-4xl font-extrabold mb-8 text-center"
-        style={{ color: "#575757", textShadow: "1px 1px 2px rgba(87,87,87,0.2)" }}
+      <div
+        className='mx-auto mt-10 max-w-7xl rounded-2xl border p-6 shadow-xl'
+        style={{
+          background:
+            'linear-gradient(135deg, #f0eaea 0%, #fff 50%, #f0eaea 100%)',
+          borderColor: '#ddd'
+        }}
       >
-        Logs of created Events
-      </h1>
+        <h1
+          className='mb-8 text-center text-4xl font-extrabold'
+          style={{
+            color: '#575757',
+            textShadow: '1px 1px 2px rgba(87,87,87,0.2)'
+          }}
+        >
+          Logs of created Events
+        </h1>
 
         {/* Filter Controls */}
-        <div className="flex flex-col md:flex-row justify-between mb-8 gap-4">
+        <div className='mb-8 flex flex-col justify-between gap-4 md:flex-row'>
           <div>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-lg border border-black-300 px-4 py-2 text-lg font-medium bg-black text-white"
-              aria-label="Filter events by status"
+              onChange={e => setStatusFilter(e.target.value)}
+              className='border-black-300 rounded-lg border bg-black px-4 py-2 text-lg font-medium text-white'
+              aria-label='Filter events by status'
             >
-              <option value="all">All Statuses</option>
-              <option value="draft">Draft</option>
-              <option value="pending approval">Pending Approval</option>
-              <option value="approval sent">Approval Sent</option>
-              <option value="approved">Approved</option>
+              <option value='all'>All Statuses</option>
+              <option value='draft'>Draft</option>
+              <option value='pending approval'>Pending Approval</option>
+              <option value='approval sent'>Approval Sent</option>
+              <option value='approved'>Approved</option>
             </select>
           </div>
 
           <div>
             <input
-              type="text"
-              placeholder="Search by event name"
+              type='text'
+              placeholder='Search by event name'
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-white text-lg bg-black font-medium w-full md:w-80"
-              aria-label="Search events by name"
+              onChange={e => setSearchTerm(e.target.value)}
+              className='w-full rounded-lg border border-gray-300 bg-black px-4 py-2 text-lg font-medium text-white md:w-80'
+              aria-label='Search events by name'
             />
           </div>
         </div>
 
         {filteredEvents.length === 0 ? (
-          <p className="text-center text-gray-500 italic text-lg">No events found.</p>
+          <p className='text-center text-lg text-gray-500 italic'>
+            No events found.
+          </p>
         ) : (
-          <section className="space-y-8">
-            {filteredEvents.map((ev) => {
-              const incompleteTab = getFirstIncompleteTab(ev.eventData);
-              const { label: status, color: statusColor, icon: statusIcon } = getStatusAndColor(ev);
+          <section className='space-y-8'>
+            {filteredEvents.map(ev => {
+              const incompleteTab = getFirstIncompleteTab(ev.eventData)
+              const {
+                label: status,
+                color: statusColor,
+                icon: statusIcon
+              } = getStatusAndColor(ev)
 
               return (
                 <article
                   key={ev.id}
-                  className="bg-[#d7d7d7] rounded-2xl shadow-md border px-6 py-6 md:px-10 md:py-8 flex flex-col md:flex-row justify-between items-center gap-6 hover:shadow-2xl transition duration-300"
+                  className='flex flex-col items-center justify-between gap-6 rounded-2xl border bg-[#d7d7d7] px-6 py-6 shadow-md transition duration-300 hover:shadow-2xl md:flex-row md:px-10 md:py-8'
                 >
-                  <div className="flex-1 w-full">
+                  <div className='w-full flex-1'>
                     <h2
-                      className="text-2xl md:text-3xl font-bold text-gray-800 truncate mb-2 flex items-center gap-2"
-                      title={ev.eventData.eventInfo.title || "Untitled Event"}
+                      className='mb-2 flex items-center gap-2 truncate text-2xl font-bold text-gray-800 md:text-3xl'
+                      title={ev.eventData.eventInfo.title || 'Untitled Event'}
                     >
-                      {ev.eventData.eventInfo.title || "Untitled Event"}
+                      {ev.eventData.eventInfo.title || 'Untitled Event'}
                     </h2>
-                    <dl className="text-gray-600 text-lg space-y-1">
+                    <dl className='space-y-1 text-lg text-gray-600'>
                       <div>
-                        <dt className="inline font-semibold">Date:</dt>{" "}
-                        <dd className="inline">{ev.eventData.eventInfo.date || "-"}</dd>
+                        <dt className='inline font-semibold'>Date:</dt>{' '}
+                        <dd className='inline'>
+                          {ev.eventData.eventInfo.date || '-'}
+                        </dd>
                       </div>
                       <div>
-                        <dt className="inline font-semibold">Location:</dt>{" "}
-                        <dd className="inline">{ev.eventData.eventInfo.location || "-"}</dd>
+                        <dt className='inline font-semibold'>Location:</dt>{' '}
+                        <dd className='inline'>
+                          {ev.eventData.eventInfo.location || '-'}
+                        </dd>
                       </div>
                     </dl>
-                    <p className="mt-4 inline-block px-4 py-1 rounded-full text-sm font-semibold tracking-wide cursor-default select-none">
+                    <p className='mt-4 inline-block cursor-default rounded-full px-4 py-1 text-sm font-semibold tracking-wide select-none'>
                       <span className={`${statusColor} flex items-center`}>
                         {statusIcon} {status}
                       </span>
                     </p>
                   </div>
 
-                  <div className="flex flex-wrap gap-3 justify-end md:flex-col">
+                  <div className='flex flex-wrap justify-end gap-3 md:flex-col'>
                     <button
                       onClick={() => onEditEvent(ev.id, incompleteTab)}
-                      className="rounded-xl bg-yellow-400 px-6 py-2 text-white font-semibold hover:bg-yellow-500 flex items-center gap-2 transition"
+                      className='flex items-center gap-2 rounded-xl bg-yellow-400 px-6 py-2 font-semibold text-white transition hover:bg-yellow-500'
                       aria-label={`Edit event ${ev.eventData.eventInfo.title}`}
                     >
                       <FaEdit /> Edit
                     </button>
 
-                    {(status === "Draft" || status === "Pending Approval") && (
+                    {(status === 'Draft' || status === 'Pending Approval') && (
                       <button
                         onClick={() => openApprovalPopup(ev)}
-                        className="rounded-xl bg-indigo-600 px-6 py-2 text-white font-semibold hover:bg-indigo-700 flex items-center gap-2 transition"
+                        className='flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-2 font-semibold text-white transition hover:bg-indigo-700'
                         aria-label={`Request approval for event ${ev.eventData.eventInfo.title}`}
                       >
                         <FaPaperPlane /> Request Approval
                       </button>
                     )}
 
-                    {status === "Approval Sent" && (
+                    {status === 'Approval Sent' && (
                       <button
-                       onClick={() => handleCancelApprovalClick(ev)}
-
-                        className="rounded-xl bg-red-600 px-6 py-2 text-white font-semibold hover:bg-red-700 flex items-center gap-2 transition"
+                        onClick={() => handleCancelApprovalClick(ev)}
+                        className='flex items-center gap-2 rounded-xl bg-red-600 px-6 py-2 font-semibold text-white transition hover:bg-red-700'
                         aria-label={`Cancel approval for event ${ev.eventData.eventInfo.title}`}
                       >
                         <FaTimesCircle /> Cancel Approval
                       </button>
                     )}
 
-                   <button
-            onClick={() => openModal(ev.id)}
-            className="rounded-xl bg-gray-600 px-6 py-2 text-white font-semibold hover:bg-gray-700 flex items-center gap-2 transition"
-            aria-label={`Delete event ${ev.eventData.eventInfo.title}`}
-          >
-            <FaTrashAlt /> Delete
-          </button>
+                    <button
+                      onClick={() => openModal(ev.id)}
+                      className='flex items-center gap-2 rounded-xl bg-gray-600 px-6 py-2 font-semibold text-white transition hover:bg-gray-700'
+                      aria-label={`Delete event ${ev.eventData.eventInfo.title}`}
+                    >
+                      <FaTrashAlt /> Delete
+                    </button>
                   </div>
                 </article>
-              );
+              )
             })}
           </section>
         )}
@@ -315,44 +358,46 @@ const [showModal, setShowModal] = useState(false);
 
       {showApprovalPopup && selectedEvent && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-6"
+          className='bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center bg-black p-6 backdrop-blur-sm'
           onClick={closeApprovalPopup}
-          aria-modal="true"
-          role="dialog"
-          aria-labelledby="approval-popup-title"
+          aria-modal='true'
+          role='dialog'
+          aria-labelledby='approval-popup-title'
         >
           <div
-            className="bg-white rounded-3xl p-8 sm:p-10 w-full max-w-lg shadow-2xl"
-            style={{ borderTop: "6px solid rgb(34, 105, 197)" }}
-            onClick={(e) => e.stopPropagation()}
+            className='w-full max-w-lg rounded-3xl bg-white p-8 shadow-2xl sm:p-10'
+            style={{borderTop: '6px solid rgb(34, 105, 197)'}}
+            onClick={e => e.stopPropagation()}
           >
             <h3
-              className="text-3xl font-extrabold mb-6 text-gray-900 border-b pb-4"
-              
-              id="approval-popup-title"
+              className='mb-6 border-b pb-4 text-3xl font-extrabold text-gray-900'
+              id='approval-popup-title'
             >
               Request Approval
             </h3>
 
-            <div className="mb-6 max-h-60 overflow-y-auto space-y-4" role="list">
-              {staticApprovers.map((approver) => (
+            <div
+              className='mb-6 max-h-60 space-y-4 overflow-y-auto'
+              role='list'
+            >
+              {staticApprovers.map(approver => (
                 <label
                   key={approver}
-                  className="block text-gray-800 text-lg cursor-pointer select-none hover:bg-indigo-50 rounded-lg px-4 py-2 transition"
+                  className='block cursor-pointer rounded-lg px-4 py-2 text-lg text-gray-800 transition select-none hover:bg-indigo-50'
                 >
                   <input
-                    type="checkbox"
+                    type='checkbox'
                     value={approver}
                     checked={selectedApprovers.includes(approver)}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setSelectedApprovers((prev) =>
+                    onChange={e => {
+                      const value = e.target.value
+                      setSelectedApprovers(prev =>
                         prev.includes(value)
-                          ? prev.filter((a) => a !== value)
+                          ? prev.filter(a => a !== value)
                           : [...prev, value]
-                      );
+                      )
                     }}
-                    className="mr-4 w-5 h-5 align-middle"
+                    className='mr-4 h-5 w-5 align-middle'
                   />
                   {approver}
                 </label>
@@ -360,23 +405,24 @@ const [showModal, setShowModal] = useState(false);
             </div>
 
             {selectedApprovers.length > 0 && (
-              <div className="mb-6"
-              
-              >
-                <h4 className="font-semibold text-lg mb-3 border-b pb-2">Selected Approvers:</h4>
-                <ul className="space-y-2 max-h-40 overflow-y-auto" role="list">
-                  {selectedApprovers.map((approver) => (
+              <div className='mb-6'>
+                <h4 className='mb-3 border-b pb-2 text-lg font-semibold'>
+                  Selected Approvers:
+                </h4>
+                <ul className='max-h-40 space-y-2 overflow-y-auto' role='list'>
+                  {selectedApprovers.map(approver => (
                     <li
                       key={approver}
-                      className="flex justify-between items-center bg-indigo-100 text-indigo-900 px-4 py-2 rounded-lg"
-                      
+                      className='flex items-center justify-between rounded-lg bg-indigo-100 px-4 py-2 text-indigo-900'
                     >
-                      <span className="font-medium">{approver}</span>
+                      <span className='font-medium'>{approver}</span>
                       <button
                         onClick={() =>
-                          setSelectedApprovers((prev) => prev.filter((a) => a !== approver))
+                          setSelectedApprovers(prev =>
+                            prev.filter(a => a !== approver)
+                          )
                         }
-                        className="text-red-600 hover:text-red-800 font-bold text-lg"
+                        className='text-lg font-bold text-red-600 hover:text-red-800'
                         aria-label={`Remove ${approver}`}
                       >
                         &times;
@@ -387,17 +433,16 @@ const [showModal, setShowModal] = useState(false);
               </div>
             )}
 
-            <div className="flex justify-end gap-4 mt-6"
-            >
+            <div className='mt-6 flex justify-end gap-4'>
               <button
                 onClick={closeApprovalPopup}
-                className="rounded-xl bg-gray-300 px-6 py-2 font-semibold text-gray-700 hover:bg-gray-400 transition"
+                className='rounded-xl bg-gray-300 px-6 py-2 font-semibold text-gray-700 transition hover:bg-gray-400'
               >
                 Cancel
               </button>
               <button
                 onClick={handleRequestApproval}
-                className="rounded-xl bg-indigo-600 px-6 py-2 font-semibold text-white hover:bg-indigo-700 transition"
+                className='rounded-xl bg-indigo-600 px-6 py-2 font-semibold text-white transition hover:bg-indigo-700'
               >
                 Request
               </button>
@@ -406,87 +451,88 @@ const [showModal, setShowModal] = useState(false);
         </div>
       )}
       {/* NEW: Cancel Confirmation Popup */}
-     {showCancelConfirm && (
-  <div
-    className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50"
-    
-    onClick={cancelCancelApproval}
-    aria-modal="true"
-    role="dialog"
-    aria-labelledby="cancel-approval-title"
-  >
-    <div
-      className="bg-white rounded-3xl p-8 sm:p-10 w-full max-w-lg shadow-2xl relative"
-       style={{ borderTop: "6px solid rgb(197, 34, 34)" }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      {/* Warning Icon and Title */}
-      <div className="flex items-center gap-4 mb-6">
-        <div className="p-3 bg-yellow-100 rounded-full">
-          <FaExclamationTriangle className="text-yellow-600 text-3xl" />
-        </div>
-        <h3
-          id="cancel-approval-title"
-          className="text-2xl sm:text-3xl font-bold text-gray-900"
-        >
-          Cancel Approval Request
-        </h3>
-      </div>
-
-      {/* Confirmation Text */}
-      <p className="text-gray-700 text-lg leading-relaxed mb-8">
-        Are you sure you want to cancel the approval request for{" "}
-        <span className="font-semibold text-gray-900">
-          {eventToCancel?.eventData?.eventInfo?.title || "this event"}
-        </span>
-        ?
-      </p>
-
-      {/* Buttons */}
-      <div className="flex justify-end gap-4">
-        <button
+      {showCancelConfirm && (
+        <div
+          className='bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black backdrop-blur-sm'
           onClick={cancelCancelApproval}
-          className="flex items-center gap-2 px-6 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold transition"
+          aria-modal='true'
+          role='dialog'
+          aria-labelledby='cancel-approval-title'
         >
-          <span className="text-lg">❌</span> No, Keep
-        </button>
-        <button
-          onClick={confirmCancelApproval}
-          className="flex items-center gap-2 px-6 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold transition"
-        >
-          <span className="text-lg">✅</span> Yes, Cancel
-        </button>
-      </div>
+          <div
+            className='relative w-full max-w-lg rounded-3xl bg-white p-8 shadow-2xl sm:p-10'
+            style={{borderTop: '6px solid rgb(197, 34, 34)'}}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Warning Icon and Title */}
+            <div className='mb-6 flex items-center gap-4'>
+              <div className='rounded-full bg-yellow-100 p-3'>
+                <FaExclamationTriangle className='text-3xl text-yellow-600' />
+              </div>
+              <h3
+                id='cancel-approval-title'
+                className='text-2xl font-bold text-gray-900 sm:text-3xl'
+              >
+                Cancel Approval Request
+              </h3>
+            </div>
 
-      {/* Close icon top-right (optional) */}
-      <button
-        onClick={cancelCancelApproval}
-        className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition text-xl"
-        aria-label="Close"
-      >
-        ×
-      </button>
-    </div>
-  </div>
-)}
+            {/* Confirmation Text */}
+            <p className='mb-8 text-lg leading-relaxed text-gray-700'>
+              Are you sure you want to cancel the approval request for{' '}
+              <span className='font-semibold text-gray-900'>
+                {eventToCancel?.eventData?.eventInfo?.title || 'this event'}
+              </span>
+              ?
+            </p>
 
-{/* Modal */}
+            {/* Buttons */}
+            <div className='flex justify-end gap-4'>
+              <button
+                onClick={cancelCancelApproval}
+                className='flex items-center gap-2 rounded-xl bg-gray-200 px-6 py-2 font-semibold text-gray-800 transition hover:bg-gray-300'
+              >
+                <span className='text-lg'>❌</span> No, Keep
+              </button>
+              <button
+                onClick={confirmCancelApproval}
+                className='flex items-center gap-2 rounded-xl bg-red-600 px-6 py-2 font-semibold text-white transition hover:bg-red-700'
+              >
+                <span className='text-lg'>✅</span> Yes, Cancel
+              </button>
+            </div>
+
+            {/* Close icon top-right (optional) */}
+            <button
+              onClick={cancelCancelApproval}
+              className='absolute top-4 right-4 text-xl text-gray-400 transition hover:text-gray-600'
+              aria-label='Close'
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-          <div  className="bg-white rounded-3xl p-8 sm:p-10 w-full max-w-lg shadow-2xl relative"
-           style={{ borderTop: "6px solid rgb(197, 34, 34)" }}>
-            <h2 className="text-lg font-bold mb-4">Confirm Deletion</h2>
-            <p className="mb-6">Are you sure you want to delete this event?</p>
-            <div className="flex justify-end gap-4">
+        <div className='bg-opacity-40 fixed inset-0 z-50 flex items-center justify-center bg-black'>
+          <div
+            className='relative w-full max-w-lg rounded-3xl bg-white p-8 shadow-2xl sm:p-10'
+            style={{borderTop: '6px solid rgb(197, 34, 34)'}}
+          >
+            <h2 className='mb-4 text-lg font-bold'>Confirm Deletion</h2>
+            <p className='mb-6'>Are you sure you want to delete this event?</p>
+            <div className='flex justify-end gap-4'>
               <button
                 onClick={closeModal}
-                className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+                className='rounded bg-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-400'
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                className='rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700'
               >
                 Delete
               </button>
@@ -494,11 +540,8 @@ const [showModal, setShowModal] = useState(false);
           </div>
         </div>
       )}
-
-
-
     </>
-  );
-};
+  )
+}
 
-export default EventLogs;
+export default EventLogs

@@ -1,6 +1,6 @@
 import {useState, useEffect} from 'react'
 
-const Agenda = ({event_id, eventStartDate}) => {
+const Agenda = ({eventStartDate}) => {
   const [objectives, setObjectives] = useState('')
   const [outcomes, setOutcomes] = useState('')
   const [brochure, setBrochure] = useState(null)
@@ -14,8 +14,7 @@ const Agenda = ({event_id, eventStartDate}) => {
   const [topic, setTopic] = useState('')
   const [speakerName, setSpeakerName] = useState('')
 
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+
 
   // Count words helper
   const countWords = text => {
@@ -33,58 +32,7 @@ const Agenda = ({event_id, eventStartDate}) => {
     }
   }, [eventStartDate])
 
-  // Fetch existing agenda on mount
-  useEffect(() => {
-    if (!event_id) return
-
-    const fetchAgenda = async () => {
-      setLoading(true)
-      setError(null)
-
-      try {
-        const res = await fetch(
-          `http://localhost:5000/api/events/${event_id}/agenda`,
-          {
-            credentials: 'include'
-          }
-        )
-        if (!res.ok) {
-          throw new Error('Failed to fetch agenda')
-        }
-        const data = await res.json()
-
-        // Prefill data if exists
-        if (data) {
-          setObjectives(data.objectives || '')
-          setOutcomes(data.outcomes || '')
-          if (data.sessions && Array.isArray(data.sessions)) {
-            setSessions(
-              data.sessions.map(s => ({
-                sessionDate: s.session_date,
-                fromTime: s.from_time,
-                toTime: s.to_time,
-                topic: s.topic,
-                speakerName: s.speaker_name
-              }))
-            )
-
-            // Optionally set sessionDate input to first session date if available
-            if (data.sessions.length > 0) {
-              setSessionDate(data.sessions[0].session_date)
-            }
-          }
-        }
-      } catch (err) {
-        console.error(err)
-        setError('Error loading agenda.')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchAgenda()
-  }, [event_id])
-
+ 
   const handleAddSession = () => {
     if (!sessionDate || !fromTime || !toTime || !topic || !speakerName) {
       alert('Please fill all fields for the session before adding.')
@@ -110,66 +58,10 @@ const Agenda = ({event_id, eventStartDate}) => {
     setBrochure(file)
   }
 
-  const handleSubmit = async e => {
-    e.preventDefault()
-
-    if (countWords(objectives) > 200) {
-      alert('Objectives of event must be within 200 words.')
-      return
-    }
-    if (countWords(outcomes) > 200) {
-      alert('Outcomes of event must be within 200 words.')
-      return
-    }
-
-    if (sessions.length === 0) {
-      alert('Please add at least one session.')
-      return
-    }
-
-    const formData = new FormData()
-    // Append form fields separately to match backend expectations
-    formData.append('objectives', objectives)
-    formData.append('outcomes', outcomes)
-    formData.append('sessions', JSON.stringify(sessions))
-    if (brochure) {
-      formData.append('brochure', brochure)
-    }
-
-    try {
-      const res = await fetch(
-        `http://localhost:5000/api/events/${event_id}/agenda`,
-        {
-          method: 'POST',
-          body: formData,
-          credentials: 'include' // to send cookies/session if needed
-        }
-      )
-
-      const result = await res.json()
-
-      if (res.ok) {
-        alert('Agenda saved successfully!')
-        // Optionally clear or update UI here
-      } else {
-        alert(`Error: ${result.error || 'Something went wrong'}`)
-      }
-    } catch (err) {
-      console.error('Error submitting agenda:', err)
-      alert('Failed to submit agenda.')
-    }
-  }
-
-  if (loading) {
-    return <p>Loading agenda...</p>
-  }
-  if (error) {
-    return <p className='text-red-600'>{error}</p>
-  }
-
+  
   return (
     <form
-      onSubmit={handleSubmit}
+     
       className='max-w-8xl mx-auto space-y-12 rounded-xl px-6 py-10'
       style={{fontFeatureSettings: "'liga' 1"}}
     >
@@ -360,15 +252,7 @@ const Agenda = ({event_id, eventStartDate}) => {
         )}
       </section>
 
-      {/* Submit Button */}
-      <div className='mt-10 text-center'>
-        <button
-          type='submit'
-          className='inline-block rounded-md bg-black px-6 py-2 text-base font-bold text-white shadow-md transition hover:bg-gray-900'
-        >
-          Save Agenda
-        </button>
-      </div>
+      
     </form>
   )
 }

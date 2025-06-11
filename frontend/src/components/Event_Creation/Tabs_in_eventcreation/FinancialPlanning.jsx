@@ -1,4 +1,5 @@
-import {useState} from 'react'
+import { useState } from 'react';
+import { FaTrash } from 'react-icons/fa';
 
 const fundingOptions = [
   'Management Funding',
@@ -10,8 +11,8 @@ const fundingOptions = [
   'Professional Societies / Student Chapters',
   'Tech Clubs / Innovation Cells',
   'Event Collaborations',
-  'Others'
-]
+  'Others',
+];
 
 const budgetOptions = [
   'Resource Person Honorarium',
@@ -26,101 +27,89 @@ const budgetOptions = [
   'Logistics & Venue',
   'Photography / Videography',
   'Digital Promotion & Media',
-  'Miscellaneous / Contingency'
-]
+  'Miscellaneous / Contingency',
+];
 
 const FinancialPlanning = () => {
-  const [activeTab, setActiveTab] = useState('funding')
+  const [activeTab, setActiveTab] = useState('funding');
 
-  const [fundingSource, setFundingSource] = useState('')
-  const [customFundingSource, setCustomFundingSource] = useState('')
-  const [fundingAmount, setFundingAmount] = useState('')
-  const [fundingRemark, setFundingRemark] = useState('')
-  const [fundingData, setFundingData] = useState([])
+  const [fundingSource, setFundingSource] = useState('');
+  const [customFundingSource, setCustomFundingSource] = useState('');
+  const [fundingAmount, setFundingAmount] = useState('');
+  const [fundingRemark, setFundingRemark] = useState('');
+  const [fundingData, setFundingData] = useState([]);
 
-  const [budgetParticular, setBudgetParticular] = useState('')
-  const [budgetAmount, setBudgetAmount] = useState('')
-  const [budgetRemark, setBudgetRemark] = useState('')
-  const [budgetData, setBudgetData] = useState([])
+  const [budgetParticular, setBudgetParticular] = useState('');
+  const [budgetAmount, setBudgetAmount] = useState('');
+  const [budgetRemark, setBudgetRemark] = useState('');
+  const [budgetData, setBudgetData] = useState([]);
 
   const addFunding = () => {
     if (!fundingSource || !fundingAmount) {
-      alert('Please fill all required funding fields')
-      return
+      alert('Please fill all required funding fields');
+      return;
     }
 
-    const source =
-      fundingSource === 'Others' ? customFundingSource : fundingSource
+    const source = fundingSource === 'Others' ? customFundingSource : fundingSource;
 
     setFundingData([
       ...fundingData,
-      {source, amount: parseFloat(fundingAmount), remark: fundingRemark}
-    ])
+      { source, amount: parseFloat(fundingAmount), remark: fundingRemark },
+    ]);
 
-    setFundingSource('')
-    setCustomFundingSource('')
-    setFundingAmount('')
-    setFundingRemark('')
-  }
+    setFundingSource('');
+    setCustomFundingSource('');
+    setFundingAmount('');
+    setFundingRemark('');
+  };
 
   const addBudget = () => {
     if (!budgetParticular || !budgetAmount) {
-      alert('Please fill all required budget fields')
-      return
+      alert('Please fill all required budget fields');
+      return;
     }
 
     setBudgetData([
       ...budgetData,
-      {
-        particular: budgetParticular,
-        amount: parseFloat(budgetAmount),
-        remark: budgetRemark
-      }
-    ])
+      { particular: budgetParticular, amount: parseFloat(budgetAmount), remark: budgetRemark },
+    ]);
 
-    setBudgetParticular('')
-    setBudgetAmount('')
-    setBudgetRemark('')
-  }
+    setBudgetParticular('');
+    setBudgetAmount('');
+    setBudgetRemark('');
+  };
 
-  const getBudgetTotal = () => {
-    return budgetData.reduce((acc, item) => acc + item.amount, 0).toFixed(2)
-  }
+  const removeFunding = (index) => {
+    const updated = [...fundingData];
+    updated.splice(index, 1);
+    setFundingData(updated);
+  };
 
-  const getFundingTotal = () => {
-    return fundingData.reduce((acc, item) => acc + item.amount, 0).toFixed(2)
-  }
+  const removeBudget = (index) => {
+    const updated = [...budgetData];
+    updated.splice(index, 1);
+    setBudgetData(updated);
+  };
 
-  const handleSaveFunding = () => {
-    console.log('Saving Funding Data:', fundingData)
-    alert('Funding data saved!')
-  }
+  const getBudgetTotal = () =>
+    budgetData.reduce((acc, item) => acc + item.amount, 0).toFixed(2);
 
-  const handleSaveBudget = () => {
-    console.log('Saving Budget Data:', budgetData)
-    alert('Budget data saved!')
-  }
+  const getFundingTotal = () =>
+    fundingData.reduce((acc, item) => acc + item.amount, 0).toFixed(2);
 
   return (
     <div className='max-w-8xl mx-auto space-y-12 rounded-xl px-6 py-10'>
-      <h2 className='mb-6 text-3xl font-bold text-gray-800'>
-        Financial Planning
-      </h2>
+      <h2 className='mb-6 text-3xl font-bold text-gray-800'>Financial Planning</h2>
 
-      {/* Tabs */}
       <div className='mb-4 flex space-x-4'>
         <button
-          className={`rounded-t-lg px-4 py-2 font-medium ${
-            activeTab === 'funding' ? 'bg-gray-200' : 'bg-gray-100'
-          }`}
+          className={`rounded-t-lg px-4 py-2 font-medium ${activeTab === 'funding' ? 'bg-gray-200' : 'bg-gray-100'}`}
           onClick={() => setActiveTab('funding')}
         >
           Funding Sources
         </button>
         <button
-          className={`rounded-t-lg px-4 py-2 font-medium ${
-            activeTab === 'budget' ? 'bg-gray-200' : 'bg-gray-100'
-          }`}
+          className={`rounded-t-lg px-4 py-2 font-medium ${activeTab === 'budget' ? 'bg-gray-200' : 'bg-gray-100'}`}
           onClick={() => setActiveTab('budget')}
         >
           Estimated Budget
@@ -130,20 +119,16 @@ const FinancialPlanning = () => {
       {/* Funding Tab */}
       {activeTab === 'funding' && (
         <section className='rounded border bg-gray-50 p-6 shadow-sm'>
-          <h3 className='mb-4 text-xl font-semibold text-gray-700'>
-            Funding Sources
-          </h3>
+          <h3 className='mb-4 text-xl font-semibold text-gray-700'>Funding Sources</h3>
           <div className='mb-4 grid gap-4 md:grid-cols-4'>
             <select
               value={fundingSource}
-              onChange={e => setFundingSource(e.target.value)}
+              onChange={(e) => setFundingSource(e.target.value)}
               className='w-full rounded border p-4 text-base'
             >
               <option value=''>Select Funding Source</option>
               {fundingOptions.map((opt, i) => (
-                <option key={i} value={opt}>
-                  {opt}
-                </option>
+                <option key={i} value={opt}>{opt}</option>
               ))}
             </select>
 
@@ -152,7 +137,7 @@ const FinancialPlanning = () => {
                 type='text'
                 placeholder='Specify other source'
                 value={customFundingSource}
-                onChange={e => setCustomFundingSource(e.target.value)}
+                onChange={(e) => setCustomFundingSource(e.target.value)}
                 className='w-full rounded border p-4 text-base'
               />
             )}
@@ -161,7 +146,7 @@ const FinancialPlanning = () => {
               type='number'
               placeholder='Enter amount'
               value={fundingAmount}
-              onChange={e => setFundingAmount(e.target.value)}
+              onChange={(e) => setFundingAmount(e.target.value)}
               className='w-full rounded border p-4 text-base'
             />
 
@@ -169,7 +154,7 @@ const FinancialPlanning = () => {
               type='text'
               placeholder='Remarks'
               value={fundingRemark}
-              onChange={e => setFundingRemark(e.target.value)}
+              onChange={(e) => setFundingRemark(e.target.value)}
               className='w-full rounded border p-4 text-base'
             />
           </div>
@@ -189,6 +174,7 @@ const FinancialPlanning = () => {
                     <th className='border p-2'>Source</th>
                     <th className='border p-2'>Amount</th>
                     <th className='border p-2'>Remarks</th>
+                    <th className='border p-2'>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -198,6 +184,16 @@ const FinancialPlanning = () => {
                       <td className='border p-2'>{item.source}</td>
                       <td className='border p-2'>₹{item.amount.toFixed(2)}</td>
                       <td className='border p-2'>{item.remark}</td>
+                     <td className='border p-2 text-center'>
+  <button
+    onClick={() => removeFunding(idx)} // or removeBudget(idx)
+    className='rounded-full p-2 transition-colors hover:bg-red-100'
+    title='Remove'
+  >
+    <FaTrash className='text-red-600 hover:text-red-800 text-lg' />
+  </button>
+</td>
+
                     </tr>
                   ))}
                   <tr className='bg-gray-100 font-bold'>
@@ -206,15 +202,10 @@ const FinancialPlanning = () => {
                     </td>
                     <td className='border p-2'>₹{getFundingTotal()}</td>
                     <td className='border p-2'></td>
+                    <td className='border p-2'></td>
                   </tr>
                 </tbody>
               </table>
-              <button
-                onClick={handleSaveFunding}
-                className='mt-4 rounded bg-green-600 px-6 py-2 text-white hover:bg-green-700'
-              >
-                Save Funding Data
-              </button>
             </div>
           )}
         </section>
@@ -223,20 +214,16 @@ const FinancialPlanning = () => {
       {/* Budget Tab */}
       {activeTab === 'budget' && (
         <section className='rounded border bg-gray-50 p-6 shadow-sm'>
-          <h3 className='mb-4 text-xl font-semibold text-gray-700'>
-            Estimated Budget
-          </h3>
+          <h3 className='mb-4 text-xl font-semibold text-gray-700'>Estimated Budget</h3>
           <div className='mb-4 grid gap-4 md:grid-cols-4'>
             <select
               value={budgetParticular}
-              onChange={e => setBudgetParticular(e.target.value)}
+              onChange={(e) => setBudgetParticular(e.target.value)}
               className='w-full rounded border p-4 text-base'
             >
               <option value=''>Select Particular</option>
               {budgetOptions.map((opt, i) => (
-                <option key={i} value={opt}>
-                  {opt}
-                </option>
+                <option key={i} value={opt}>{opt}</option>
               ))}
             </select>
 
@@ -244,7 +231,7 @@ const FinancialPlanning = () => {
               type='number'
               placeholder='Enter amount'
               value={budgetAmount}
-              onChange={e => setBudgetAmount(e.target.value)}
+              onChange={(e) => setBudgetAmount(e.target.value)}
               className='w-full rounded border p-4 text-base'
             />
 
@@ -252,7 +239,7 @@ const FinancialPlanning = () => {
               type='text'
               placeholder='Remarks'
               value={budgetRemark}
-              onChange={e => setBudgetRemark(e.target.value)}
+              onChange={(e) => setBudgetRemark(e.target.value)}
               className='w-full rounded border p-4 text-base'
             />
           </div>
@@ -272,6 +259,7 @@ const FinancialPlanning = () => {
                     <th className='border p-2'>Particular</th>
                     <th className='border p-2'>Amount</th>
                     <th className='border p-2'>Remarks</th>
+                    <th className='border p-2'>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -281,6 +269,16 @@ const FinancialPlanning = () => {
                       <td className='border p-2'>{item.particular}</td>
                       <td className='border p-2'>₹{item.amount.toFixed(2)}</td>
                       <td className='border p-2'>{item.remark}</td>
+                     <td className='border p-2 text-center'>
+  <button
+    onClick={() => removeBudget(idx)} // or removeBudget(idx)
+    className='rounded-full p-2 transition-colors hover:bg-red-100'
+    title='Remove'
+  >
+    <FaTrash className='text-red-600 hover:text-red-800 text-lg' />
+  </button>
+</td>
+
                     </tr>
                   ))}
                   <tr className='bg-gray-100 font-bold'>
@@ -289,21 +287,16 @@ const FinancialPlanning = () => {
                     </td>
                     <td className='border p-2'>₹{getBudgetTotal()}</td>
                     <td className='border p-2'></td>
+                    <td className='border p-2'></td>
                   </tr>
                 </tbody>
               </table>
-              <button
-                onClick={handleSaveBudget}
-                className='mt-4 rounded bg-green-600 px-6 py-2 text-white hover:bg-green-700'
-              >
-                Save Budget Data
-              </button>
             </div>
           )}
         </section>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default FinancialPlanning
+export default FinancialPlanning;

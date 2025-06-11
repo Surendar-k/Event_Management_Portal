@@ -42,7 +42,6 @@ const CreateEvent = () => {
     checklist: []
   })
 
-  // Separate startDate/endDate for easy access
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
 
@@ -53,13 +52,26 @@ const CreateEvent = () => {
     }))
 
     if (section === 'eventInfo') {
-      // Update lifted start/end dates for all tabs
       if (data.startDate) setStartDate(data.startDate)
       if (data.endDate) setEndDate(data.endDate)
     }
   }
 
+  const handleSaveAll = () => {
+    console.log('Saving all event data:', eventData)
+    localStorage.setItem('savedEvent', JSON.stringify(eventData))
+    alert('Event data saved successfully!')
+  }
+
   const renderActiveTab = () => {
+    if (!eventId && activeTab !== 'eventInfo') {
+      return (
+        <div className="text-center text-red-600 font-medium">
+          Please complete and save Event Info before accessing other sections.
+        </div>
+      )
+    }
+
     switch (activeTab) {
       case 'eventInfo':
         return (
@@ -75,8 +87,8 @@ const CreateEvent = () => {
             data={eventData.agenda}
             onChange={data => updateSection('agenda', data)}
             eventId={eventId}
-            eventStartDate={startDate} // <-- pass here
-            eventEndDate={endDate} // <-- pass here
+            eventStartDate={startDate}
+            eventEndDate={endDate}
           />
         )
       case 'financialPlanning':
@@ -172,10 +184,24 @@ const CreateEvent = () => {
         role='tabpanel'
         aria-labelledby={`${activeTab}-tab`}
         className='min-h-[350px] rounded-xl border p-8 shadow-inner'
-        style={{backgroundColor: '#fff', borderColor: '#ddd', color: '#575757'}}
+        style={{
+          backgroundColor: '#fff',
+          borderColor: '#ddd',
+          color: '#575757'
+        }}
       >
         {renderActiveTab()}
       </section>
+
+      {/* Save All Button */}
+      <div className='mt-6 text-center'>
+        <button
+          onClick={handleSaveAll}
+          className='rounded-lg bg-green-600 px-6 py-3 text-white font-semibold shadow-lg hover:bg-green-700 transition duration-300'
+        >
+          Save All
+        </button>
+      </div>
     </div>
   )
 }

@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-dom'
-import { FaEye, FaEyeSlash } from 'react-icons/fa'
+import {useState} from 'react'
+import {useNavigate} from 'react-router-dom'
+import {FaEye, FaEyeSlash} from 'react-icons/fa'
 import ksrLogo from '../../assets/ksr-logo.png'
 
 const Login = () => {
@@ -18,8 +18,8 @@ const Login = () => {
       const response = await fetch('http://localhost:5000/api/login', {
         method: 'POST',
         credentials: 'include', // IMPORTANT: include cookies in request
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email, password})
       })
 
       if (!response.ok) {

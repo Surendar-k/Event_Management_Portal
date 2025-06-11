@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, {useState, useMemo} from 'react'
 import {
   FaEdit,
   FaPaperPlane,
@@ -27,9 +27,9 @@ const sampleEvents = [
         date: '2025-07-20',
         location: 'Auditorium'
       },
-      agenda: [{ time: '10:00 AM', topic: 'Intro to AI' }],
-      financialPlanning: { budget: 5000, expenses: [] },
-      foodTravel: { foodArrangements: 'Snacks', travelDetails: '' },
+      agenda: [{time: '10:00 AM', topic: 'Intro to AI'}],
+      financialPlanning: {budget: 5000, expenses: []},
+      foodTravel: {foodArrangements: 'Snacks', travelDetails: ''},
       checklist: ['Projector', 'Seating arranged']
     }
   },
@@ -37,16 +37,16 @@ const sampleEvents = [
     id: 'event2',
     creatorEmail: 'hod.ai_ds@shanmugha.edu.in',
     status: 'submitted',
-    approvals: { principal: false },
+    approvals: {principal: false},
     eventData: {
       eventInfo: {
         title: 'Data Science Workshop',
         date: '2025-07-25',
         location: 'Lab 3'
       },
-      agenda: [{ time: '09:00 AM', topic: 'Python Basics' }],
-      financialPlanning: { budget: 7000, expenses: [] },
-      foodTravel: { foodArrangements: 'Lunch', travelDetails: 'Bus arranged' },
+      agenda: [{time: '09:00 AM', topic: 'Python Basics'}],
+      financialPlanning: {budget: 7000, expenses: []},
+      foodTravel: {foodArrangements: 'Lunch', travelDetails: 'Bus arranged'},
       checklist: ['Laptops', 'WiFi']
     }
   }
@@ -68,7 +68,7 @@ const isFormComplete = data => {
   return true
 }
 
-const EventLogs = ({ onEditEvent }) => {
+const EventLogs = ({onEditEvent}) => {
   const [events, setEvents] = useState(sampleEvents)
   const [showApprovalPopup, setShowApprovalPopup] = useState(false)
   const [selectedApprovers, setSelectedApprovers] = useState([])
@@ -123,9 +123,7 @@ const EventLogs = ({ onEditEvent }) => {
   const confirmCancelApproval = () => {
     if (!eventToCancel) return
     const updatedEvents = events.map(ev =>
-      ev.id === eventToCancel.id
-        ? { ...ev, status: 'draft', approvals: {} }
-        : ev
+      ev.id === eventToCancel.id ? {...ev, status: 'draft', approvals: {}} : ev
     )
     setEvents(updatedEvents)
     setShowCancelConfirm(false)
@@ -200,13 +198,13 @@ const EventLogs = ({ onEditEvent }) => {
             icon: <FaUserCheck className='mr-2 inline' />
           }
     }
-    return { label: 'Unknown', color: ' text-gray-800', icon: null }
+    return {label: 'Unknown', color: ' text-gray-800', icon: null}
   }
 
   // Filtered events based on status filter and search term
   const filteredEvents = useMemo(() => {
     return events.filter(ev => {
-      const { label: statusLabel } = getStatusAndColor(ev)
+      const {label: statusLabel} = getStatusAndColor(ev)
       const matchesStatus =
         statusFilter === 'all'
           ? true
@@ -368,7 +366,7 @@ const EventLogs = ({ onEditEvent }) => {
         >
           <div
             className='w-full max-w-lg rounded-3xl bg-white p-8 shadow-2xl sm:p-10'
-            style={{ borderTop: '6px solid rgb(34, 105, 197)' }}
+            style={{borderTop: '6px solid rgb(34, 105, 197)'}}
             onClick={e => e.stopPropagation()}
           >
             <h3
@@ -463,7 +461,7 @@ const EventLogs = ({ onEditEvent }) => {
         >
           <div
             className='relative w-full max-w-lg rounded-3xl bg-white p-8 shadow-2xl sm:p-10'
-            style={{ borderTop: '6px solid rgb(197, 34, 34)' }}
+            style={{borderTop: '6px solid rgb(197, 34, 34)'}}
             onClick={e => e.stopPropagation()}
           >
             {/* Warning Icon and Title */}
@@ -521,7 +519,7 @@ const EventLogs = ({ onEditEvent }) => {
         <div className='bg-opacity-40 fixed inset-0 z-50 flex items-center justify-center bg-black'>
           <div
             className='relative w-full max-w-lg rounded-3xl bg-white p-8 shadow-2xl sm:p-10'
-            style={{ borderTop: '6px solid rgb(197, 34, 34)' }}
+            style={{borderTop: '6px solid rgb(197, 34, 34)'}}
           >
             <h2 className='mb-4 text-lg font-bold'>Confirm Deletion</h2>
             <p className='mb-6'>Are you sure you want to delete this event?</p>

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-dom'
+import {BrowserRouter, Routes, Route} from 'react-router-dom'
 import Login from './components/Login_Page/Login'
 import CreateEvent from './components/Event_Creation/CreateEvent'
 import MainLayout from './components/Layout/MainLayout'
@@ -7,9 +7,8 @@ import EventLogs from './components/EventLogs/EventLogs'
 
 import FacultyInbox from './components/Event_Inbox/Roles_Inbox/FacultyInbox'
 import HigherAuthorityInbox from './components/Event_Inbox/Roles_Inbox/HigherAuthorityInbox'
-// import other pages like Inbox, ReportGeneration, etc.
 
-function App() {
+export default function App() {
   return (
     <BrowserRouter>
       <Routes>
@@ -31,5 +30,3 @@ function App() {
     </BrowserRouter>
   )
 }
-
-export default App

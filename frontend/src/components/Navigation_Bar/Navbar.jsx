@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
-import { useNavigate, useLocation } from 'react-dom'
+import {useState, useEffect, useRef} from 'react'
+import {useNavigate, useLocation} from 'react-router-dom'
 import ksrLogo from '../../assets/ksr-logo.png'
 import axios from 'axios'
 
@@ -78,12 +78,12 @@ const Navbar = () => {
       {/* Navigation Links */}
       <ul className='flex flex-wrap justify-center gap-8 text-xl font-semibold sm:justify-start'>
         {[
-          { label: 'Create Event', path: '/create-event' },
-          { label: 'Report Generation', path: '/report-generation' },
-          { label: 'Event Logs', path: '/event-logs' },
-          { label: 'Inbox', path: '/faculty-inbox' },
-          { label: 'Inbox', path: '/higherauthority-inbox' }
-        ].map(({ label, path }) => (
+          {label: 'Create Event', path: '/create-event'},
+          {label: 'Report Generation', path: '/report-generation'},
+          {label: 'Event Logs', path: '/event-logs'},
+          {label: 'Inbox', path: '/faculty-inbox'},
+          {label: 'Inbox', path: '/higherauthority-inbox'}
+        ].map(({label, path}) => (
           <li key={path}>
             <button
               onClick={() => handleNavigate(path)}
@@ -124,12 +124,12 @@ const Navbar = () => {
             </h2>
             <div className='flex flex-col gap-3'>
               {[
-                { label: 'Name', value: user.faculty_name },
-                { label: 'Designation', value: user.designation },
-                { label: 'Department', value: user.department },
-                { label: 'Institution', value: user.institution_name },
-                { label: 'Faculty ID', value: user.faculty_id }
-              ].map(({ label, value }) => (
+                {label: 'Name', value: user.faculty_name},
+                {label: 'Designation', value: user.designation},
+                {label: 'Department', value: user.department},
+                {label: 'Institution', value: user.institution_name},
+                {label: 'Faculty ID', value: user.faculty_id}
+              ].map(({label, value}) => (
                 <div
                   key={label}
                   className='flex flex-wrap items-center gap-2 rounded-md bg-gray-50 p-2'

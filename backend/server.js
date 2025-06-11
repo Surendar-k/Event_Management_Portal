@@ -2,46 +2,45 @@
 const express = require('express')
 const cors = require('cors')
 const session = require('express-session')
-const bodyParser = require('body-parser')
 const routes = require('./src/routes/routes')
 
 const app = express()
 const PORT = 5000
 
-// 1. CORS must be configured BEFORE any routes
+// 1. CORS configuration
 app.use(
   cors({
-    origin: 'http://localhost:5173', // must match your frontend
-    credentials: true // required for sending cookies
+    origin: 'http://localhost:5174', // frontend URL
+    credentials: true
   })
 )
 
-// 2. Body parser for JSON payloads
-app.use(bodyParser.json())
+// 2. Built-in body parsing
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 
-// 3. Express-session middleware
+// 3. Session middleware
 app.use(
   session({
     secret: 'eventmanagementportal',
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: false, // set true only if using HTTPS
+      secure: false,
       httpOnly: true,
       sameSite: 'lax',
       maxAge: 1000 * 60 * 60 * 24 // 1 day
     }
   })
 )
-app.use(express.json())
-app.use(express.urlencoded({extended: true}))
+
+// 4. Static file serving (brochures etc.)
 app.use('/uploads', express.static('uploads'))
 
-// 4. Routes after CORS and session
+// 5. Routes
 app.use('/api', routes)
-app.use('/uploads', express.static('uploads')) // for brochure access
 
-// 5. Start server
+// 6. Start the server
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`)
 })

@@ -9,7 +9,7 @@ const PORT = 5000;
 
 // 1. CORS must be configured BEFORE any routes
 app.use(cors({
-  origin: "http://localhost:5173", // must match your frontend
+  origin: "http://localhost:5174", // must match your frontend
   credentials: true, // required for sending cookies
 }));
 
@@ -31,12 +31,11 @@ app.use(
   })
 );
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use("/uploads", express.static("uploads"));
+
 
 // 4. Routes after CORS and session
 app.use("/api", routes);
-app.use('/uploads', express.static('uploads')); // for brochure access
+
 
 // 5. Start server
 app.listen(PORT, () => {

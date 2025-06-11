@@ -1,5 +1,5 @@
-import {useState, useEffect} from 'react'
-import axios from 'axios'
+import {useEffect} from 'react'
+import useFormStore from '../../../store/formStore'
 
 const colleges = {
   'College A': ['Dept A1', 'Dept A2'],
@@ -12,56 +12,41 @@ const coordinators = [
   'Ms. K. Kavitha',
   'Mr. Arun Raj'
 ]
-const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEndDate}) => {
-  const [selectedCollege, setSelectedCollege] = useState('')
-  const [departments, setDepartments] = useState([])
-  const [selectedDepartment, setSelectedDepartment] = useState('')
-  const [title, setTitle] = useState('')
-  const [eventNature, setEventNature] = useState('')
-  const [otherNature, setOtherNature] = useState('')
-  const [fundingSource, setFundingSource] = useState('')
-  const [otherFunding, setOtherFunding] = useState('')
-  const [venueType, setVenueType] = useState('')
-  const [venue, setVenue] = useState('')
-  const [audience, setAudience] = useState('')
-  const [scope, setScope] = useState('')
- 
-  const [numDays, setNumDays] = useState('')
-  const [speakers, setSpeakers] = useState([
-    {name: '', designation: '', affiliation: '', contact: '', email: ''}
-  ])
-  const [participants, setParticipants] = useState({
-    students: '',
-    faculty: '',
-    total: ''
-  })
-  const [guestServices, setGuestServices] = useState({
-    accommodation: '',
-    transportation: '',
-    dining: ''
-  })
-
+const EventInfo = ({
+  loginName,
+  // setEventId,
+  startDate,
+  endDate,
+  setStartDate,
+  setEndDate
+}) => {
+  const event = useFormStore(s => s.event)
+  const {
+    setEventField,
+    speakers,
+    selectedCoordinators,
+    technicalSetup,
+    participants
+  } = event
   useEffect(() => {
-    setDepartments(colleges[selectedCollege] || [])
-  }, [selectedCollege])
+    setEventField('departments', colleges[event.selectedCollege] || [])
+  }, [event.selectedCollege, setEventField])
 
   useEffect(() => {
     if (startDate && endDate) {
       const start = new Date(startDate)
       const end = new Date(endDate)
       const diff = (end - start) / (1000 * 3600 * 24)
-      setNumDays(diff >= 0 ? diff + 1 : 0)
+      setEventField('numDays', diff >= 0 ? diff + 1 : 0)
     }
-  }, [startDate, endDate])
+  }, [startDate, endDate, setEventField])
 
   const handleSpeakerChange = (index, field, value) => {
-    const updated = [...speakers]
-    updated[index][field] = value
-    setSpeakers(updated)
+    event.updateSpeaker(index, field, value)
   }
 
   const addSpeaker = () => {
-    setSpeakers([
+    event.setSpeakers([
       ...speakers,
       {name: '', designation: '', affiliation: '', contact: '', email: ''}
     ])
@@ -70,66 +55,8 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
   const removeSpeaker = index => {
     if (speakers.length === 1) return
     const updated = speakers.filter((_, i) => i !== index)
-    setSpeakers(updated)
+    event.setSpeakers(updated)
   }
-
-  const handleSubmit = async e => {
-    e.preventDefault()
-
-    try {
-      // Step 1: Create base event (returns event_id)
-      const createRes = await axios.post('http://localhost:5000/api/events', {
-        title
-      })
-      const event_id = createRes.data.event_id
-
-      // Step 2: Save all event info
-      const eventData = {
-        title,
-        selected_college: selectedCollege,
-        selected_department: selectedDepartment,
-        faculty_coordinators: selectedCoordinators,
-        start_date: startDate,
-        end_date: endDate,
-        num_days: numDays,
-        event_nature: eventNature === 'Others' ? otherNature : eventNature,
-        other_nature: otherNature,
-        funding_source:
-          fundingSource === 'Others' ? otherFunding : fundingSource,
-        other_funding: otherFunding,
-        venue_type: venueType,
-        venue,
-        audience,
-        scope,
-        speakers,
-        participants,
-        guest_services: guestServices
-      }
-
-      await axios.post(
-        `http://localhost:5000/api/events/${event_id}/event-info`,
-        eventData
-      )
-      if (setEventId) setEventId(event_id)
-      alert('Event Info Saved Successfully!')
-    } catch (error) {
-      console.error('Error saving event:', error)
-      alert('Failed to save event info.')
-    }
-  }
-
-  const [technicalSetup, setTechnicalSetup] = useState({
-    audioVisual: '',
-    speakerSystem: '',
-    airConditioningType: '',
-    airConditioningUnits: '',
-    presentationMaterials: '',
-    recording: [],
-    additional: ''
-  })
-  const [filteredSuggestions, setFilteredSuggestions] = useState([])
-  const [showSuggestions, setShowSuggestions] = useState(false)
-  const [selectedCoordinators, setSelectedCoordinators] = useState([])
 
   const handleChange = e => {
     const value = e.target.value
@@ -140,31 +67,29 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
           name.toLowerCase().includes(value.toLowerCase()) &&
           !selectedCoordinators.includes(name)
       )
-      setFilteredSuggestions(filtered)
-      setShowSuggestions(true)
+      setEventField('filteredSuggestions', filtered)
+      setEventField('showSuggestions', true)
     } else {
-      setShowSuggestions(false)
+      setEventField('showSuggestions', false)
     }
   }
 
   const handleSelect = name => {
     if (!selectedCoordinators.includes(name)) {
-      setSelectedCoordinators([...selectedCoordinators, name])
+      setEventField('selectedCoordinators', [...selectedCoordinators, name])
     }
 
-    setShowSuggestions(false)
+    setEventField('showSuggestions', false)
   }
 
   const handleRemove = nameToRemove => {
-    setSelectedCoordinators(
+    setEventField(
+      'selectedCoordinators',
       selectedCoordinators.filter(name => name !== nameToRemove)
     )
   }
   return (
-    <form
-      onSubmit={handleSubmit}
-      className='max-w-8xl mx-auto space-y-12 rounded-xl px-6 py-10'
-    >
+    <form className='max-w-8xl mx-auto space-y-12 rounded-xl px-6 py-10'>
       {/* Event Details Section */}
       <section className='rounded-lg border border-gray-400 bg-white p-6 shadow-md'>
         <h2 className='mb-4 border-b border-gray-400 pb-2 text-2xl font-bold text-gray-800'>
@@ -174,8 +99,8 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
           <input
             type='text'
             placeholder='Title of the Event'
-            value={title}
-            onChange={e => setTitle(e.target.value)}
+            value={event.title}
+            onChange={e => setEventField('title', e.target.value)}
             className='col-span-1 rounded border border-gray-400 p-2 text-gray-700 shadow-sm md:col-span-3'
           />
 
@@ -184,8 +109,8 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
               Organizing Institution
             </label>
             <select
-              value={selectedCollege}
-              onChange={e => setSelectedCollege(e.target.value)}
+              value={event.selectedCollege}
+              onChange={e => setEventField('selectedCollege', e.target.value)}
               className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
             >
               <option value=''>Select College</option>
@@ -202,12 +127,14 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
               Organizing Department
             </label>
             <select
-              value={selectedDepartment}
-              onChange={e => setSelectedDepartment(e.target.value)}
+              value={event.selectedDepartment}
+              onChange={e =>
+                setEventField('selectedDepartment', e.target.value)
+              }
               className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
             >
               <option value=''>Select Dept</option>
-              {departments.map(d => (
+              {event.departments.map(d => (
                 <option key={d}>{d}</option>
               ))}
             </select>
@@ -255,10 +182,10 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
               placeholder='Type a name...'
             />
 
-            {showSuggestions && (
+            {event.showSuggestions && (
               <ul className='absolute z-10 mt-1 max-h-40 w-full overflow-y-auto rounded border border-gray-300 bg-white shadow'>
-                {filteredSuggestions.length > 0 ? (
-                  filteredSuggestions.map((name, idx) => (
+                {event.filteredSuggestions.length > 0 ? (
+                  event.filteredSuggestions.map((name, idx) => (
                     <li
                       key={idx}
                       onClick={() => handleSelect(name)}
@@ -307,7 +234,7 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
             </label>
             <input
               type='number'
-              value={numDays}
+              value={event.numDays}
               readOnly
               className='w-full rounded border border-gray-400 bg-gray-200 p-2 text-gray-800'
             />
@@ -318,8 +245,8 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
               Nature of Event
             </label>
             <select
-              value={eventNature}
-              onChange={e => setEventNature(e.target.value)}
+              value={event.eventNature}
+              onChange={e => setEventField('eventNature', e.target.value)}
               className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
             >
               <option value=''>Select</option>
@@ -329,11 +256,11 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
               <option>Conference</option>
               <option value='Others'>Others</option>
             </select>
-            {eventNature === 'Others' && (
+            {event.eventNature === 'Others' && (
               <input
                 type='text'
-                value={otherNature}
-                onChange={e => setOtherNature(e.target.value)}
+                value={event.otherNature}
+                onChange={e => setEventField('otherNature', e.target.value)}
                 placeholder='Specify Nature'
                 className='mt-2 w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
               />
@@ -345,8 +272,8 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
               Venue Type
             </label>
             <select
-              value={venueType}
-              onChange={e => setVenueType(e.target.value)}
+              value={event.venueType}
+              onChange={e => setEventField('venueType', e.target.value)}
               className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
             >
               <option value=''>Select</option>
@@ -360,8 +287,8 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
               Venue
             </label>
             <select
-              value={venue}
-              onChange={e => setVenue(e.target.value)}
+              value={event.venue}
+              onChange={e => setEventField('venue', e.target.value)}
               className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
             >
               <option value=''>Select Venue</option>
@@ -375,8 +302,8 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
               Intended Audience
             </label>
             <select
-              value={audience}
-              onChange={e => setAudience(e.target.value)}
+              value={event.audience}
+              onChange={e => setEventField('audience', e.target.value)}
               className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
             >
               <option>Students</option>
@@ -390,8 +317,8 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
               Scope
             </label>
             <select
-              value={scope}
-              onChange={e => setScope(e.target.value)}
+              value={event.scope}
+              onChange={e => setEventField('scope', e.target.value)}
               className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
             >
               <option value=''>Select</option>
@@ -407,8 +334,8 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
               Funding Source
             </label>
             <select
-              value={fundingSource}
-              onChange={e => setFundingSource(e.target.value)}
+              value={event.fundingSource}
+              onChange={e => setEventField('fundingSource', e.target.value)}
               className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
             >
               <option value=''>Select</option>
@@ -416,11 +343,11 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
               <option>Funding Agency</option>
               <option>Others</option>
             </select>
-            {fundingSource === 'Others' && (
+            {event.fundingSource === 'Others' && (
               <input
                 type='text'
-                value={otherFunding}
-                onChange={e => setOtherFunding(e.target.value)}
+                value={event.otherFunding}
+                onChange={e => setEventField('otherFunding', e.target.value)}
                 placeholder='Specify Funding'
                 className='mt-2 w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
               />
@@ -493,7 +420,10 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
             placeholder='Student Participation'
             value={participants.students}
             onChange={e =>
-              setParticipants({...participants, students: e.target.value})
+              setEventField('participants', {
+                ...participants,
+                students: e.target.value
+              })
             }
             className='rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
           />
@@ -502,7 +432,10 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
             placeholder='Faculty Participation'
             value={participants.faculty}
             onChange={e =>
-              setParticipants({...participants, faculty: e.target.value})
+              setEventField('participants', {
+                ...participants,
+                faculty: e.target.value
+              })
             }
             className='rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
           />
@@ -511,7 +444,10 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
             placeholder='Total Attendees'
             value={participants.total}
             onChange={e =>
-              setParticipants({...participants, total: e.target.value})
+              setEventField('participants', {
+                ...participants,
+                total: e.target.value
+              })
             }
             className='rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
           />
@@ -534,9 +470,12 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
                 {label}
               </label>
               <select
-                value={guestServices[key]}
+                value={event.guestServices[key]}
                 onChange={e =>
-                  setGuestServices({...guestServices, [key]: e.target.value})
+                  setEventField('guestServices', {
+                    ...event.guestServices,
+                    [key]: e.target.value
+                  })
                 }
                 className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
               >
@@ -562,7 +501,7 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
             <select
               value={technicalSetup.audioVisual}
               onChange={e =>
-                setTechnicalSetup({
+                setEventField('technicalSetup', {
                   ...technicalSetup,
                   audioVisual: e.target.value
                 })
@@ -585,7 +524,7 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
             <select
               value={technicalSetup.speakerSystem}
               onChange={e =>
-                setTechnicalSetup({
+                setEventField('technicalSetup', {
                   ...technicalSetup,
                   speakerSystem: e.target.value
                 })
@@ -608,7 +547,7 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
               <select
                 value={technicalSetup.airConditioningType}
                 onChange={e =>
-                  setTechnicalSetup({
+                  setEventField('technicalSetup', {
                     ...technicalSetup,
                     airConditioningType: e.target.value
                   })
@@ -626,7 +565,7 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
                 min='0'
                 value={technicalSetup.airConditioningUnits || ''}
                 onChange={e =>
-                  setTechnicalSetup({
+                  setEventField('technicalSetup', {
                     ...technicalSetup,
                     airConditioningUnits: e.target.value
                   })
@@ -644,7 +583,7 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
             <select
               value={technicalSetup.presentationMaterials}
               onChange={e =>
-                setTechnicalSetup({
+                setEventField('technicalSetup', {
                   ...technicalSetup,
                   presentationMaterials: e.target.value
                 })
@@ -681,7 +620,10 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
                       const updated = e.target.checked
                         ? [...selected, option]
                         : selected.filter(item => item !== option)
-                      setTechnicalSetup({...technicalSetup, recording: updated})
+                      setEventField('technicalSetup', {
+                        ...technicalSetup,
+                        recording: updated
+                      })
                     }}
                     className='accent-gray-700'
                   />
@@ -701,7 +643,7 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
               placeholder='Enter any additional setup required...'
               value={technicalSetup.additional || ''}
               onChange={e =>
-                setTechnicalSetup({
+                setEventField('technicalSetup', {
                   ...technicalSetup,
                   additional: e.target.value
                 })
@@ -711,18 +653,7 @@ const EventInfo = ({loginName, setEventId, startDate,endDate,setStartDate,setEnd
           </div>
         </div>
       </section>
-
-      {/* Submit Button */}
-      <div className='pt-4 text-center'>
-        <button
-          type='submit'
-          className='rounded bg-gray-800 px-8 py-2 text-white transition hover:bg-gray-600'
-        >
-          Save
-        </button>
-      </div>
     </form>
   )
 }
-
 export default EventInfo

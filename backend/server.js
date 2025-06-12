@@ -1,8 +1,8 @@
 import express, {json, urlencoded} from 'express'
 import cors from 'cors'
 import session from 'express-session'
-import initializeDB from './src/config/db'
-import routes from './src/routes/routes'
+import initializeDB from './src/config/db.js'
+import routes from './src/routes/routes.js'
 
 const app = express()
 const PORT = 5000

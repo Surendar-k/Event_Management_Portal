@@ -40,6 +40,7 @@ app.post('/api/submit-event', async (req, res) => {
   if (!event) return res.status(400).json({error: 'Missing event data'})
 
   const keys = [
+    'faculty_id',
     'title',
     'selected_college',
     'selected_department',
@@ -61,6 +62,7 @@ app.post('/api/submit-event', async (req, res) => {
   ]
 
   const values = keys.map(key => {
+     if (key === 'faculty_id') return req.session.faculty_id; 
     const camelKey = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
     const val = event[camelKey]
     if (Array.isArray(val) || typeof val === 'object')

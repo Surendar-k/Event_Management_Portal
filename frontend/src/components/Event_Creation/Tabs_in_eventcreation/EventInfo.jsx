@@ -33,16 +33,31 @@ const EventInfo = ({
   }, [event.selectedCollege, setEventField])
 
 useEffect(() => {
-  if (event.startTime && event.endTime) {
-    const [startH, startM] = event.startTime.split(':').map(Number)
-    const [endH, endM] = event.endTime.split(':').map(Number)
-    const start = startH * 60 + startM
-    const end = endH * 60 + endM
-    const diff = end - start
-    const hours = diff > 0 ? (diff / 60).toFixed(2) : 0
-    setEventField('numHours', hours)
+  if (startDate && endDate) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (end >= start) {
+      const diffTime = end - start;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // include both start and end
+      setEventField('numDays', diffDays);
+    } else {
+      setEventField('numDays', 0); // or show validation message
+    }
   }
-}, [event.startTime, event.endTime, setEventField])
+}, [startDate, endDate, setEventField]);
+
+useEffect(() => {
+  if (event.startTime && event.endTime) {
+    const [startH, startM] = event.startTime.split(':').map(Number);
+    const [endH, endM] = event.endTime.split(':').map(Number);
+    const start = startH * 60 + startM;
+    const end = endH * 60 + endM;
+    const diff = end - start;
+    const hours = diff > 0 ? (diff / 60).toFixed(2) : 0;
+    setEventField('numHours', hours);
+  }
+}, [event.startTime, event.endTime, setEventField]);
+
 
   const handleSpeakerChange = (index, field, value) => {
     event.updateSpeaker(index, field, value)
@@ -102,9 +117,9 @@ useEffect(() => {
   <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
     {/* 1. Title */}
     <input
-      type='text'
-      placeholder='Title of the Event'
-      value={event.title}
+       type='text'
+  placeholder='Title of the Event'
+  value={event.title || ''}
       onChange={e => setEventField('title', e.target.value)}
       className='col-span-1 rounded border border-gray-400 p-2 text-gray-700 shadow-sm md:col-span-3'
     />
@@ -200,8 +215,8 @@ useEffect(() => {
       <label className='block mb-1 font-medium text-gray-700'>Start Date</label>
       <input
         type='date'
-        value={startDate}
-        min={startDate}
+        value={startDate || ''}
+        min={startDate || ''}
         onChange={e => setStartDate(e.target.value)}
         className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
       />
@@ -520,172 +535,178 @@ useEffect(() => {
     </div>
   </section>
 )}
-      {/* Technical Setup Section */}
-      <section className='rounded-lg border border-gray-400 bg-white p-6 shadow-md'>
-        <h2 className='mb-4 border-b border-gray-400 pb-2 text-2xl font-bold text-gray-800'>
-          Technical Setup
-        </h2>
-        <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
-          {/* Audio-Visual Setup */}
-          <div>
-            <label className='mb-1 block font-medium text-gray-700'>
-              Audio-Visual Setup
-            </label>
-            <select
-              value={technicalSetup.audioVisual}
-              onChange={e =>
+  <section className='rounded-lg border border-gray-400 bg-white p-6 shadow-md'>
+  <h2 className='mb-4 border-b border-gray-400 pb-2 text-2xl font-bold text-gray-800'>
+    Technical Setup
+  </h2>
+
+  <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
+    {/* Audio-Visual Setup */}
+    <div className='w-full'>
+      <label className='mb-1 block font-medium text-gray-700'>Audio-Visual Setup</label>
+      <select
+        value={technicalSetup.audioVisual || ''}
+        onChange={e =>
+          setEventField('technicalSetup', {
+            ...technicalSetup,
+            audioVisual: e.target.value
+          })
+        }
+        className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+      >
+        <option value=''>Select</option>
+        <option>Projector</option>
+        <option>LED Display</option>
+        <option>Microphones</option>
+        <option>All of the above</option>
+      </select>
+    </div>
+
+    {/* Microphone Type */}
+    <div className='w-full'>
+      <label className='mb-1 block font-medium text-gray-700'>Microphone Type</label>
+      <select
+        value={technicalSetup.microphoneType || ''}
+        onChange={e =>
+          setEventField('technicalSetup', {
+            ...technicalSetup,
+            microphoneType: e.target.value
+          })
+        }
+        className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+      >
+        <option value=''>Select</option>
+        <option>Handheld</option>
+        <option>Collar</option>
+        <option>Both</option>
+        <option>Not Required</option>
+      </select>
+    </div>
+
+    {/* Speakers Dropdown */}
+    <div className='w-full'>
+      <label className='mb-1 block font-medium text-gray-700'>Speakers</label>
+      <select
+        value={technicalSetup.speakers || ''}
+        onChange={e =>
+          setEventField('technicalSetup', {
+            ...technicalSetup,
+            speakers: e.target.value
+          })
+        }
+        className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+      >
+        <option value=''>Select</option>
+        <option>Yes</option>
+        <option>No</option>
+      </select>
+    </div>
+
+    {/* Air Conditioning Dropdown + Units */}
+    <div className='lg:col-span-2 w-full'>
+      <label className='mb-1 block font-medium text-gray-700'>Air Conditioning</label>
+      <div className='flex gap-4'>
+        <select
+          value={technicalSetup.airConditioning || ''}
+          onChange={e =>
+            setEventField('technicalSetup', {
+              ...technicalSetup,
+              airConditioning: e.target.value
+            })
+          }
+          className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+        >
+          <option value=''>Select</option>
+          <option>Yes</option>
+          <option>No</option>
+        </select>
+        {technicalSetup.airConditioning === 'Yes' && (
+          <input
+            type='number'
+            placeholder='No. of Units'
+            min='0'
+            value={technicalSetup.airConditioningUnits || ''}
+            onChange={e =>
+              setEventField('technicalSetup', {
+                ...technicalSetup,
+                airConditioningUnits: e.target.value
+              })
+            }
+            className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+          />
+        )}
+      </div>
+    </div>
+
+    {/* Additional Ventilation */}
+    <div className='w-full'>
+      <label className='mb-1 block font-medium text-gray-700'>Additional Ventilation</label>
+      <input
+        type='text'
+        placeholder='Describe ventilation'
+        value={technicalSetup.additionalVentilation || ''}
+        onChange={e =>
+          setEventField('technicalSetup', {
+            ...technicalSetup,
+            additionalVentilation: e.target.value
+          })
+        }
+        className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+      />
+    </div>
+
+    {/* Presentation Materials - Checkboxes in a row */}
+    <div className='lg:col-span-3 w-full'>
+      <label className='mb-1 block font-medium text-gray-700'>Presentation Materials</label>
+      <div className='flex flex-wrap gap-4'>
+        {[
+          'Projector & Screen',
+          'Whiteboard & Markers',
+          'Laser Pointer',
+          'Flip Charts',
+          'All of the above'
+        ].map(item => (
+          <label key={item} className='flex items-center gap-2 whitespace-nowrap'>
+            <input
+              type='checkbox'
+              checked={technicalSetup.presentationMaterials?.includes(item) || false}
+              onChange={e => {
+                const selected = technicalSetup.presentationMaterials || []
+                const updated = e.target.checked
+                  ? [...selected, item]
+                  : selected.filter(i => i !== item)
                 setEventField('technicalSetup', {
                   ...technicalSetup,
-                  audioVisual: e.target.value
+                  presentationMaterials: updated
                 })
-              }
-              className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-            >
-              <option value=''>Select</option>
-              <option>Projector</option>
-              <option>LED Display</option>
-              <option>Microphones</option>
-              <option>All of the above</option>
-            </select>
-          </div>
-
-          {/* Speaker System */}
-          <div>
-            <label className='mb-1 block font-medium text-gray-700'>
-              Speakers
-            </label>
-            <select
-              value={technicalSetup.speakerSystem}
-              onChange={e =>
-                setEventField('technicalSetup', {
-                  ...technicalSetup,
-                  speakerSystem: e.target.value
-                })
-              }
-              className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-            >
-              <option value=''>Select</option>
-              <option>Mono</option>
-              <option>Stereo</option>
-              <option>Surround</option>
-            </select>
-          </div>
-
-          {/* Air Conditioner & Ventilation */}
-          <div className='col-span-1 lg:col-span-2'>
-            <label className='mb-1 block font-medium text-gray-700'>
-              Air Conditioner & Ventilation
-            </label>
-            <div className='flex gap-4'>
-              <select
-                value={technicalSetup.airConditioningType}
-                onChange={e =>
-                  setEventField('technicalSetup', {
-                    ...technicalSetup,
-                    airConditioningType: e.target.value
-                  })
-                }
-                className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-              >
-                <option value=''>Select Type</option>
-                <option>Air Conditioner</option>
-                <option>Fans Only</option>
-                <option>Natural Ventilation</option>
-              </select>
-              <input
-                type='number'
-                placeholder='No. of Units'
-                min='0'
-                value={technicalSetup.airConditioningUnits || ''}
-                onChange={e =>
-                  setEventField('technicalSetup', {
-                    ...technicalSetup,
-                    airConditioningUnits: e.target.value
-                  })
-                }
-                className='w-1/2 rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-              />
-            </div>
-          </div>
-
-          {/* Presentation Materials */}
-          <div>
-            <label className='mb-1 block font-medium text-gray-700'>
-              Presentation Materials
-            </label>
-            <select
-              value={technicalSetup.presentationMaterials}
-              onChange={e =>
-                setEventField('technicalSetup', {
-                  ...technicalSetup,
-                  presentationMaterials: e.target.value
-                })
-              }
-              className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-            >
-              <option value=''>Select</option>
-              <option>Projector & Screen</option>
-              <option>Whiteboard & Markers</option>
-              <option>All of the above</option>
-            </select>
-          </div>
-
-          {/* Recording & Documentation */}
-          <div className='lg:col-span-2'>
-            <label className='mb-1 block font-medium text-gray-700'>
-              Recording & Documentation
-            </label>
-            <div className='grid grid-cols-2 gap-2'>
-              {[
-                'Photography',
-                'Videography',
-                'Professional Lighting',
-                'Live Stream'
-              ].map(option => (
-                <label key={option} className='flex items-center gap-2'>
-                  <input
-                    type='checkbox'
-                    checked={
-                      technicalSetup.recording?.includes(option) || false
-                    }
-                    onChange={e => {
-                      const selected = technicalSetup.recording || []
-                      const updated = e.target.checked
-                        ? [...selected, option]
-                        : selected.filter(item => item !== option)
-                      setEventField('technicalSetup', {
-                        ...technicalSetup,
-                        recording: updated
-                      })
-                    }}
-                    className='accent-gray-700'
-                  />
-                  {option}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Additional Needs */}
-          <div className='lg:col-span-3'>
-            <label className='mb-1 block font-medium text-gray-700'>
-              Additional Technical Requirements
-            </label>
-            <textarea
-              rows='3'
-              placeholder='Enter any additional setup required...'
-              value={technicalSetup.additional || ''}
-              onChange={e =>
-                setEventField('technicalSetup', {
-                  ...technicalSetup,
-                  additional: e.target.value
-                })
-              }
-              className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+              }}
+              className='accent-gray-700'
             />
-          </div>
-        </div>
-      </section>
+            {item}
+          </label>
+        ))}
+      </div>
+    </div>
+
+    {/* Other Additional Requirements */}
+    <div className='lg:col-span-3 w-full'>
+      <label className='mb-1 block font-medium text-gray-700'>Other Additional Requirements</label>
+      <textarea
+        rows='3'
+        placeholder='Specify other technical setup needs...'
+        value={technicalSetup.additional || ''}
+        onChange={e =>
+          setEventField('technicalSetup', {
+            ...technicalSetup,
+            additional: e.target.value
+          })
+        }
+        className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+      />
+    </div>
+  </div>
+</section>
+
     </form>
   )
 }

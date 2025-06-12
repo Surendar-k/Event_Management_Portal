@@ -5,7 +5,7 @@ const multer = require('multer');
 const path = require("path");
 const loginController = require("../controllers/loginController");
 const authMiddleware = require("../middleware/authMiddleware");
-const eventController = require("../controllers/eventController");
+const eventController = require('../controllers/eventController');
 
 
 const upload = multer({
@@ -28,8 +28,7 @@ router.get("/users", authMiddleware.isAuthenticated, loginController.getUsers);
 router.post("/users", authMiddleware.isAuthenticated, loginController.createUser);
 
 // ========== Event Routes ==========
-
-router.post("/events/:event_id/event-info", authMiddleware.isAuthenticated, eventController.saveEventInfo);
+router.post('/submit-event',authMiddleware.isAuthenticated, eventController.saveEventInfo);
 
 
 

@@ -1,76 +1,76 @@
+const db = require("../config/db");
+
 exports.saveEventInfo = async (req, res) => {
   try {
-    const { event_id } = req.params;
-    const data = req.body;
+    console.log("🛠️ Incoming body:", JSON.stringify(req.body));
 
+    const { eventinfo, agenda, financialplanning, foodandtransport, checklist } = req.body;
+    const faculty_id = req.session.user?.faculty_id;
+
+    if (!faculty_id) {
+      return res.status(401).json({ error: "Unauthorized: Faculty ID not found in session" });
+    }
+
+    // Generate a new event_id if not provided (UUID or timestamp can be used instead)
+    const event_id = req.body.event_id || Date.now(); // simple fallback unique ID
+
+    // Normalize values to avoid undefined
+    const safeEventInfo = JSON.stringify(eventinfo || {});
+    const safeAgenda = JSON.stringify(agenda || {});
+    const safeFinance = JSON.stringify(financialplanning || {});
+    const safeFood = JSON.stringify(foodandtransport || {});
+    const safeChecklist = JSON.stringify(checklist || []);
+
+    // Check if the event already exists
     const [existing] = await db.execute(
-      'SELECT id FROM event_info WHERE event_id = ?',
+      "SELECT event_id FROM event_info WHERE event_id = ?",
       [event_id]
     );
 
-    const normalize = val => (val === undefined || val === '' ? null : val);
-
-    const payload = [
-      normalize(data.title),
-      normalize(data.selected_college),
-      normalize(data.selected_department),
-      JSON.stringify(data.faculty_coordinators || []),
-      normalize(data.start_date),
-      normalize(data.end_date),
-      normalize(data.num_days),
-      normalize(data.event_nature),
-      normalize(data.other_nature),
-      normalize(data.venue_type),
-      normalize(data.venue),
-      normalize(data.audience),
-      normalize(data.scope),
-      normalize(data.funding_source),
-      normalize(data.other_funding),
-      JSON.stringify(data.speakers || []),
-      JSON.stringify(data.participants || {}),
-      JSON.stringify(data.guest_services || {}),
-      normalize(data.objectives),
-      normalize(data.outcomes),
-      normalize(data.brochure_path),
-      JSON.stringify(data.agenda_sessions || []),
-      JSON.stringify(data.financial_data || {}),
-      JSON.stringify(data.food_transport_data || {
-        meals: [],
-        refreshments: [],
-        travels: []
-      }),
-      JSON.stringify(data.checklist_data || [])
-    ];
-
     if (existing.length > 0) {
+      // Update existing
       await db.execute(
         `UPDATE event_info SET
-          title = ?, selected_college = ?, selected_department = ?, faculty_coordinators = ?,
-          start_date = ?, end_date = ?, num_days = ?, event_nature = ?, other_nature = ?,
-          venue_type = ?, venue = ?, audience = ?, scope = ?, funding_source = ?, other_funding = ?,
-          speakers = ?, participants = ?, guest_services = ?,
-          objectives = ?, outcomes = ?, brochure_path = ?, agenda_sessions = ?,
-          financial_data = ?, food_transport_data = ?, checklist_data = ?
+          faculty_id = ?,
+          eventinfo = ?,
+          agenda = ?,
+          financialplanning = ?,
+          foodandtransport = ?,
+          checklist = ?
          WHERE event_id = ?`,
-        [...payload, event_id]
+        [
+          faculty_id,
+          safeEventInfo,
+          safeAgenda,
+          safeFinance,
+          safeFood,
+          safeChecklist,
+          event_id,
+        ]
       );
     } else {
+      // Insert new
       await db.execute(
         `INSERT INTO event_info (
-          event_id, title, selected_college, selected_department, faculty_coordinators,
-          start_date, end_date, num_days, event_nature, other_nature,
-          venue_type, venue, audience, scope, funding_source, other_funding,
-          speakers, participants, guest_services,
-          objectives, outcomes, brochure_path, agenda_sessions,
-          financial_data, food_transport_data, checklist_data
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [event_id, ...payload]
+          event_id, faculty_id,
+          eventinfo, agenda, financialplanning,
+          foodandtransport, checklist
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          event_id,
+          faculty_id,
+          safeEventInfo,
+          safeAgenda,
+          safeFinance,
+          safeFood,
+          safeChecklist,
+        ]
       );
     }
 
-    res.json({ message: 'Full event info saved successfully.' });
+    res.json({ message: "Event data saved successfully", event_id });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Error saving event info:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };

@@ -42,21 +42,30 @@ app.post('/api/submit-event', async (req, res) => {
 
   const keys = [
     'selectedCollege',
-    'departments',
     'selectedDepartment',
     'title',
+    'selectedCoordinators',
+    'startDate',
+    'endDate',
+    'numDays',
     'eventNature',
     'otherNature',
-    'fundingSource',
-    'otherFunding',
     'venueType',
     'venue',
     'audience',
     'scope',
-    'startDate',
-    'endDate',
-    'numDays',
-    'selectedCoordinators'
+    'fundingSource',
+    'otherFunding',
+    'speakers',
+    'participants',
+    'guestServices',
+    'objectives',
+    'outcomes',
+    'brochure_path',
+    'agenda_sessions',
+    'financial_data',
+    'food_transport_data',
+    'checklist_data'
   ]
 
   const values = keys.map(key => {

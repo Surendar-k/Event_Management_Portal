@@ -68,7 +68,7 @@ app.post('/api/submit-event', async (req, res) => {
 
   try {
     const [result] = await db.execute(
-      `INSERT INTO events (${keys.join(',')}) VALUES (${keys
+      `INSERT INTO event_info (${keys.join(',')}) VALUES (${keys
         .map(() => '?')
         .join(',')})`,
       values

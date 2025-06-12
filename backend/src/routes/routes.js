@@ -6,7 +6,7 @@ const path = require("path");
 const loginController = require("../controllers/loginController");
 const authMiddleware = require("../middleware/authMiddleware");
 const eventController = require("../controllers/eventController");
-const agendaController = require("../controllers/agendaController"); // import agenda controller
+
 
 const upload = multer({
   dest: path.join(__dirname, "..", "uploads"),
@@ -28,9 +28,9 @@ router.get("/users", authMiddleware.isAuthenticated, loginController.getUsers);
 router.post("/users", authMiddleware.isAuthenticated, loginController.createUser);
 
 // ========== Event Routes ==========
-router.post("/events", authMiddleware.isAuthenticated, eventController.createEvent);
+
 router.post("/events/:event_id/event-info", authMiddleware.isAuthenticated, eventController.saveEventInfo);
-router.get("/events/:event_id", authMiddleware.isAuthenticated, eventController.getFullEvent);
+
 
 
 module.exports = router;

@@ -90,13 +90,7 @@ const CreateEvent = () => {
   }
 
   const renderActiveTab = () => {
-    if (!eventId && activeTab !== 'eventInfo') {
-      return (
-        <p className='text-center font-medium text-red-600'>
-          Please complete and save Event Info before accessing other sections.
-        </p>
-      )
-    }
+   
 
     switch (activeTab) {
       case 'eventInfo':
@@ -174,7 +168,7 @@ const CreateEvent = () => {
       >
         {tabs.map(({id, label, icon}) => {
           const isActive = activeTab === id
-          const isDisabled = id !== 'eventInfo' && !eventId
+          const isDisabled = false
           return (
             <button
               key={id}

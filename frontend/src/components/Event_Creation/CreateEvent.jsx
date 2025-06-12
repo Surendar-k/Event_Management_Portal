@@ -68,13 +68,13 @@ const CreateEvent = () => {
   }
 
   const handleSaveAll = async () => {
-    const eve = useFormStore.getState()
+    const data = useFormStore.getState()
     try {
       const response = await fetch('http://localhost:5000/api/submit-event', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         credentials: 'include',
-        body: JSON.stringify({eve})
+        body: JSON.stringify({data})
       })
 
       const result = await response.json()
@@ -90,8 +90,6 @@ const CreateEvent = () => {
   }
 
   const renderActiveTab = () => {
-   
-
     switch (activeTab) {
       case 'eventInfo':
         return (

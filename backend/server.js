@@ -1,11 +1,11 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
-const express = require('express')
-const cors = require('cors')
-const session = require('express-session')
-const routes = require('./src/routes/routes')
+import express, {json, urlencoded} from 'express'
+import cors from 'cors'
+import session from 'express-session'
+import initializeDB from './src/config/db'
+import routes from './src/routes/routes'
+
 const app = express()
 const PORT = 5000
-const db = require('./src/config/db')
 
 app.use(
   cors({
@@ -14,8 +14,8 @@ app.use(
   })
 )
 
-app.use(express.json())
-app.use(express.urlencoded({extended: true}))
+app.use(json())
+app.use(urlencoded({extended: true}))
 
 app.use(
   session({
@@ -32,49 +32,57 @@ app.use(
 )
 
 app.use('/uploads', express.static('uploads'))
-
 app.use('/api', routes)
 
+// Main route
 app.post('/api/submit-event', async (req, res) => {
   const {event} = req.body.data
   if (!event) return res.status(400).json({error: 'Missing event data'})
 
-  const keys = [
-    'faculty_id',
-    'title',
-    'selected_college',
-    'selected_department',
-    'faculty_coordinators',
-    'start_date',
-    'end_date',
-    'num_days',
-    'event_nature',
-    'other_nature',
-    'venue_type',
-    'venue',
-    'audience',
-    'scope',
-    'funding_source',
-    'other_funding',
-    'speakers',
-    'participants',
-    'guest_services'
-  ]
-
-  const values = keys.map(key => {
-     if (key === 'faculty_id') return req.session.faculty_id; 
-    const camelKey = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
-    const val = event[camelKey]
-    if (Array.isArray(val) || typeof val === 'object')
-      return JSON.stringify(val || null)
-    return val || null
-  })
+  const faculty_id = req.session.faculty_id
+  if (!faculty_id) return res.status(401).json({error: 'Unauthorized'})
 
   try {
+    const eventinfo = {
+      title: event.title,
+      selected_college: event.selectedCollege,
+      selected_department: event.selectedDepartment,
+      faculty_coordinators: event.selectedCoordinators,
+      start_date: event.startDate,
+      end_date: event.endDate,
+      num_days: event.numDays,
+      event_nature: event.eventNature,
+      other_nature: event.otherNature,
+      venue_type: event.venueType,
+      venue: event.venue,
+      audience: event.audience,
+      scope: event.scope,
+      funding_source: event.fundingSource,
+      other_funding: event.otherFunding,
+      speakers: event.speakers,
+      participants: event.participants,
+      guest_services: event.guestServices
+    }
+
+    const agenda = event.agendaSessions || []
+    const financialplanning = event.financialData || {}
+    const foodandtransport = event.foodTransportData || {}
+    const checklist = event.checklistData || []
+
+    const db = await initializeDB()
     const [result] = await db.execute(
-      `INSERT INTO event_info (${keys.join(',')}) VALUES (${keys.map(() => '?').join(',')})`,
-      values
+      `INSERT INTO event_info (faculty_id, eventinfo, agenda, financialplanning, foodandtransport, checklist)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        faculty_id,
+        JSON.stringify(eventinfo),
+        JSON.stringify(agenda),
+        JSON.stringify(financialplanning),
+        JSON.stringify(foodandtransport),
+        JSON.stringify(checklist)
+      ]
     )
+
     res.json({success: true, eventId: result.insertId})
   } catch (err) {
     console.error(err)
@@ -82,6 +90,9 @@ app.post('/api/submit-event', async (req, res) => {
   }
 })
 
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`)
+// Init DB and start server
+initializeDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`)
+  })
 })

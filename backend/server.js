@@ -38,6 +38,7 @@ app.use('/api', routes)
 app.post('/api/submit-event', async (req, res) => {
   const {event} = req.body
   if (!event) return res.status(400).json({error: 'Missing event data'})
+  console.log('Incoming body:', req.body)
 
   const keys = [
     'selectedCollege',

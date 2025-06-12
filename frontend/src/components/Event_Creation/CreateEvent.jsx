@@ -12,7 +12,7 @@ import Agenda from './Tabs_in_eventcreation/Agenda'
 import FinancialPlanning from './Tabs_in_eventcreation/FinancialPlanning'
 import FoodTravel from './Tabs_in_eventcreation/FoodTravel'
 import Checklist from './Tabs_in_eventcreation/Checklist'
-import eve from '../../store/formStore'
+import useFormStore from '../../store/formStore'
 
 const tabs = [
   {id: 'eventInfo', label: 'Event Info', icon: <FaInfoCircle size={18} />},
@@ -68,6 +68,7 @@ const CreateEvent = () => {
   }
 
   const handleSaveAll = async () => {
+    const eve = useFormStore.getState()
     try {
       const response = await fetch('http://localhost:5000/api/submit-event', {
         method: 'POST',

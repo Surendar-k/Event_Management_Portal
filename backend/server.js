@@ -38,27 +38,26 @@ app.use('/api', routes)
 app.post('/api/submit-event', async (req, res) => {
   const {event} = req.body.data
   if (!event) return res.status(400).json({error: 'Missing event data'})
-  console.log('Incoming body:', req.body)
 
   const keys = [
-    'selectedCollege',
-    'selectedDepartment',
     'title',
-    'selectedCoordinators',
-    'startDate',
-    'endDate',
-    'numDays',
-    'eventNature',
-    'otherNature',
-    'venueType',
+    'selected_college',
+    'selected_department',
+    'faculty_coordinators',
+    'start_date',
+    'end_date',
+    'num_days',
+    'event_nature',
+    'other_nature',
+    'venue_type',
     'venue',
     'audience',
     'scope',
-    'fundingSource',
-    'otherFunding',
+    'funding_source',
+    'other_funding',
     'speakers',
     'participants',
-    'guestServices',
+    'guest_services',
     'objectives',
     'outcomes',
     'brochure_path',
@@ -69,7 +68,8 @@ app.post('/api/submit-event', async (req, res) => {
   ]
 
   const values = keys.map(key => {
-    const val = event[key]
+    const camelKey = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
+    const val = event[camelKey]
     if (Array.isArray(val) || typeof val === 'object')
       return JSON.stringify(val || null)
     return val || null
@@ -77,9 +77,7 @@ app.post('/api/submit-event', async (req, res) => {
 
   try {
     const [result] = await db.execute(
-      `INSERT INTO event_info (${keys.join(',')}) VALUES (${keys
-        .map(() => '?')
-        .join(',')})`,
+      `INSERT INTO event_info (${keys.join(',')}) VALUES (${keys.map(() => '?').join(',')})`,
       values
     )
     res.json({success: true, eventId: result.insertId})

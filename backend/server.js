@@ -57,14 +57,7 @@ app.post('/api/submit-event', async (req, res) => {
     'other_funding',
     'speakers',
     'participants',
-    'guest_services',
-    'objectives',
-    'outcomes',
-    'brochure_path',
-    'agenda_sessions',
-    'financial_data',
-    'food_transport_data',
-    'checklist_data'
+    'guest_services'
   ]
 
   const values = keys.map(key => {

@@ -1,11 +1,11 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
-const express = require('express')
-const cors = require('cors')
-const session = require('express-session')
-const routes = require('./src/routes/routes')
+import express, {json, urlencoded} from 'express'
+import cors from 'cors'
+import session from 'express-session'
+import initializeDB from './src/config/db.js'
+import routes from './src/routes/routes.js'
+
 const app = express()
 const PORT = 5000
-const db = require('./src/config/db')
 
 app.use(
   cors({
@@ -14,8 +14,8 @@ app.use(
   })
 )
 
-app.use(express.json())
-app.use(express.urlencoded({extended: true}))
+app.use(json())
+app.use(urlencoded({extended: true}))
 
 app.use(
   session({
@@ -32,9 +32,9 @@ app.use(
 )
 
 app.use('/uploads', express.static('uploads'))
-
 app.use('/api', routes)
 
+// Main route
 app.post('/api/submit-event', async (req, res) => {
   const {event} = req.body.data
   if (!event) return res.status(400).json({error: 'Missing event data'})
@@ -78,9 +78,18 @@ console.log("Final values to insert:", values);
 
   try {
     const [result] = await db.execute(
-      `INSERT INTO event_info (${keys.join(',')}) VALUES (${keys.map(() => '?').join(',')})`,
-      values
+      `INSERT INTO event_info (faculty_id, eventinfo, agenda, financialplanning, foodandtransport, checklist)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        faculty_id,
+        JSON.stringify(eventinfo),
+        JSON.stringify(agenda),
+        JSON.stringify(financialplanning),
+        JSON.stringify(foodandtransport),
+        JSON.stringify(checklist)
+      ]
     )
+
     res.json({success: true, eventId: result.insertId})
   } catch (err) {
     console.error(err)
@@ -88,6 +97,9 @@ console.log("Final values to insert:", values);
   }
 })
 
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`)
+// Init DB and start server
+initializeDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`)
+  })
 })

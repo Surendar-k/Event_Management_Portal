@@ -1,111 +1,124 @@
-import {useEffect} from 'react'
-import useFormStore from '../../../store/formStore'
+import { useEffect } from 'react';
 
 const colleges = {
   'College A': ['Dept A1', 'Dept A2'],
   'College B': ['Dept B1', 'Dept B2']
-}
+};
+
 const coordinators = [
   'Dr. S. Karthik',
   'Prof. N. Priya',
   'Dr. R. Balaji',
   'Ms. K. Kavitha',
   'Mr. Arun Raj'
-]
+];
+
 const EventInfo = ({
   loginName,
-  // setEventId,
   startDate,
   endDate,
   setStartDate,
-  setEndDate
+  setEndDate,
+  data = {},
+  onChange
 }) => {
-  const event = useFormStore(s => s.event)
-  const {
-    setEventField,
-    speakers,
-    selectedCoordinators,
-    technicalSetup,
-    participants
-  } = event
-  useEffect(() => {
-    setEventField('departments', colleges[event.selectedCollege] || [])
-  }, [event.selectedCollege, setEventField])
+  const setField = (key, value) => onChange({ ...data, [key]: value });
 
-useEffect(() => {
+  const updateNested = (key, subKey, value) => {
+    onChange({
+      ...data,
+      [key]: {
+        ...data[key],
+        [subKey]: value
+      }
+    });
+  };
+
+  useEffect(() => {
+    setField('departments', colleges[data.selectedCollege] || []);
+  }, [data.selectedCollege]);
+
+ useEffect(() => {
+  if (startDate !== data.startDate) {
+    setField('startDate', startDate);
+  }
+  if (endDate !== data.endDate) {
+    setField('endDate', endDate);
+  }
+
   if (startDate && endDate) {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    if (end >= start) {
-      const diffTime = end - start;
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // include both start and end
-      setEventField('numDays', diffDays);
-    } else {
-      setEventField('numDays', 0); // or show validation message
-    }
+    const diffDays = end >= start ? Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1 : 0;
+    setField('numDays', diffDays);
   }
-}, [startDate, endDate, setEventField]);
+}, [startDate, endDate]);
+
 
 useEffect(() => {
-  if (event.startTime && event.endTime) {
-    const [startH, startM] = event.startTime.split(':').map(Number);
-    const [endH, endM] = event.endTime.split(':').map(Number);
-    const start = startH * 60 + startM;
-    const end = endH * 60 + endM;
-    const diff = end - start;
-    const hours = diff > 0 ? (diff / 60).toFixed(2) : 0;
-    setEventField('numHours', hours);
-  }
-}, [event.startTime, event.endTime, setEventField]);
-
+    if (data.startTime && data.endTime) {
+      const [startH, startM] = data.startTime.split(':').map(Number);
+      const [endH, endM] = data.endTime.split(':').map(Number);
+      const diff = (endH * 60 + endM) - (startH * 60 + startM);
+      const hours = diff > 0 ? (diff / 60).toFixed(2) : 0;
+      setField('numHours', hours);
+    }
+  }, [data.startTime, data.endTime]);
 
   const handleSpeakerChange = (index, field, value) => {
-    event.updateSpeaker(index, field, value)
-  }
+    const updated = [...(data.speakers || [])];
+    updated[index][field] = value;
+    setField('speakers', updated);
+  };
 
   const addSpeaker = () => {
-    event.setSpeakers([
-      ...speakers,
-      {name: '', designation: '', affiliation: '', contact: '', email: ''}
-    ])
-  }
+    const updated = [...(data.speakers || []), { name: '', designation: '', affiliation: '', contact: '', email: '' }];
+    setField('speakers', updated);
+  };
 
-  const removeSpeaker = index => {
-    if (speakers.length === 1) return
-    const updated = speakers.filter((_, i) => i !== index)
-    event.setSpeakers(updated)
-  }
+  const removeSpeaker = (index) => {
+    const updated = [...(data.speakers || [])];
+    if (updated.length > 1) {
+      updated.splice(index, 1);
+      setField('speakers', updated);
+    }
+  };
 
-  const handleChange = e => {
-    const value = e.target.value
-
+  const handleChange = (e) => {
+    const value = e.target.value;
     if (value.trim()) {
       const filtered = coordinators.filter(
-        name =>
-          name.toLowerCase().includes(value.toLowerCase()) &&
-          !selectedCoordinators.includes(name)
-      )
-      setEventField('filteredSuggestions', filtered)
-      setEventField('showSuggestions', true)
+        name => name.toLowerCase().includes(value.toLowerCase()) &&
+          !(data.selectedCoordinators || []).includes(name)
+      );
+      onChange({ ...data, filteredSuggestions: filtered, showSuggestions: true });
     } else {
-      setEventField('showSuggestions', false)
+      onChange({ ...data, showSuggestions: false });
     }
-  }
+  };
 
-  const handleSelect = name => {
-    if (!selectedCoordinators.includes(name)) {
-      setEventField('selectedCoordinators', [...selectedCoordinators, name])
-    }
+  const handleSelect = (name) => {
+  const updated = [...(data.selectedCoordinators || []), name];
 
-    setEventField('showSuggestions', false)
-  }
+  onChange({
+    ...data,
+    selectedCoordinators: updated,
+    filteredSuggestions: [],
+    showSuggestions: false
+  });
+};
 
-  const handleRemove = nameToRemove => {
-    setEventField(
-      'selectedCoordinators',
-      selectedCoordinators.filter(name => name !== nameToRemove)
-    )
-  }
+
+ const handleRemove = (nameToRemove) => {
+  const updated = (data.selectedCoordinators || []).filter(name => name !== nameToRemove);
+
+  onChange({
+    ...data,
+    selectedCoordinators: updated
+  });
+};
+
+ 
   return (
     <form className='max-w-8xl mx-auto space-y-12 rounded-xl px-6 py-10'>
       {/* Event Details Section */}
@@ -119,8 +132,8 @@ useEffect(() => {
     <input
        type='text'
   placeholder='Title of the Event'
-  value={event.title || ''}
-      onChange={e => setEventField('title', e.target.value)}
+  value={data.title || ''}
+      onChange={e => setField('title', e.target.value)}
       className='col-span-1 rounded border border-gray-400 p-2 text-gray-700 shadow-sm md:col-span-3'
     />
 
@@ -128,8 +141,8 @@ useEffect(() => {
     <div>
       <label className='block mb-1 font-medium text-gray-700'>Organizing Institution</label>
       <select
-        value={event.selectedCollege}
-        onChange={e => setEventField('selectedCollege', e.target.value)}
+        value={data.selectedCollege}
+        onChange={e => setField('selectedCollege', e.target.value)}
         className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
       >
         <option value=''>Select College</option>
@@ -139,27 +152,28 @@ useEffect(() => {
       </select>
     </div>
 
-    {/* Organizing Department */}
-    <div>
-      <label className='block mb-1 font-medium text-gray-700'>Organizing Department</label>
-      <select
-        value={event.selectedDepartment}
-        onChange={e => setEventField('selectedDepartment', e.target.value)}
-        className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-      >
-        <option value=''>Select Dept</option>
-        {event.departments.map(d => (
-          <option key={d}>{d}</option>
-        ))}
-      </select>
-    </div>
+   {/* Organizing Department */}
+<div>
+  <label className='block mb-1 font-medium text-gray-700'>Organizing Department</label>
+  <select
+    value={data.selectedDepartment}
+    onChange={e => setField('selectedDepartment', e.target.value)}
+    className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+  >
+    <option value=''>Select Dept</option>
+    {(data.departments || []).map(d => (
+      <option key={d}>{d}</option>
+    ))}
+  </select>
+</div>
+
 
     {/* Scope */}
     <div>
       <label className='block mb-1 font-medium text-gray-700'>Scope</label>
       <select
-        value={event.scope}
-        onChange={e => setEventField('scope', e.target.value)}
+        value={data.scope}
+        onChange={e => setField('scope', e.target.value)}
         className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
       >
         <option value=''>Select</option>
@@ -174,8 +188,8 @@ useEffect(() => {
     <div>
       <label className='block mb-1 font-medium text-gray-700'>Venue Mode</label>
       <select
-    value={event.venueType}
-    onChange={e => setEventField('venueType', e.target.value)}
+    value={data.venueType}
+    onChange={e => setField('venueType', e.target.value)}
     className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
   >
     <option value=''>Select</option>
@@ -187,8 +201,8 @@ useEffect(() => {
     <div>
       <label className='block mb-1 font-medium text-gray-700'>Venue Type</label>
       <select
-        value={event.venueCategory}
-        onChange={e => setEventField('venueCategory', e.target.value)}
+        value={data.venueCategory}
+        onChange={e => setField('venueCategory', e.target.value)}
         className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
       >
         <option value=''>Select</option>
@@ -200,8 +214,8 @@ useEffect(() => {
     <div>
       <label className='block mb-1 font-medium text-gray-700'>Venue</label>
       <select
-        value={event.venue}
-        onChange={e => setEventField('venue', e.target.value)}
+        value={data.venue}
+        onChange={e => setField('venue', e.target.value)}
         className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
       >
         <option value=''>Select Venue</option>
@@ -213,31 +227,36 @@ useEffect(() => {
     {/* 4. Start Date, End Date, No. of Days */}
     <div>
       <label className='block mb-1 font-medium text-gray-700'>Start Date</label>
-      <input
-        type='date'
-        value={startDate || ''}
-        min={startDate || ''}
-        onChange={e => setStartDate(e.target.value)}
-        className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-      />
+     <input
+  type='date'
+  value={data.startDate || ''}
+  onChange={e => {
+    setStartDate(e.target.value);
+    setField('startDate', e.target.value);
+  }}
+  className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+/>
     </div>
 
     <div>
       <label className='block mb-1 font-medium text-gray-700'>End Date</label>
       <input
-        type='date'
-        value={endDate}
-        max={endDate}
-        onChange={e => setEndDate(e.target.value)}
-        className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-      />
+  type='date'
+  value={data.endDate || ''}
+  onChange={e => {
+    setEndDate(e.target.value);
+    setField('endDate', e.target.value);
+  }}
+  className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+/>
     </div>
 
     <div>
       <label className='block mb-1 font-medium text-gray-700'>No. of Days</label>
       <input
         type='number'
-        value={event.numDays}
+        value={data.numDays}
+         onChange={e => setField('numDays', e.target.value)}
         readOnly
         className='w-full rounded border border-gray-400 bg-gray-200 p-2 text-gray-800'
       />
@@ -247,9 +266,9 @@ useEffect(() => {
     <div>
       <label className='block mb-1 font-medium text-gray-700'>Start Time</label>
       <input
-        type='time'
-        value={event.startTime || ''}
-        onChange={e => setEventField('startTime', e.target.value)}
+         type='time'
+            value={data.startTime || ''}
+            onChange={e => setField('startTime', e.target.value)}
         className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
       />
     </div>
@@ -257,9 +276,9 @@ useEffect(() => {
     <div>
       <label className='block mb-1 font-medium text-gray-700'>End Time</label>
       <input
-        type='time'
-        value={event.endTime || ''}
-        onChange={e => setEventField('endTime', e.target.value)}
+         type='time'
+            value={data.endTime || ''}
+            onChange={e => setField('endTime', e.target.value)}
         className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
       />
     </div>
@@ -268,7 +287,7 @@ useEffect(() => {
   <label className='block mb-1 font-medium text-gray-700'>No. of Hours</label>
   <input
     type='number'
-    value={event.numHours || ''}
+            value={data.numHours || ''}
     readOnly
     className='w-full rounded border border-gray-400 bg-gray-200 p-2 text-gray-800'
   />
@@ -279,8 +298,8 @@ useEffect(() => {
     <div>
       <label className='block mb-1 font-medium text-gray-700'>Funding Source</label>
       <select
-        value={event.fundingSource}
-        onChange={e => setEventField('fundingSource', e.target.value)}
+        value={data.fundingSource}
+        onChange={e => setField('fundingSource', e.target.value)}
         className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
       >
         <option value=''>Select</option>
@@ -288,11 +307,11 @@ useEffect(() => {
         <option>Funding Agency</option>
         <option>Others</option>
       </select>
-      {event.fundingSource === 'Others' && (
+      {data.fundingSource === 'Others' && (
         <input
           type='text'
-          value={event.otherFunding}
-          onChange={e => setEventField('otherFunding', e.target.value)}
+          value={data.otherFunding}
+          onChange={e => setField('otherFunding', e.target.value)}
           placeholder='Specify Funding'
           className='mt-2 w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
         />
@@ -310,65 +329,62 @@ useEffect(() => {
       />
     </div>
 
-    {/* Faculty Coordinators */}
-   <div className='relative'>
-  <label className='block mb-1 font-medium text-gray-700'>Faculty Coordinators</label>
-
-  <input
-    type='text'
-    onChange={handleChange}
-    className='w-full rounded border border-gray-400 p-2 text-gray-800'
-    placeholder='Type a name...'
-  />
-
-  {event.showSuggestions && (
-    <ul className='absolute z-10 mt-1 max-h-40 w-full overflow-y-auto rounded border border-gray-300 bg-white shadow'>
-      {event.filteredSuggestions.length > 0 ? (
-        event.filteredSuggestions.map((name, idx) => (
-          <li
-            key={idx}
-            onClick={() => handleSelect(name)}
-            className='cursor-pointer p-2 hover:bg-gray-100'
-          >
-            {name}
-          </li>
-        ))
-      ) : (
-        <li className='p-2 text-gray-500'>No matches found</li>
-      )}
-    </ul>
-  )}
-
-  {/* Move this section BELOW the input + suggestions */}
-  <div className='mt-2 flex flex-wrap gap-2'>
-    {selectedCoordinators.map((name, idx) => (
-      <span
-        key={idx}
-        className='flex items-center gap-2 rounded-full bg-blue-100 px-3 py-1 text-blue-800'
+ {/* Faculty Coordinators */}
+      <div className='relative'>
+        <label className='block mb-1 font-medium text-gray-700'>Faculty Coordinators</label>
+        <input
+          type='text'
+          onChange={handleChange}
+          className='w-full rounded border border-gray-400 p-2 text-gray-800'
+          placeholder='Type a name...'
+        />
+        {data.showSuggestions && (
+          <ul className='absolute z-10 mt-1 max-h-40 w-full overflow-y-auto rounded border border-gray-300 bg-white shadow'>
+            {data.filteredSuggestions && data.filteredSuggestions.length > 0 ? (
+              data.filteredSuggestions.map((name, idx) => (
+                <li
+                  key={idx}
+                  onClick={() => handleSelect(name)}
+                  className='cursor-pointer p-2 hover:bg-gray-100'
+                >
+                  {name}
+                </li>
+              ))
+            ) : (
+              <li className='p-2 text-gray-500'>No matches found</li>
+            )}
+          </ul>
+        )}
+       <div className='mt-2 flex flex-wrap gap-2'>
+  {(data.selectedCoordinators || []).map((name, idx) => (
+    <span
+      key={idx}
+      className='flex items-center gap-2 rounded-full bg-blue-100 px-3 py-1 text-blue-800'
+    >
+      {name}
+      <button
+        type='button'
+        onClick={() => handleRemove(name)}
+        className='font-bold text-red-500 hover:text-red-700'
       >
-        {name}
-        <button
-          type='button'
-          onClick={() => handleRemove(name)}
-          className='font-bold text-red-500 hover:text-red-700'
-        >
-          ×
-        </button>
-      </span>
-    ))}
-  </div>
+        ×
+      </button>
+    </span>
+  ))}
 </div>
+
+      </div>
 
   </div>
 </section>
 
 
-      {/* Speaker Section */}
+       {/* Speaker Section */}
       <section className='rounded-lg border border-gray-400 bg-white p-6 shadow-md'>
         <h2 className='mb-4 border-b border-gray-400 pb-2 text-2xl font-bold text-gray-800'>
           Speaker Details
         </h2>
-        {speakers.map((speaker, index) => (
+        {(data.speakers || []).map((speaker, index) => (
           <div
             key={index}
             className='mb-6 rounded border bg-gray-200 p-4 shadow-sm'
@@ -396,7 +412,7 @@ useEffect(() => {
                 )
               )}
             </div>
-            {speakers.length > 1 && (
+            {(data.speakers || []).length > 1 && (
               <button
                 type='button'
                 onClick={() => removeSpeaker(index)}
@@ -416,296 +432,224 @@ useEffect(() => {
         </button>
       </section>
 
-     {/* Estimated Participation Section */}
-<section className='rounded-lg border border-gray-400 bg-white p-6 shadow-md'>
-  <h2 className='mb-4 border-b border-gray-400 pb-2 text-2xl font-bold text-gray-800'>
-    Estimated Participation
-  </h2>
+{/* Estimated Participation Section */}
+      <section className='rounded-lg border border-gray-400 bg-white p-6 shadow-md'>
+        <h2 className='mb-4 border-b border-gray-400 pb-2 text-2xl font-bold text-gray-800'>
+          Estimated Participation
+        </h2>
 
-  {/* Audience Dropdown */}
-  <div className='mb-6'>
-    <label className='mb-1 block font-medium text-gray-700'>
-      Intended Audience
-    </label>
-    <select
-      value={event.audience}
-      onChange={e => setEventField('audience', e.target.value)}
-      className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-    >
-      <option value=''>Select</option>
-      <option value='Students'>Students</option>
-      <option value='Faculty'>Faculty</option>
-      <option value='Both'>Both</option>
-    </select>
-  </div>
-
-  {/* Input Fields */}
-  <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-    {(event.audience === 'Students' || event.audience === 'Both') && (
-      <input
-        type='number'
-        placeholder='Student Count'
-        value={participants.students}
-        onChange={e =>
-          setEventField('participants', {
-            ...participants,
-            students: Number(e.target.value)
-          })
-        }
-        className='rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-      />
-    )}
-
-    {(event.audience === 'Faculty' || event.audience === 'Both') && (
-      <input
-        type='number'
-        placeholder='Faculty Count'
-        value={participants.faculty}
-        onChange={e =>
-          setEventField('participants', {
-            ...participants,
-            faculty: Number(e.target.value)
-          })
-        }
-        className='rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-      />
-    )}
-
-    <input
-      type='number'
-      placeholder='Coordinator Count'
-      value={participants.coordinators}
-      onChange={e =>
-        setEventField('participants', {
-          ...participants,
-          coordinators: Number(e.target.value)
-        })
-      }
-      className='rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-    />
-
-    {/* Total Count - Read-only */}
-    <input
-      type='number'
-      placeholder='Total Count'
-      value={
-        (parseInt(participants.students) || 0) +
-        (parseInt(participants.faculty) || 0) +
-        (parseInt(participants.coordinators) || 0)
-      }
-      readOnly
-      className='rounded border border-gray-400 p-2 text-gray-700 shadow-sm bg-gray-100 cursor-not-allowed'
-    />
-  </div>
-</section>
-
-
-      {/* Guest Services Section */}
-      {event.venueType !== 'Online' && (
-  <section className='rounded-lg border border-gray-400 bg-white p-6 shadow-md mt-6'>
-    <h2 className='mb-4 border-b border-gray-400 pb-2 text-2xl font-bold text-gray-800'>
-      Guest Services
-    </h2>
-    <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
-      {[
-        { key: 'accommodation', label: 'Guest Accommodation' },
-        { key: 'transportation', label: 'Guest Transportation' },
-        { key: 'dining', label: 'Dining Arrangements' }
-      ].map(({ key, label }) => (
-        <div key={key}>
-          <label className='mb-1 block font-medium text-gray-700'>
-            {label}
-          </label>
+        {/* Audience Dropdown */}
+        <div className='mb-6'>
+          <label className='mb-1 block font-medium text-gray-700'>Intended Audience</label>
           <select
-            value={event.guestServices[key]}
-            onChange={e =>
-              setEventField('guestServices', {
-                ...event.guestServices,
-                [key]: e.target.value
-              })
-            }
+            value={data.audience}
+            onChange={e => setField('audience', e.target.value)}
             className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
           >
             <option value=''>Select</option>
-            <option>Yes</option>
-            <option>No</option>
+            <option value='Students'>Students</option>
+            <option value='Faculty'>Faculty</option>
+            <option value='Both'>Both</option>
           </select>
         </div>
-      ))}
-    </div>
-  </section>
-)}
-  <section className='rounded-lg border border-gray-400 bg-white p-6 shadow-md'>
-  <h2 className='mb-4 border-b border-gray-400 pb-2 text-2xl font-bold text-gray-800'>
-    Technical Setup
-  </h2>
 
-  <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
-    {/* Audio-Visual Setup */}
-    <div className='w-full'>
-      <label className='mb-1 block font-medium text-gray-700'>Audio-Visual Setup</label>
-      <select
-        value={technicalSetup.audioVisual || ''}
-        onChange={e =>
-          setEventField('technicalSetup', {
-            ...technicalSetup,
-            audioVisual: e.target.value
-          })
-        }
-        className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-      >
-        <option value=''>Select</option>
-        <option>Projector</option>
-        <option>LED Display</option>
-        <option>Microphones</option>
-        <option>All of the above</option>
-      </select>
-    </div>
+        {/* Input Fields */}
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+          {(data.audience === 'Students' || data.audience === 'Both') && (
+            <input
+              type='number'
+              placeholder='Student Count'
+              value={data.participants?.students || ''}
+              onChange={e => updateNested('participants', 'students', Number(e.target.value))}
+              className='rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+            />
+          )}
 
-    {/* Microphone Type */}
-    <div className='w-full'>
-      <label className='mb-1 block font-medium text-gray-700'>Microphone Type</label>
-      <select
-        value={technicalSetup.microphoneType || ''}
-        onChange={e =>
-          setEventField('technicalSetup', {
-            ...technicalSetup,
-            microphoneType: e.target.value
-          })
-        }
-        className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-      >
-        <option value=''>Select</option>
-        <option>Handheld</option>
-        <option>Collar</option>
-        <option>Both</option>
-        <option>Not Required</option>
-      </select>
-    </div>
+          {(data.audience === 'Faculty' || data.audience === 'Both') && (
+            <input
+              type='number'
+              placeholder='Faculty Count'
+              value={data.participants?.faculty || ''}
+              onChange={e => updateNested('participants', 'faculty', Number(e.target.value))}
+              className='rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+            />
+          )}
 
-    {/* Speakers Dropdown */}
-    <div className='w-full'>
-      <label className='mb-1 block font-medium text-gray-700'>Speakers</label>
-      <select
-        value={technicalSetup.speakers || ''}
-        onChange={e =>
-          setEventField('technicalSetup', {
-            ...technicalSetup,
-            speakers: e.target.value
-          })
-        }
-        className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-      >
-        <option value=''>Select</option>
-        <option>Yes</option>
-        <option>No</option>
-      </select>
-    </div>
-
-    {/* Air Conditioning Dropdown + Units */}
-    <div className='lg:col-span-2 w-full'>
-      <label className='mb-1 block font-medium text-gray-700'>Air Conditioning</label>
-      <div className='flex gap-4'>
-        <select
-          value={technicalSetup.airConditioning || ''}
-          onChange={e =>
-            setEventField('technicalSetup', {
-              ...technicalSetup,
-              airConditioning: e.target.value
-            })
-          }
-          className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-        >
-          <option value=''>Select</option>
-          <option>Yes</option>
-          <option>No</option>
-        </select>
-        {technicalSetup.airConditioning === 'Yes' && (
           <input
             type='number'
-            placeholder='No. of Units'
-            min='0'
-            value={technicalSetup.airConditioningUnits || ''}
-            onChange={e =>
-              setEventField('technicalSetup', {
-                ...technicalSetup,
-                airConditioningUnits: e.target.value
-              })
-            }
-            className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+            placeholder='Coordinator Count'
+            value={data.participants?.coordinators || ''}
+            onChange={e => updateNested('participants', 'coordinators', Number(e.target.value))}
+            className='rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
           />
-        )}
-      </div>
-    </div>
 
-    {/* Additional Ventilation */}
-    <div className='w-full'>
-      <label className='mb-1 block font-medium text-gray-700'>Additional Ventilation</label>
-      <input
-        type='text'
-        placeholder='Describe ventilation'
-        value={technicalSetup.additionalVentilation || ''}
-        onChange={e =>
-          setEventField('technicalSetup', {
-            ...technicalSetup,
-            additionalVentilation: e.target.value
-          })
-        }
-        className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-      />
-    </div>
+          {/* Total Count - Read-only */}
+          <input
+            type='number'
+            placeholder='Total Count'
+            value={
+              (parseInt(data.participants?.students) || 0) +
+              (parseInt(data.participants?.faculty) || 0) +
+              (parseInt(data.participants?.coordinators) || 0)
+            }
+            readOnly
+            className='rounded border border-gray-400 p-2 text-gray-700 shadow-sm bg-gray-100 cursor-not-allowed'
+          />
+        </div>
+      </section>
 
-    {/* Presentation Materials - Checkboxes in a row */}
-    <div className='lg:col-span-3 w-full'>
-      <label className='mb-1 block font-medium text-gray-700'>Presentation Materials</label>
-      <div className='flex flex-wrap gap-4'>
-        {[
-          'Projector & Screen',
-          'Whiteboard & Markers',
-          'Laser Pointer',
-          'Flip Charts',
-          'All of the above'
-        ].map(item => (
-          <label key={item} className='flex items-center gap-2 whitespace-nowrap'>
+     {data.venueType !== 'Online' && (
+        <section className='rounded-lg border border-gray-400 bg-white p-6 shadow-md mt-6'>
+          <h2 className='mb-4 border-b border-gray-400 pb-2 text-2xl font-bold text-gray-800'>
+            Guest Services
+          </h2>
+          <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
+            {[
+              { key: 'accommodation', label: 'Guest Accommodation' },
+              { key: 'transportation', label: 'Guest Transportation' },
+              { key: 'dining', label: 'Dining Arrangements' }
+            ].map(({ key, label }) => (
+              <div key={key}>
+                <label className='mb-1 block font-medium text-gray-700'>{label}</label>
+                <select
+                  value={data.guestServices?.[key] || ''}
+                  onChange={e => updateNested('guestServices', key, e.target.value)}
+                  className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+                >
+                  <option value=''>Select</option>
+                  <option>Yes</option>
+                  <option>No</option>
+                </select>
+              </div>
+            ))}
+          </div>
+        </section>
+)}
+ {/* Technical Setup Section */}
+      <section className='rounded-lg border border-gray-400 bg-white p-6 shadow-md'>
+        <h2 className='mb-4 border-b border-gray-400 pb-2 text-2xl font-bold text-gray-800'>
+          Technical Setup
+        </h2>
+        <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
+          <div className='w-full'>
+            <label className='mb-1 block font-medium text-gray-700'>Audio-Visual Setup</label>
+            <select
+              value={data.technicalSetup?.audioVisual || ''}
+              onChange={e => updateNested('technicalSetup', 'audioVisual', e.target.value)}
+              className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+            >
+              <option value=''>Select</option>
+              <option>Projector</option>
+              <option>LED Display</option>
+              <option>All of the above</option>
+            </select>
+          </div>
+
+          <div className='w-full'>
+            <label className='mb-1 block font-medium text-gray-700'>Microphone Type</label>
+            <select
+              value={data.technicalSetup?.microphoneType || ''}
+              onChange={e => updateNested('technicalSetup', 'microphoneType', e.target.value)}
+              className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+            >
+              <option value=''>Select</option>
+              <option>Handheld</option>
+              <option>Collar</option>
+              <option>Both</option>
+              <option>Not Required</option>
+            </select>
+          </div>
+
+          <div className='w-full'>
+            <label className='mb-1 block font-medium text-gray-700'>Speakers</label>
+            <select
+              value={data.technicalSetup?.speakers || ''}
+              onChange={e => updateNested('technicalSetup', 'speakers', e.target.value)}
+              className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+            >
+              <option value=''>Select</option>
+              <option>Yes</option>
+              <option>No</option>
+            </select>
+          </div>
+
+          <div className='lg:col-span-2 w-full'>
+            <label className='mb-1 block font-medium text-gray-700'>Air Conditioning</label>
+            <div className='flex gap-4'>
+              <select
+                value={data.technicalSetup?.airConditioning || ''}
+                onChange={e => updateNested('technicalSetup', 'airConditioning', e.target.value)}
+                className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+              >
+                <option value=''>Select</option>
+                <option>Yes</option>
+                <option>No</option>
+              </select>
+              {data.technicalSetup?.airConditioning === 'Yes' && (
+                <input
+                  type='number'
+                  placeholder='No. of Units'
+                  min='0'
+                  value={data.technicalSetup?.airConditioningUnits || ''}
+                  onChange={e => updateNested('technicalSetup', 'airConditioningUnits', e.target.value)}
+                  className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+                />
+              )}
+            </div>
+          </div>
+
+          <div className='w-full'>
+            <label className='mb-1 block font-medium text-gray-700'>Additional Ventilation</label>
             <input
-              type='checkbox'
-              checked={technicalSetup.presentationMaterials?.includes(item) || false}
-              onChange={e => {
-                const selected = technicalSetup.presentationMaterials || []
-                const updated = e.target.checked
-                  ? [...selected, item]
-                  : selected.filter(i => i !== item)
-                setEventField('technicalSetup', {
-                  ...technicalSetup,
-                  presentationMaterials: updated
-                })
-              }}
-              className='accent-gray-700'
+              type='text'
+              placeholder='Describe ventilation'
+              value={data.technicalSetup?.additionalVentilation || ''}
+              onChange={e => updateNested('technicalSetup', 'additionalVentilation', e.target.value)}
+              className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
             />
-            {item}
-          </label>
-        ))}
-      </div>
-    </div>
+          </div>
 
-    {/* Other Additional Requirements */}
-    <div className='lg:col-span-3 w-full'>
-      <label className='mb-1 block font-medium text-gray-700'>Other Additional Requirements</label>
-      <textarea
-        rows='3'
-        placeholder='Specify other technical setup needs...'
-        value={technicalSetup.additional || ''}
-        onChange={e =>
-          setEventField('technicalSetup', {
-            ...technicalSetup,
-            additional: e.target.value
-          })
-        }
-        className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-      />
-    </div>
-  </div>
-</section>
+          <div className='lg:col-span-3 w-full'>
+            <label className='mb-1 block font-medium text-gray-700'>Presentation Materials</label>
+            <div className='flex flex-wrap gap-4'>
+              {[
+                'Projector & Screen',
+                'Whiteboard & Markers',
+                'Laser Pointer',
+                'Flip Charts',
+                'All of the above'
+              ].map(item => (
+                <label key={item} className='flex items-center gap-2 whitespace-nowrap'>
+                  <input
+                    type='checkbox'
+                    checked={data.technicalSetup?.presentationMaterials?.includes(item) || false}
+                    onChange={e => {
+                      const selected = data.technicalSetup?.presentationMaterials || [];
+                      const updated = e.target.checked
+                        ? [...selected, item]
+                        : selected.filter(i => i !== item);
+                      updateNested('technicalSetup', 'presentationMaterials', updated);
+                    }}
+                    className='accent-gray-700'
+                  />
+                  {item}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className='lg:col-span-3 w-full'>
+            <label className='mb-1 block font-medium text-gray-700'>Other Additional Requirements</label>
+            <textarea
+              rows='3'
+              placeholder='Specify other technical setup needs...'
+              value={data.technicalSetup?.additional || ''}
+              onChange={e => updateNested('technicalSetup', 'additional', e.target.value)}
+              className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+            />
+          </div>
+        </div>
+      </section>
 
     </form>
   )

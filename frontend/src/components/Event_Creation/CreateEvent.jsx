@@ -1,5 +1,10 @@
-import { useState, } from 'react';
-
+// CreateEvent.jsx (Updated to persist all tab data)
+import { useState } from 'react';
+import EventInfo from './Tabs_in_eventcreation/EventInfo';
+import Agenda from './Tabs_in_eventcreation/Agenda';
+import FinancialPlanning from './Tabs_in_eventcreation/FinancialPlanning';
+import FoodTravel from './Tabs_in_eventcreation/FoodTravel';
+import Checklist from './Tabs_in_eventcreation/Checklist';
 import {
   FaInfoCircle,
   FaCalendarAlt,
@@ -7,12 +12,6 @@ import {
   FaUtensils,
   FaCheckCircle,
 } from 'react-icons/fa';
-
-import EventInfo from './Tabs_in_eventcreation/EventInfo';
-import Agenda from './Tabs_in_eventcreation/Agenda';
-import FinancialPlanning from './Tabs_in_eventcreation/FinancialPlanning';
-import FoodTravel from './Tabs_in_eventcreation/FoodTravel';
-import Checklist from './Tabs_in_eventcreation/Checklist';
 
 const tabs = [
   { id: 'eventInfo', label: 'Event Info', icon: <FaInfoCircle size={18} /> },
@@ -28,69 +27,38 @@ const CreateEvent = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  const [eventData, setEventData] = useState({
-    eventInfo: {
-      title: '',
-      date: '',
-      location: '',
-      startDate: '',
-      endDate: '',
-    },
-    agenda: {
-      objectives: '',
-      outcomes: '',
-      brochure: null,
-      sessions: [],
-    },
-    financialPlanning: { budget: '', expenses: [], startDate: '', endDate: '' },
-    foodTravel: {
-      foodArrangements: '',
-      travelDetails: '',
-      startDate: '',
-      endDate: '',
-    },
-    checklist: [],
+  const [eventInfo, setEventInfo] = useState({});
+  const [agenda, setAgenda] = useState({});
+  const [checklist, setChecklist] = useState([]);
+  const [financialPlanning, setFinancialPlanning] = useState({});
+  const [foodAndTransport, setFoodAndTransport] = useState({
+    meals: [],
+    refreshments: [],
+    travels: [],
+    travelBy: 'college'
   });
 
-  const updateSection = (section, data) => {
-    setEventData((prev) => ({
-      ...prev,
-      [section]: data,
-    }));
-    if (section === 'eventInfo') {
-      if (data.startDate) setStartDate(data.startDate);
-      if (data.endDate) setEndDate(data.endDate);
-    }
-  };
-
- 
-
-
   const handleSaveAll = async () => {
-    try {
-      const payload = {
-        
-        eventinfo: eventData.eventInfo,
-        agenda: eventData.agenda,
-        financialplanning: eventData.financialPlanning,
-        foodandtransport: eventData.foodTravel,
-        checklist: eventData.checklist,
-      };
+    const payload = {
+      eventinfo: eventInfo,
+      agenda,
+      financialplanning: financialPlanning,
+      foodandtransport: foodAndTransport,
+      checklist
+    };
 
-      const response = await fetch('http://localhost:5000/api/submit-event', {
+    try {
+      const res = await fetch('http://localhost:5000/api/submit-event', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload)
       });
 
-      const result = await response.json();
+      const result = await res.json();
 
-      if (response.ok) {
-        alert('Event saved successfully!');
-      } else {
-        alert(`Save failed: ${result.error}`);
-      }
+      if (res.ok) alert('Event saved successfully!');
+      else alert(`Save failed: ${result.error}`);
     } catch (err) {
       console.error('Save failed:', err);
       alert('An error occurred while saving the event.');
@@ -102,8 +70,8 @@ const CreateEvent = () => {
       case 'eventInfo':
         return (
           <EventInfo
-            data={eventData.eventInfo}
-            onChange={(data) => updateSection('eventInfo', data)}
+            data={eventInfo}
+            onChange={setEventInfo}
             setEventId={setEventId}
             startDate={startDate}
             setStartDate={setStartDate}
@@ -114,8 +82,8 @@ const CreateEvent = () => {
       case 'agenda':
         return (
           <Agenda
-            data={eventData.agenda}
-            onChange={(data) => updateSection('agenda', data)}
+            data={agenda}
+            onChange={setAgenda}
             eventId={eventId}
             eventStartDate={startDate}
             eventEndDate={endDate}
@@ -124,27 +92,19 @@ const CreateEvent = () => {
       case 'financialPlanning':
         return (
           <FinancialPlanning
-            data={eventData.financialPlanning}
-            onChange={(data) => updateSection('financialPlanning', data)}
-            eventId={eventId}
+            data={financialPlanning}
+            onChange={setFinancialPlanning}
           />
         );
       case 'foodTravel':
         return (
           <FoodTravel
-            data={eventData.foodTravel}
-            onChange={(data) => updateSection('foodTravel', data)}
-            eventId={eventId}
+            data={foodAndTransport}
+            onChange={setFoodAndTransport}
           />
         );
       case 'checklist':
-        return (
-          <Checklist
-            data={eventData.checklist}
-            onChange={(data) => updateSection('checklist', data)}
-            eventId={eventId}
-          />
-        );
+        return <Checklist data={checklist} onChange={setChecklist} />;
       default:
         return null;
     }

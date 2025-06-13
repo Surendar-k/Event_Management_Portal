@@ -32,45 +32,37 @@ const allTasks = {
   ]
 }
 
-const EventChecklist = () => {
+const Checklist = ({data=[],onChange}) => {
   const [eventType, setEventType] = useState('')
-  const [activeTasks, setActiveTasks] = useState([])
+ 
   const [showAddTasks, setShowAddTasks] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
 
   const addTask = task => {
-    if (!activeTasks.some(t => t.activity === task)) {
-      setActiveTasks([
-        ...activeTasks,
-        {activity: task, inCharge: '', date: '', remarks: ''}
-      ])
+    if (!data.some(t => t.activity === task)) {
+      const updated = [...data, { activity: task, inCharge: '', date: '', remarks: '' }];
+      onChange(updated);
     }
-  }
+  };
 
-  const removeTask = activity => {
-    setActiveTasks(activeTasks.filter(t => t.activity !== activity))
-  }
+ const removeTask = activity => {
+    const updated = data.filter(t => t.activity !== activity);
+    onChange(updated);
+  };
 
-  const handleChange = (index, field, value) => {
-    const updated = [...activeTasks]
-    updated[index][field] = value
-    setActiveTasks(updated)
-  }
+ const handleChange = (index, field, value) => {
+    const updated = [...data];
+    updated[index][field] = value;
+    onChange(updated);
+  };
 
-  const filteredTasks =
-    eventType && allTasks[eventType]
-      ? allTasks[eventType].filter(
-          task =>
-            task.toLowerCase().includes(searchTerm.toLowerCase()) &&
-            !activeTasks.some(t => t.activity === task)
-        )
-      : []
+ const filteredTasks = eventType && allTasks[eventType] ?
+    allTasks[eventType].filter(
+      task => task.toLowerCase().includes(searchTerm.toLowerCase()) &&
+              !data.some(t => t.activity === task)
+    ) : [];
 
-  // Save handler (replace with your actual save logic)
-  const handleSave = () => {
-    console.log('Saving tasks:', activeTasks)
-    alert('Tasks saved! Check console for output.')
-  }
+
 
   return (
     <div className='mx-auto max-w-7xl rounded-lg bg-white p-8 shadow-lg'>
@@ -90,7 +82,7 @@ const EventChecklist = () => {
           value={eventType}
           onChange={e => {
             setEventType(e.target.value)
-            setActiveTasks([]) // reset when event type changes
+            onChange([]);
             setShowAddTasks(false)
             setSearchTerm('')
           }}
@@ -142,9 +134,7 @@ const EventChecklist = () => {
                       onClick={() => addTask(task)}
                       role='button'
                       tabIndex={0}
-                      onKeyPress={e => {
-                        if (e.key === 'Enter') addTask(task)
-                      }}
+                     
                     >
                       {task}
                     </div>
@@ -158,7 +148,7 @@ const EventChecklist = () => {
             </div>
           )}
 
-          {activeTasks.length > 0 ? (
+          {data.length > 0 ? (
             <>
               <div className='overflow-x-auto rounded-lg shadow-md'>
                 <table className='min-w-full table-auto border-collapse'>
@@ -185,7 +175,7 @@ const EventChecklist = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {activeTasks.map((item, index) => (
+                    {data.map((item, index) => (
                       <tr
                         key={index}
                         className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
@@ -242,14 +232,7 @@ const EventChecklist = () => {
                   </tbody>
                 </table>
               </div>
-              <div className='mt-6 text-right'>
-                <button
-                  className='rounded-md bg-blue-600 px-6 py-2 font-semibold text-white transition hover:bg-blue-700'
-                  onClick={handleSave}
-                >
-                  Save
-                </button>
-              </div>
+             
             </>
           ) : (
             <p className='text-center text-gray-700 italic'>
@@ -262,4 +245,4 @@ const EventChecklist = () => {
   )
 }
 
-export default EventChecklist
+export default Checklist

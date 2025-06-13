@@ -1,64 +1,53 @@
 import {useState, useEffect} from 'react'
 
-const Agenda = ({eventStartDate, eventEndDate}) => {
-  const [objectives, setObjectives] = useState('')
-  const [outcomes, setOutcomes] = useState('')
-  const [brochure, setBrochure] = useState(null)
 
-  const [sessions, setSessions] = useState([])
+const Agenda = ({ data, onChange, eventStartDate, eventEndDate }) => {
+  const [sessionInput, setSessionInput] = useState({
+    sessionDate: '',
+    fromTime: '',
+    toTime: '',
+    topic: '',
+    speakerName: ''
+  });
 
-  // Session input fields
-  const [sessionDate, setSessionDate] = useState('')
-  const [fromTime, setFromTime] = useState('')
-  const [toTime, setToTime] = useState('')
-  const [topic, setTopic] = useState('')
-  const [speakerName, setSpeakerName] = useState('')
+  const handleChange = (field, value) => {
+    onChange({ ...data, [field]: value });
+  };
 
+  const handleSessionChange = (field, value) => {
+    setSessionInput(prev => ({ ...prev, [field]: value }));
+  };
 
+  const handleAddSession = () => {
+    const { sessionDate, fromTime, toTime, topic, speakerName } = sessionInput;
+    if (!sessionDate || !fromTime || !toTime || !topic || !speakerName) {
+      alert('Please fill all session fields');
+      return;
+    }
+    const updatedSessions = [...(data.sessions || []), sessionInput];
+    handleChange('sessions', updatedSessions);
+    setSessionInput({ sessionDate: '', fromTime: '', toTime: '', topic: '', speakerName: '' });
+  };
 
-  // Count words helper
-  const countWords = text => {
-    return text.trim().split(/\s+/).filter(Boolean).length
-  }
-
-  // Set initial sessionDate on eventStartDate change
   useEffect(() => {
     if (eventStartDate) {
-      const d = new Date(eventStartDate)
-      const dd = String(d.getDate()).padStart(2, '0')
-      const mm = String(d.getMonth() + 1).padStart(2, '0')
-      const yyyy = d.getFullYear()
-      setSessionDate(`${yyyy}-${mm}-${dd}`)
+      setSessionInput(prev => ({ ...prev, sessionDate: eventStartDate }));
     }
-  }, [eventStartDate])
+  }, [eventStartDate]);
 
- 
-  const handleAddSession = () => {
-    if (!sessionDate || !fromTime || !toTime || !topic || !speakerName) {
-      alert('Please fill all fields for the session before adding.')
-      return
-    }
-    setSessions([
-      ...sessions,
-      {sessionDate, fromTime, toTime, topic, speakerName}
-    ])
-    setFromTime('')
-    setToTime('')
-    setTopic('')
-    setSpeakerName('')
-  }
+  const countWords = text => text.trim().split(/\s+/).filter(Boolean).length;
 
-  const handleBrochureUpload = e => {
-    const file = e.target.files[0]
+  const handleBrochureUpload = (e) => {
+    const file = e.target.files[0];
     if (file && file.type !== 'application/pdf') {
-      alert('Please upload a PDF file only.')
-      e.target.value = null
-      return
+      alert('Please upload a PDF file only.');
+      e.target.value = null;
+      return;
     }
-    setBrochure(file)
-  }
+    handleChange('brochure', file);
+  };
 
-  
+   const sessions = data.sessions || [];
   return (
     <form
      
@@ -76,15 +65,15 @@ const Agenda = ({eventStartDate, eventEndDate}) => {
           <span className='text-sm text-gray-500'>(max 200 words)</span>
         </label>
         <textarea
-          value={objectives}
-          onChange={e => setObjectives(e.target.value)}
+          value={data.objectives || ''}
+          onChange={(e) => handleChange('objectives',e.target.value)}
           rows={5}
           maxLength={1200}
           className='w-full rounded-lg border border-gray-300 p-4 shadow-sm transition focus:ring-2 focus:ring-black focus:outline-none'
           placeholder='Enter objectives...'
         />
         <p className='mt-1 text-right text-sm text-gray-500'>
-          {countWords(objectives)} / 200 words
+          {countWords(data.objectives || '')} / 200 words
         </p>
 
         <label className='mt-8 mb-2 block text-lg font-semibold text-gray-800'>
@@ -92,15 +81,15 @@ const Agenda = ({eventStartDate, eventEndDate}) => {
           <span className='text-sm text-gray-500'>(max 200 words)</span>
         </label>
         <textarea
-          value={outcomes}
-          onChange={e => setOutcomes(e.target.value)}
+          value={data.outcomes || ''}
+          onChange={e => handleChange('outcomes',e.target.value)}
           rows={5}
           maxLength={1200}
           className='w-full rounded-lg border border-gray-300 p-4 shadow-sm transition focus:ring-2 focus:ring-black focus:outline-none'
           placeholder='Enter outcomes...'
         />
         <p className='mt-1 text-right text-sm text-gray-500'>
-          {countWords(outcomes)} / 200 words
+          {countWords(data.outcomes || '')} / 200 words
         </p>
       </section>
 
@@ -124,7 +113,7 @@ const Agenda = ({eventStartDate, eventEndDate}) => {
             className='hidden'
           />
           <span className='text-gray-700 italic'>
-            {brochure ? brochure.name : 'No file chosen'}
+            {data.brochure ? data.brochure.name : 'No file chosen'}
           </span>
         </div>
       </section>
@@ -143,10 +132,10 @@ const Agenda = ({eventStartDate, eventEndDate}) => {
             </label>
             <input
               type='date'
-              value={sessionDate}
+              value={sessionInput.sessionDate}
                min={eventStartDate}
                max={eventEndDate}
-              onChange={e => setSessionDate(e.target.value)}
+              onChange={e => handleSessionChange('sessionDate',e.target.value)}
               className='w-full rounded-lg border border-gray-300 p-3 focus:ring-2 focus:ring-black focus:outline-none'
             />
           </div>
@@ -156,10 +145,9 @@ const Agenda = ({eventStartDate, eventEndDate}) => {
               From Time
             </label>
             <input
-              type='time'
-              value={fromTime}
-             
-              onChange={e => setFromTime(e.target.value)}
+             type="time"
+          value={sessionInput.fromTime}
+          onChange={(e) => handleSessionChange('fromTime', e.target.value)}
               className='w-full rounded-lg border border-gray-300 p-3 focus:ring-2 focus:ring-black focus:outline-none'
             />
           </div>
@@ -170,9 +158,9 @@ const Agenda = ({eventStartDate, eventEndDate}) => {
             </label>
             <input
               type='time'
-              value={toTime}
+              value={sessionInput.toTime}
               
-              onChange={e => setToTime(e.target.value)}
+              onChange={(e)=> handleSessionChange('toTime',e.target.value)}
               className='w-full rounded-lg border border-gray-300 p-3 focus:ring-2 focus:ring-black focus:outline-none'
             />
           </div>
@@ -182,9 +170,10 @@ const Agenda = ({eventStartDate, eventEndDate}) => {
               Topic
             </label>
             <input
-              type='text'
-              value={topic}
-              onChange={e => setTopic(e.target.value)}
+              type="text"
+          value={sessionInput.topic}
+          onChange={(e) => handleSessionChange('topic', e.target.value)}
+          
               placeholder='Session topic'
               className='w-full rounded-lg border border-gray-300 p-3 focus:ring-2 focus:ring-black focus:outline-none'
             />
@@ -195,9 +184,9 @@ const Agenda = ({eventStartDate, eventEndDate}) => {
               Speaker Name
             </label>
             <input
-              type='text'
-              value={speakerName}
-              onChange={e => setSpeakerName(e.target.value)}
+               type="text"
+          value={sessionInput.speakerName}
+          onChange={(e) => handleSessionChange('speakerName', e.target.value)}
               placeholder='Speaker'
               className='w-full rounded-lg border border-gray-300 p-3 focus:ring-2 focus:ring-black focus:outline-none'
             />
@@ -215,45 +204,37 @@ const Agenda = ({eventStartDate, eventEndDate}) => {
         </div>
 
         {/* List of added sessions */}
-        {sessions.length > 0 && (
-          <div className='mt-8 overflow-x-auto rounded-lg border border-gray-300 shadow-md'>
-            <table className='w-full min-w-[700px] border-collapse text-left'>
-              <thead className='border-b border-gray-300 bg-gray-100 text-sm font-semibold text-gray-900'>
-                <tr>
-                  <th className='border-r border-gray-300 p-3'>Date</th>
-                  <th className='border-r border-gray-300 p-3'>From Time</th>
-                  <th className='border-r border-gray-300 p-3'>To Time</th>
-                  <th className='border-r border-gray-300 p-3'>Topic</th>
-                  <th className='p-3'>Speaker Name</th>
+       {sessions.length > 0 && (
+        <div className='mt-8 overflow-x-auto rounded-lg border border-gray-300 shadow-md'>
+          <table className='w-full min-w-[700px] border-collapse text-left'>
+            <thead className='border-b border-gray-300 bg-gray-100 text-sm font-semibold text-gray-900'>
+              <tr>
+                <th className='border-r border-gray-300 p-3'>Date</th>
+                <th className='border-r border-gray-300 p-3'>From Time</th>
+                <th className='border-r border-gray-300 p-3'>To Time</th>
+                <th className='border-r border-gray-300 p-3'>Topic</th>
+                <th className='p-3'>Speaker Name</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sessions.map((sess, idx) => (
+                <tr
+                  key={idx}
+                  className={`border-b border-gray-300 text-sm text-gray-800 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
+                >
+                  <td className='border-r border-gray-300 p-3'>
+                    {new Date(sess.sessionDate).toLocaleDateString('en-GB')}
+                  </td>
+                  <td className='border-r border-gray-300 p-3'>{sess.fromTime}</td>
+                  <td className='border-r border-gray-300 p-3'>{sess.toTime}</td>
+                  <td className='border-r border-gray-300 p-3'>{sess.topic}</td>
+                  <td className='p-3'>{sess.speakerName}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {sessions.map((sess, idx) => (
-                  <tr
-                    key={idx}
-                    className={`border-b border-gray-300 text-sm text-gray-800 ${
-                      idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                    }`}
-                  >
-                    <td className='border-r border-gray-300 p-3'>
-                      {new Date(sess.sessionDate).toLocaleDateString('en-GB')}
-                    </td>
-                    <td className='border-r border-gray-300 p-3'>
-                      {sess.fromTime}
-                    </td>
-                    <td className='border-r border-gray-300 p-3'>
-                      {sess.toTime}
-                    </td>
-                    <td className='border-r border-gray-300 p-3'>
-                      {sess.topic}
-                    </td>
-                    <td className='p-3'>{sess.speakerName}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
       </section>
 
       

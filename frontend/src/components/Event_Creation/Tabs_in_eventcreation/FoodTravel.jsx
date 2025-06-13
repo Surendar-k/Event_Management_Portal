@@ -1,115 +1,51 @@
-import {useState} from 'react'
+import { useState, useEffect } from 'react';
 
-const FoodTravel = () => {
-  const [activeTab, setActiveTab] = useState('meal')
+const FoodTravel = ({ data = { meals: [], refreshments: [], travels: [], travelBy: 'college' }, onChange }) => {
+  const [activeTab, setActiveTab] = useState('meal');
 
-  const [mealList, setMealList] = useState([])
-  const [refreshmentList, setRefreshmentList] = useState([])
-  const [travelList, setTravelList] = useState([])
-  const [travelBy, setTravelBy] = useState('college')
+  const [meal, setMeal] = useState({ from: '', to: '', time: '', mealType: '', category: '', menu: '', personCount: '', servedAt: '', note: '' });
+  const [refreshment, setRefreshment] = useState({ from: '', to: '', time: '', session: '', category: '', items: '', personCount: '', servedAt: '', note: '' });
+  const [travel, setTravel] = useState({ category: '', mode: '', date: '', time: '', pickup: '', drop: '', remarks: '' });
+  const [travelBy, setTravelBy] = useState(data.travelBy || 'college');
 
-  const [meal, setMeal] = useState({
-    from: '',
-    to: '',
-    time: '',
-    mealType: '',
-    category: '',
-    menu: '',
-    personCount: '',
-    servedAt: '',
-    note: ''
-  })
-
-  const [refreshment, setRefreshment] = useState({
-    from: '',
-    to: '',
-    time: '',
-    session: '',
-    category: '',
-    items: '',
-    personCount: '',
-    servedAt: '',
-    note: ''
-  })
-
-  const [travel, setTravel] = useState({
-    category: '',
-    mode: '',
-    date: '',
-    time: '',
-    pickup: '',
-    drop: '',
-    remarks: ''
-  })
-
-  const handleMealAdd = () => {
-    setMealList([...mealList, meal])
-    setMeal({
-      from: '',
-      to: '',
-      time: '',
-      mealType: '',
-      category: '',
-      menu: '',
-      personCount: '',
-      servedAt: '',
-      note: ''
-    })
-  }
-
-  const handleRefreshmentAdd = () => {
-    setRefreshmentList([...refreshmentList, refreshment])
-    setRefreshment({
-      from: '',
-      to: '',
-      time: '',
-      session: '',
-      category: '',
-      items: '',
-      personCount: '',
-      servedAt: '',
-      note: ''
-    })
-  }
-
-  const handleTravelAdd = () => {
-    setTravelList([...travelList, travel])
-    setTravel({
-      category: '',
-      mode: '',
-      date: '',
-      time: '',
-      pickup: '',
-      drop: '',
-      remarks: ''
-    })
-  }
-
-  const tabButton = (tab, label) => (
+  const tabButton = (id, label) => (
     <button
-      onClick={() => setActiveTab(tab)}
-      className={`rounded-t-md px-4 py-2 font-semibold ${
-        activeTab === tab ? 'bg-black text-white' : 'bg-gray-200 text-black'
-      }`}
+      className={`border-b-2 px-4 py-2 text-sm font-medium ${activeTab === id ? 'border-black text-black' : 'border-transparent text-gray-500'}`}
+      onClick={() => setActiveTab(id)}
     >
       {label}
     </button>
-  )
+  );
 
-  const handleSaveAll = () => {
-    const fullData = {
-      meals: mealList,
-      refreshments: refreshmentList,
-      travels: travelList
-    }
-    console.log('Saving data:', fullData)
-    alert('Data saved! Check console for output.')
+  useEffect(() => {
+    onChange({ ...data, travelBy });
+  }, [travelBy]);
 
-    // Here you can do further saving like API call:
-    // axios.post('/api/save-arrangements', fullData)
-    //   .then(() => alert("Data saved successfully!"))
-    //   .catch(err => console.error(err));
-  }
+  const updateData = (key, list) => {
+    onChange({ ...data, [key]: list });
+  };
+
+  const handleMealAdd = () => {
+    const updatedMeals = [...(data.meals || []), meal];
+    updateData('meals', updatedMeals);
+    setMeal({ from: '', to: '', time: '', mealType: '', category: '', menu: '', personCount: '', servedAt: '', note: '' });
+  };
+
+  const handleRefreshmentAdd = () => {
+    const updatedRefreshments = [...(data.refreshments || []), refreshment];
+    updateData('refreshments', updatedRefreshments);
+    setRefreshment({ from: '', to: '', time: '', session: '', category: '', items: '', personCount: '', servedAt: '', note: '' });
+  };
+
+  const handleTravelAdd = () => {
+    const updatedTravels = [...(data.travels || []), travel];
+    updateData('travels', updatedTravels);
+    setTravel({ category: '', mode: '', date: '', time: '', pickup: '', drop: '', remarks: '' });
+  };
+
+  const mealList = data.meals || [];
+  const refreshmentList = data.refreshments || [];
+  const travelList = data.travels || [];
 
   return (
     <div className='space-y-10 p-6'>
@@ -506,12 +442,7 @@ const FoodTravel = () => {
                       ))}
                     </tbody>
                   </table>
-                  <button
-                    onClick={handleSaveAll}
-                    className='mt-6 rounded bg-green-600 px-6 py-3 text-white shadow-lg hover:bg-green-700'
-                  >
-                    Save All Arrangements
-                  </button>
+                 
                 </div>
               )}
             </>
@@ -520,6 +451,6 @@ const FoodTravel = () => {
       )}
     </div>
   )
-}
+};
 
 export default FoodTravel

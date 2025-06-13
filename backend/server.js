@@ -61,14 +61,20 @@ app.post('/api/submit-event', async (req, res) => {
     'guest_services'
   ]
 
-  const values = keys.map(key => {
-     if (key === 'faculty_id') return req.session.faculty_id; 
-    const camelKey = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
-    const val = event[camelKey]
-    if (Array.isArray(val) || typeof val === 'object')
-      return JSON.stringify(val || null)
-    return val || null
-  })
+const values = keys.map((key) => {
+  if (key === 'faculty_id') return req.session.user?.faculty_id;
+
+  const camelKey = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+  const val = event[camelKey];
+
+  if (Array.isArray(val) || typeof val === 'object') {
+    return JSON.stringify(val || null);
+  }
+console.log("Final values to insert:", values);
+
+  return val || null;
+});
+
 
   try {
     const [result] = await db.execute(

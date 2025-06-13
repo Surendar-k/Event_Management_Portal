@@ -1,34 +1,31 @@
-const db = require('../config/db').default
+const db = require("../config/db");
 
 exports.saveEventInfo = async (req, res) => {
   try {
-    console.log('🛠️ Incoming body:', JSON.stringify(req.body))
+    console.log("🛠 Incoming body:", JSON.stringify(req.body));
 
-    const {eventinfo, agenda, financialplanning, foodandtransport, checklist} =
-      req.body
-    const faculty_id = req.session.user?.faculty_id
+    const { eventinfo, agenda, financialplanning, foodandtransport, checklist } = req.body;
+    const faculty_id = req.session.user?.faculty_id;
 
     if (!faculty_id) {
-      return res
-        .status(401)
-        .json({error: 'Unauthorized: Faculty ID not found in session'})
+      return res.status(401).json({ error: "Unauthorized: Faculty ID not found in session" });
     }
 
     // Generate a new event_id if not provided (UUID or timestamp can be used instead)
-    const event_id = req.body.event_id || Date.now() // simple fallback unique ID
+    const event_id = req.body.event_id || Date.now(); // simple fallback unique ID
 
     // Normalize values to avoid undefined
-    const safeEventInfo = JSON.stringify(eventinfo || {})
-    const safeAgenda = JSON.stringify(agenda || {})
-    const safeFinance = JSON.stringify(financialplanning || {})
-    const safeFood = JSON.stringify(foodandtransport || {})
-    const safeChecklist = JSON.stringify(checklist || [])
+    const safeEventInfo = JSON.stringify(eventinfo || {});
+    const safeAgenda = JSON.stringify(agenda || {});
+    const safeFinance = JSON.stringify(financialplanning || {});
+    const safeFood = JSON.stringify(foodandtransport || {});
+    const safeChecklist = JSON.stringify(checklist || []);
 
     // Check if the event already exists
     const [existing] = await db.execute(
-      'SELECT event_id FROM event_info WHERE event_id = ?',
+      "SELECT event_id FROM event_info WHERE event_id = ?",
       [event_id]
-    )
+    );
 
     if (existing.length > 0) {
       // Update existing
@@ -48,9 +45,9 @@ exports.saveEventInfo = async (req, res) => {
           safeFinance,
           safeFood,
           safeChecklist,
-          event_id
+          event_id,
         ]
-      )
+      );
     } else {
       // Insert new
       await db.execute(
@@ -66,14 +63,14 @@ exports.saveEventInfo = async (req, res) => {
           safeAgenda,
           safeFinance,
           safeFood,
-          safeChecklist
+          safeChecklist,
         ]
-      )
+      );
     }
 
-    res.json({message: 'Event data saved successfully', event_id})
+    res.json({ message: "Event data saved successfully", event_id });
   } catch (error) {
-    console.error('Error saving event info:', error)
-    res.status(500).json({error: 'Internal server error'})
+    console.error("Error saving event info:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
-}
+};

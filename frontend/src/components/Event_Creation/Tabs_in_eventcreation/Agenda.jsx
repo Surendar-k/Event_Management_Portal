@@ -217,29 +217,30 @@ const Agenda = ({ data, onChange, eventStartDate, eventEndDate }) => {
               </tr>
             </thead>
             <tbody>
-              {sessions.map((sess, idx) => (
-                <tr
-                  key={idx}
-                  className={`border-b border-gray-300 text-sm text-gray-800 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
-                >
-                  <td className='border-r border-gray-300 p-3'>
-                    {new Date(sess.sessionDate).toLocaleDateString('en-GB')}
-                  </td>
-                  <td className='border-r border-gray-300 p-3'>{sess.fromTime}</td>
-                  <td className='border-r border-gray-300 p-3'>{sess.toTime}</td>
-                  <td className='border-r border-gray-300 p-3'>{sess.topic}</td>
-                  <td className='p-3'>{sess.speakerName}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      </section>
+                {sessions.map((sess, idx) => (
+                  <tr
+  key={idx}
+  className={`border-b border-gray-300 text-sm text-gray-800 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
+>
 
-      
-    </form>
-  )
-}
+                    <td className='border-r border-gray-300 p-3'>
+                      {new Date(sess.sessionDate).toLocaleDateString('en-GB')}
+                    </td>
+                    <td className='border-r border-gray-300 p-3'>{sess.fromTime}</td>
+                    <td className='border-r border-gray-300 p-3'>{sess.toTime}</td>
+                    <td className='border-r border-gray-300 p-3'>{sess.topic}</td>
+                    <td className='p-3'>{sess.speakerName}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        </section>
 
-export default Agenda
+        
+      </form>
+    )
+  }
+
+  export default Agenda

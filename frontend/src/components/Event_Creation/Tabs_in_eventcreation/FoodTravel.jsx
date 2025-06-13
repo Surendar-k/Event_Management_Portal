@@ -10,11 +10,14 @@ const FoodTravel = ({ data = { meals: [], refreshments: [], travels: [], travelB
 
   const tabButton = (id, label) => (
     <button
-      className={`border-b-2 px-4 py-2 text-sm font-medium ${activeTab === id ? 'border-black text-black' : 'border-transparent text-gray-500'}`}
-      onClick={() => setActiveTab(id)}
-    >
-      {label}
-    </button>
+  className={`border-b-2 px-4 py-2 text-sm font-medium ${
+    activeTab === id ? 'border-black text-black' : 'border-transparent text-gray-500'
+  }`}
+  onClick={() => setActiveTab(id)}
+>
+  {label}
+</button>
+
   );
 
   useEffect(() => {

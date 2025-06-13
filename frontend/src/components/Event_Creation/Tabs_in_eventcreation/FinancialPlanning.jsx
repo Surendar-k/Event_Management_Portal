@@ -90,12 +90,20 @@ const FinancialPlanning = forwardRef(({ data = {}, onChange = () => {} }, ref) =
 
   return (
     <div className='max-w-8xl mx-auto space-y-12 rounded-xl px-6 py-10'>
-      <h2 className='mb-6 text-3xl font-bold text-gray-800'>Financial Planning</h2>
       <div className='mb-4 flex space-x-4'>
-        <button className={`rounded-t-lg px-4 py-2 font-medium ${activeTab === 'funding' ? 'bg-gray-200' : 'bg-gray-100'}`} onClick={() => setActiveTab('funding')}>Funding Sources</button>
-        <button className={`rounded-t-lg px-4 py-2 font-medium ${activeTab === 'budget' ? 'bg-gray-200' : 'bg-gray-100'}`} onClick={() => setActiveTab('budget')}>Estimated Budget</button>
-      </div>
-
+  <button
+    className={`rounded-t-lg px-4 py-2 font-medium ${activeTab === 'funding' ? 'bg-gray-200' : 'bg-gray-100'}`}
+    onClick={() => setActiveTab('funding')}
+  >
+    Funding Sources
+  </button>
+  <button
+    className={`rounded-t-lg px-4 py-2 font-medium ${activeTab === 'budget' ? 'bg-gray-200' : 'bg-gray-100'}`}
+    onClick={() => setActiveTab('budget')}
+  >
+    Estimated Budget
+  </button>
+</div>
       {activeTab === 'funding' && (
         <section className='rounded border bg-gray-50 p-6 shadow-sm'>
           <h3 className='mb-4 text-xl font-semibold text-gray-700'>Funding Sources</h3>

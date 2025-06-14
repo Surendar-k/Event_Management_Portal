@@ -13,7 +13,6 @@ const parseJSONField = (field, fallback = {}) => {
   if (typeof field === 'object') return field;
   return fallback;
 };
-
 exports.saveEventInfo = async (req, res) => {
   try {
     const {
@@ -23,6 +22,7 @@ exports.saveEventInfo = async (req, res) => {
       foodandtransport,
       checklist,
       status = "draft",
+      approvals = {},
       event_id,
     } = req.body;
 
@@ -53,11 +53,15 @@ exports.saveEventInfo = async (req, res) => {
         ? checklist
         : parseJSONField(oldData.checklist, []);
 
+      const updatedApprovals = Object.keys(approvals).length
+        ? approvals
+        : parseJSONField(oldData.approvals, {});
+
       // Update the database
       await db.execute(
         `UPDATE event_info SET
           eventinfo = ?, agenda = ?, financialplanning = ?,
-          foodandtransport = ?, checklist = ?, status = ?
+          foodandtransport = ?, checklist = ?, status = ?, approvals = ?
          WHERE event_id = ? AND faculty_id = ?`,
         [
           JSON.stringify(updatedEventInfo),
@@ -66,6 +70,7 @@ exports.saveEventInfo = async (req, res) => {
           JSON.stringify(updatedFood),
           JSON.stringify(updatedChecklist),
           status,
+          JSON.stringify(updatedApprovals),
           event_id,
           faculty_id,
         ]
@@ -77,8 +82,8 @@ exports.saveEventInfo = async (req, res) => {
       const [result] = await db.execute(
         `INSERT INTO event_info (
           faculty_id, eventinfo, agenda, financialplanning,
-          foodandtransport, checklist, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          foodandtransport, checklist, status, approvals
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           faculty_id,
           JSON.stringify(eventinfo || {}),
@@ -87,6 +92,7 @@ exports.saveEventInfo = async (req, res) => {
           JSON.stringify(foodandtransport || {}),
           JSON.stringify(checklist || []),
           status,
+          JSON.stringify(approvals || {})
         ]
       );
 
@@ -223,3 +229,9 @@ exports.deleteEvent = async (req, res) => {
     res.status(500).json({ error: "Failed to delete event" });
   }
 };
+
+
+
+
+
+

@@ -1,9 +1,8 @@
-import {useState, useEffect, useRef} from 'react'
-import {useNavigate, useLocation} from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import ksrLogo from '../../assets/ksr-logo.png'
 import axios from 'axios'
 
-// Enable sending cookies on all axios requests
 axios.defaults.withCredentials = true
 
 const Navbar = () => {
@@ -11,16 +10,15 @@ const Navbar = () => {
   const location = useLocation()
   const [activeTab, setActiveTab] = useState(location.pathname)
   const [showProfile, setShowProfile] = useState(false)
-  const [user, setUser] = useState(null) // Store fetched profile data
+  const [user, setUser] = useState(null)
   const profileRef = useRef()
 
-  // These come from localStorage but session has full user info too
   const email = localStorage.getItem('email')
   const role = localStorage.getItem('role')
 
   const handleLogout = async () => {
     try {
-      await axios.post('http://localhost:5000/api/logout') // logout API
+      await axios.post('http://localhost:5000/api/logout')
       localStorage.clear()
       navigate('/')
     } catch (error) {
@@ -28,16 +26,14 @@ const Navbar = () => {
     }
   }
 
-  const handleNavigate = path => {
+  const handleNavigate = (path) => {
     setActiveTab(path)
     navigate(path)
   }
 
-  // Toggle profile popup & fetch session user data if opening
   const toggleProfile = async () => {
     if (!showProfile) {
       try {
-        // NOTE: fixed URL with double slash after http:
         const res = await axios.get('http://localhost:5000/api/session')
         setUser(res.data.user)
         setShowProfile(true)
@@ -49,9 +45,8 @@ const Navbar = () => {
     }
   }
 
-  // Close profile popup on outside click
   useEffect(() => {
-    const handleClickOutside = event => {
+    const handleClickOutside = (event) => {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setShowProfile(false)
       }
@@ -61,6 +56,18 @@ const Navbar = () => {
   }, [])
 
   const activeStyle = 'bg-orange-400 text-white rounded-md px-3 py-1 shadow-lg'
+
+  const isHigherAuthority = ['hod', 'principal', 'cso'].includes(role?.toLowerCase())
+
+  const navLinks = [
+    { label: 'Create Event', path: '/create-event' },
+    { label: 'Report Generation', path: '/report-generation' },
+    { label: 'Event Logs', path: '/event-logs' },
+    {
+      label: 'Inbox',
+      path: isHigherAuthority ? '/higherauthority-inbox' : '/faculty-inbox'
+    }
+  ]
 
   return (
     <nav className='relative flex flex-col bg-[#2e2c2cc7] px-8 py-5 text-white shadow-lg sm:flex-row sm:items-center sm:justify-between'>
@@ -77,20 +84,12 @@ const Navbar = () => {
 
       {/* Navigation Links */}
       <ul className='flex flex-wrap justify-center gap-8 text-xl font-semibold sm:justify-start'>
-        {[
-          {label: 'Create Event', path: '/create-event'},
-          {label: 'Report Generation', path: '/report-generation'},
-          {label: 'Event Logs', path: '/event-logs'},
-          {label: 'Inbox', path: '/faculty-inbox'},
-          {label: 'Inbox', path: '/higherauthority-inbox'}
-        ].map(({label, path}) => (
+        {navLinks.map(({ label, path }) => (
           <li key={path}>
             <button
               onClick={() => handleNavigate(path)}
               className={`rounded-md px-3 py-2 transition duration-200 ${
-                activeTab === path
-                  ? activeStyle
-                  : 'hover:bg-orange-600 hover:text-white'
+                activeTab === path ? activeStyle : 'hover:bg-orange-600 hover:text-white'
               }`}
             >
               {label}
@@ -113,7 +112,6 @@ const Navbar = () => {
           {email?.charAt(0)}
         </div>
 
-        {/* Profile Popup */}
         {showProfile && user && (
           <div
             ref={profileRef}
@@ -124,12 +122,12 @@ const Navbar = () => {
             </h2>
             <div className='flex flex-col gap-3'>
               {[
-                {label: 'Name', value: user.faculty_name},
-                {label: 'Designation', value: user.designation},
-                {label: 'Department', value: user.department},
-                {label: 'Institution', value: user.institution_name},
-                {label: 'Faculty ID', value: user.faculty_id}
-              ].map(({label, value}) => (
+                { label: 'Name', value: user.faculty_name },
+                { label: 'Designation', value: user.designation },
+                { label: 'Department', value: user.department },
+                { label: 'Institution', value: user.institution_name },
+                { label: 'Faculty ID', value: user.faculty_id }
+              ].map(({ label, value }) => (
                 <div
                   key={label}
                   className='flex flex-wrap items-center gap-2 rounded-md bg-gray-50 p-2'

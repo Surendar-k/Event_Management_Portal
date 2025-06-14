@@ -11,6 +11,7 @@ import {
 } from 'react-icons/fa';
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
+
 axios.defaults.withCredentials = true;
 
 const staticApprovers = ['HOD', 'CSO', 'Principal'];
@@ -39,7 +40,9 @@ const EventLogs = () => {
   const [eventToCancel, setEventToCancel] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState(null);
-const navigate = useNavigate();
+
+  const navigate = useNavigate();
+
   const fetchEvents = async () => {
     try {
       const res = await axios.get('http://localhost:5000/api/events');
@@ -64,9 +67,10 @@ const navigate = useNavigate();
   useEffect(() => {
     fetchEvents();
   }, []);
-const handleEdit = (eventId) => {
-  navigate(`/create-event/${eventId}`);
-};
+
+  const handleEdit = (eventId) => {
+    navigate(`/create-event/${eventId}`);
+  };
 
   const openApprovalPopup = (event) => {
     setSelectedEvent(event);
@@ -86,21 +90,30 @@ const handleEdit = (eventId) => {
       return;
     }
 
-    const updatedEvent = {
-      ...selectedEvent,
+    const approvalObj = selectedApprovers.reduce((acc, role) => {
+      acc[role.toLowerCase()] = false;
+      return acc;
+    }, {});
+
+    const updatedEventData = {
+      eventinfo: selectedEvent.eventData.eventInfo,
+      agenda: selectedEvent.eventData.agenda,
+      financialplanning: selectedEvent.eventData.financialPlanning,
+      foodandtransport: selectedEvent.eventData.foodTransport,
+      checklist: selectedEvent.eventData.checklist,
       status: 'submitted',
-      approvals: selectedApprovers.reduce((acc, role) => {
-        acc[role.toLowerCase()] = false;
-        return acc;
-      }, {})
+      approvals: approvalObj,
+      event_id: selectedEvent.id
     };
 
     try {
-     await axios.put(`http://localhost:5000/api/events/${selectedEvent.id}`, {
-        eventData: updatedEvent
-      });
+      await axios.put(`http://localhost:5000/api/events/${selectedEvent.id}`, updatedEventData);
       setEvents((prev) =>
-        prev.map((ev) => (ev.id === selectedEvent.id ? updatedEvent : ev))
+        prev.map((ev) =>
+          ev.id === selectedEvent.id
+            ? { ...ev, status: 'submitted', approvals: approvalObj }
+            : ev
+        )
       );
       closeApprovalPopup();
     } catch (err) {
@@ -115,13 +128,25 @@ const handleEdit = (eventId) => {
 
   const confirmCancelApproval = async () => {
     if (!eventToCancel) return;
+
+    const updatedEventData = {
+      eventinfo: eventToCancel.eventData.eventInfo,
+      agenda: eventToCancel.eventData.agenda,
+      financialplanning: eventToCancel.eventData.financialPlanning,
+      foodandtransport: eventToCancel.eventData.foodTransport,
+      checklist: eventToCancel.eventData.checklist,
+      status: 'draft',
+      approvals: {},
+      event_id: eventToCancel.id
+    };
+
     try {
-      await axios.put(`http://localhost:5000/api/events/${eventToCancel.id}`, {
-        eventData: { ...eventToCancel, status: 'draft', approvals: {} }
-      });
+      await axios.put(`http://localhost:5000/api/events/${eventToCancel.id}`, updatedEventData);
       setEvents((prev) =>
         prev.map((ev) =>
-          ev.id === eventToCancel.id ? { ...ev, status: 'draft', approvals: {} } : ev
+          ev.id === eventToCancel.id
+            ? { ...ev, status: 'draft', approvals: {} }
+            : ev
         )
       );
       setShowCancelConfirm(false);
@@ -200,6 +225,7 @@ const handleEdit = (eventId) => {
       return matchesStatus && matchesSearch;
     });
   }, [events, statusFilter, searchTerm]);
+
   return (
     <>
       <div className='mx-auto mt-10 max-w-7xl rounded-2xl border p-6 shadow-xl'>

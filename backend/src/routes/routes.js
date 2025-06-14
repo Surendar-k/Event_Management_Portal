@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 const express = require("express");
 const router = express.Router();
-const multer = require('multer');
+const multer = require("multer");
 const path = require("path");
 const loginController = require("../controllers/loginController");
 const authMiddleware = require("../middleware/authMiddleware");
-const eventController = require('../controllers/eventController');
-
+const eventController = require("../controllers/eventController");
 
 const upload = multer({
   dest: path.join(__dirname, "..", "uploads"),
@@ -25,11 +24,45 @@ router.get("/session", loginController.session);
 
 // ========== User Management ==========
 router.get("/users", authMiddleware.isAuthenticated, loginController.getUsers);
-router.post("/users", authMiddleware.isAuthenticated, loginController.createUser);
+router.post(
+  "/users",
+  authMiddleware.isAuthenticated,
+  loginController.createUser
+);
 
 // ========== Event Routes ==========
-router.post('/submit-event',authMiddleware.isAuthenticated, eventController.saveEventInfo);
+router.post(
+  "/submit-event",
+  authMiddleware.isAuthenticated,
+  eventController.saveEventInfo
+);
+router.put(
+  "/events/:id",
+  authMiddleware.isAuthenticated,
+  eventController.saveEventInfo
+);
 
+// ========== Event Logs ============
+router.get(
+  "/events",
+  authMiddleware.isAuthenticated,
+  eventController.getEventsByUser
+);
+router.get(
+  "/events/:eventId", // ✅ now matches the frontend
+  authMiddleware.isAuthenticated,
+  eventController.getEventById
+);
 
+router.delete(
+  "/events/:eventId",
+  authMiddleware.isAuthenticated,
+  eventController.deleteEvent
+);
+router.put(
+  "/events/:eventId",
+  authMiddleware.isAuthenticated,
+  eventController.saveEventInfo
+);
 
 module.exports = router;

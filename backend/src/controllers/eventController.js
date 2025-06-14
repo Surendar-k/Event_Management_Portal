@@ -1,76 +1,214 @@
 const db = require("../config/db");
 
+// Safe JSON parser
+const parseJSONField = (field, fallback = {}) => {
+  if (!field) return fallback;
+  if (typeof field === 'string') {
+    try {
+      return JSON.parse(field);
+    } catch {
+      return fallback;
+    }
+  }
+  if (typeof field === 'object') return field;
+  return fallback;
+};
+
 exports.saveEventInfo = async (req, res) => {
   try {
-    console.log("🛠 Incoming body:", JSON.stringify(req.body));
+    const {
+      eventinfo,
+      agenda,
+      financialplanning,
+      foodandtransport,
+      checklist,
+      status = "draft",
+      event_id,
+    } = req.body;
 
-    const { eventinfo, agenda, financialplanning, foodandtransport, checklist } = req.body;
     const faculty_id = req.session.user?.faculty_id;
-
     if (!faculty_id) {
       return res.status(401).json({ error: "Unauthorized: Faculty ID not found in session" });
     }
 
-    // Generate a new event_id if not provided (UUID or timestamp can be used instead)
-    const event_id = req.body.event_id || Date.now(); // simple fallback unique ID
+    if (event_id) {
+      // Check if event exists
+      const [existing] = await db.execute(
+        "SELECT * FROM event_info WHERE event_id = ? AND faculty_id = ?",
+        [event_id, faculty_id]
+      );
 
-    // Normalize values to avoid undefined
-    const safeEventInfo = JSON.stringify(eventinfo || {});
-    const safeAgenda = JSON.stringify(agenda || {});
-    const safeFinance = JSON.stringify(financialplanning || {});
-    const safeFood = JSON.stringify(foodandtransport || {});
-    const safeChecklist = JSON.stringify(checklist || []);
+      if (existing.length === 0) {
+        return res.status(404).json({ error: "Event not found for update" });
+      }
 
-    // Check if the event already exists
-    const [existing] = await db.execute(
-      "SELECT event_id FROM event_info WHERE event_id = ?",
-      [event_id]
-    );
+      const oldData = existing[0];
 
-    if (existing.length > 0) {
-      // Update existing
+      // Merge old and new fields safely
+      const updatedEventInfo = { ...parseJSONField(oldData.eventinfo), ...eventinfo };
+      const updatedAgenda = { ...parseJSONField(oldData.agenda), ...agenda };
+      const updatedFinance = { ...parseJSONField(oldData.financialplanning), ...financialplanning };
+      const updatedFood = { ...parseJSONField(oldData.foodandtransport), ...foodandtransport };
+      const updatedChecklist = Array.isArray(checklist) && checklist.length
+        ? checklist
+        : parseJSONField(oldData.checklist, []);
+
+      // Update the database
       await db.execute(
         `UPDATE event_info SET
-          faculty_id = ?,
-          eventinfo = ?,
-          agenda = ?,
-          financialplanning = ?,
-          foodandtransport = ?,
-          checklist = ?
-         WHERE event_id = ?`,
+          eventinfo = ?, agenda = ?, financialplanning = ?,
+          foodandtransport = ?, checklist = ?, status = ?
+         WHERE event_id = ? AND faculty_id = ?`,
         [
-          faculty_id,
-          safeEventInfo,
-          safeAgenda,
-          safeFinance,
-          safeFood,
-          safeChecklist,
+          JSON.stringify(updatedEventInfo),
+          JSON.stringify(updatedAgenda),
+          JSON.stringify(updatedFinance),
+          JSON.stringify(updatedFood),
+          JSON.stringify(updatedChecklist),
+          status,
           event_id,
+          faculty_id,
         ]
       );
+
+      return res.json({ message: "Event updated successfully", event_id });
     } else {
-      // Insert new
-      await db.execute(
+      // Create new event
+      const [result] = await db.execute(
         `INSERT INTO event_info (
-          event_id, faculty_id,
-          eventinfo, agenda, financialplanning,
-          foodandtransport, checklist
+          faculty_id, eventinfo, agenda, financialplanning,
+          foodandtransport, checklist, status
         ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
-          event_id,
           faculty_id,
-          safeEventInfo,
-          safeAgenda,
-          safeFinance,
-          safeFood,
-          safeChecklist,
+          JSON.stringify(eventinfo || {}),
+          JSON.stringify(agenda || {}),
+          JSON.stringify(financialplanning || {}),
+          JSON.stringify(foodandtransport || {}),
+          JSON.stringify(checklist || []),
+          status,
         ]
       );
+
+      return res.json({ message: "Event created successfully", event_id: result.insertId });
+    }
+  } catch (error) {
+    console.error("❌ Error saving event info:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+//to fetch event in eventlogs
+
+const tryParse = (data, fallback = {}) => {
+  if (typeof data === "object") return data; // already parsed
+  try {
+    return JSON.parse(data);
+  } catch (err) {
+    console.warn("⚠️ Invalid JSON in DB field (not parsed):", data);
+    return fallback;
+  }
+};
+
+exports.getEventsByUser = async (req, res) => {
+  const facultyId = req.session.user?.faculty_id;
+  if (!facultyId) return res.status(401).json({ error: "Unauthorized" });
+
+  try {
+    const [rows] = await db.execute(
+      `SELECT event_id, eventinfo, agenda, financialplanning, foodandtransport, checklist FROM event_info WHERE faculty_id = ?`,
+      [facultyId]
+    );
+
+    const events = rows.map((r) => {
+      // 👇 Place this log to inspect what you actually get from MySQL
+      console.log("📦 Raw eventinfo from DB:", r.eventinfo, typeof r.eventinfo);
+
+      const parsedEventInfo = tryParse(r.eventinfo, {}); // still safe with updated logic
+      return {
+        eventId: r.event_id,
+        eventData: {
+          eventInfo: parsedEventInfo,
+          agenda: tryParse(r.agenda, {}),
+          financialPlanning: tryParse(r.financialplanning, {}),
+          foodTransport: tryParse(r.foodandtransport, {}),
+          checklist: tryParse(r.checklist, []),
+        },
+      };
+    });
+
+    res.json(events);
+  } catch (err) {
+    console.error("❌ Failed to fetch events:", err);
+    res.status(500).json({ error: "Failed to fetch events" });
+  }
+};
+exports.getEventById = async (req, res) => {
+  const facultyId = req.session.user?.faculty_id;
+  const { eventId } = req.params;
+
+  if (!facultyId) {
+    return res.status(401).json({ error: "Unauthorized: Faculty ID not found in session" });
+  }
+
+  try {
+    const [rows] = await db.execute(
+      `SELECT * FROM event_info WHERE event_id = ? AND faculty_id = ?`,
+      [eventId, facultyId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Event not found" });
     }
 
-    res.json({ message: "Event data saved successfully", event_id });
-  } catch (error) {
-    console.error("Error saving event info:", error);
+    const row = rows[0];
+
+    // Utility to safely parse JSON
+    const tryParse = (val, fallback) => {
+      try {
+        return JSON.parse(val);
+      } catch {
+        return fallback;
+      }
+    };
+
+    res.json({
+      event_id: row.event_id,
+      status: row.status,
+      eventinfo: tryParse(row.eventinfo, {}),
+      agenda: tryParse(row.agenda, {}),
+      financialplanning: tryParse(row.financialplanning, {}),
+      foodandtransport: tryParse(row.foodandtransport, {}),
+      checklist: tryParse(row.checklist, []),
+    });
+  } catch (err) {
+    console.error("❌ Error fetching event by ID:", err);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.deleteEvent = async (req, res) => {
+  const facultyId = req.session.user?.faculty_id;
+  const { eventId } = req.params;
+
+  console.log("🗑️ Deleting event with ID:", eventId, "by faculty:", facultyId);
+
+  if (!facultyId) return res.status(401).json({ error: "Unauthorized" });
+
+  try {
+    const [result] = await db.execute(
+      `DELETE FROM event_info WHERE event_id = ? AND faculty_id = ?`,
+      [eventId, facultyId]
+    );
+
+    if (result.affectedRows === 0) {
+      console.warn("⚠️ Delete failed. No matching event found.");
+      return res.status(404).json({ error: "Event not found" });
+    }
+
+    res.json({ message: "Event deleted" });
+  } catch (err) {
+    console.error("❌ Delete error:", err);
+    res.status(500).json({ error: "Failed to delete event" });
   }
 };

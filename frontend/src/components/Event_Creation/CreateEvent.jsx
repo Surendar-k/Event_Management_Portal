@@ -23,72 +23,90 @@ const tabs = [
   { id: 'checklist', label: 'Checklist', icon: <FaCheckCircle size={18} /> },
 ];
 
+// Initial default state
+const defaultState = {
+  eventInfo: {},
+  startDate: '',
+  endDate: '',
+  agenda: { sessions: [] },
+  checklist: [],
+  financialPlanning: {},
+  foodAndTransport: {
+    meals: [],
+    refreshments: [],
+    travels: [],
+    travelBy: 'college',
+  },
+};
+
 const CreateEvent = () => {
   const { eventId } = useParams();
   const isEditMode = !!eventId;
 
   const [activeTab, setActiveTab] = useState('eventInfo');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
 
-  const [eventInfo, setEventInfo] = useState({});
-  const [agenda, setAgenda] = useState({});
-  const [checklist, setChecklist] = useState([]);
-  const [financialPlanning, setFinancialPlanning] = useState({});
-  const [foodAndTransport, setFoodAndTransport] = useState({
-    meals: [],
-    refreshments: [],
-    travels: [],
-    travelBy: 'college',
-  });
-useEffect(() => {
-  if (!isEditMode) return;
+  // Form states
+  const [eventInfo, setEventInfo] = useState(defaultState.eventInfo);
+  const [startDate, setStartDate] = useState(defaultState.startDate);
+  const [endDate, setEndDate] = useState(defaultState.endDate);
+  const [agenda, setAgenda] = useState(defaultState.agenda);
+  const [checklist, setChecklist] = useState(defaultState.checklist);
+  const [financialPlanning, setFinancialPlanning] = useState(defaultState.financialPlanning);
+  const [foodAndTransport, setFoodAndTransport] = useState(defaultState.foodAndTransport);
 
-  const fetchEventData = async () => {
-    try {
-      const res = await fetch(`http://localhost:5000/api/events/${eventId}`, {
-        credentials: 'include',
-      });
-      const data = await res.json();
+  useEffect(() => {
+    const resetToDefault = () => {
+      setEventInfo(defaultState.eventInfo);
+      setStartDate(defaultState.startDate);
+      setEndDate(defaultState.endDate);
+      setAgenda(defaultState.agenda);
+      setChecklist(defaultState.checklist);
+      setFinancialPlanning(defaultState.financialPlanning);
+      setFoodAndTransport(defaultState.foodAndTransport);
+    };
 
-      if (res.ok) {
-        // Populate all event sections
-        setEventInfo(data.eventinfo || {});
-        setAgenda(data.agenda || {});
-        setChecklist(Array.isArray(data.checklist) ? data.checklist : []);
-        setFinancialPlanning(data.financialplanning || {});
-        setFoodAndTransport(data.foodandtransport || {
-          meals: [],
-          refreshments: [],
-          travels: [],
-          travelBy: 'college',
-        });
+    if (isEditMode) {
+      const fetchEventData = async () => {
+        try {
+          const res = await fetch(`http://localhost:5000/api/events/${eventId}`, {
+            credentials: 'include',
+          });
+          const data = await res.json();
 
-        // Set individual form fields if present
-        setStartDate(data.eventinfo?.startDate || '');
-        setEndDate(data.eventinfo?.endDate || '');
-      } else {
-        console.error('Failed to fetch event data:', data.error);
-      }
-    } catch (err) {
-      console.error('Error fetching event:', err);
+          if (res.ok && data.eventinfo) {
+            setEventInfo(data.eventinfo);
+            setStartDate(data.eventinfo?.startDate || '');
+            setEndDate(data.eventinfo?.endDate || '');
+            setAgenda({ ...(data.agenda || {}), sessions: data.agenda?.sessions || [] });
+            setChecklist(Array.isArray(data.checklist) ? data.checklist : []);
+            setFinancialPlanning(data.financialplanning || {});
+            setFoodAndTransport(data.foodandtransport || defaultState.foodAndTransport);
+          } else {
+            console.error('Invalid structure received for event data');
+            resetToDefault();
+          }
+        } catch (err) {
+          console.error('Error fetching event:', err);
+          resetToDefault();
+        }
+      };
+
+      fetchEventData();
+    } else {
+      // Create mode: Clear all data
+      resetToDefault();
     }
-  };
-
-  fetchEventData();
-}, [eventId, isEditMode]);
-
+  }, [eventId]);
 
   const handleSaveAll = async () => {
- const payload = {
-  eventinfo: eventInfo,
-  agenda,
-  financialplanning: financialPlanning,
-  foodandtransport: foodAndTransport,
-  checklist,
-  ...(isEditMode && { event_id: parseInt(eventId) }) // Add this line
-};
-
+    const payload = {
+      eventinfo: eventInfo,
+      agenda,
+      financialplanning: financialPlanning,
+      foodandtransport: foodAndTransport,
+      checklist,
+      ...(isEditMode && { event_id: parseInt(eventId) }),
+    };
 
     const url = isEditMode
       ? `http://localhost:5000/api/events/${eventId}`
@@ -124,7 +142,7 @@ useEffect(() => {
           <EventInfo
             data={eventInfo}
             onChange={setEventInfo}
-            setEventId={() => {}} // not needed in edit mode
+            setEventId={() => {}}
             startDate={startDate}
             setStartDate={setStartDate}
             endDate={endDate}

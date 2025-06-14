@@ -38,7 +38,7 @@ const EventInfo = ({
     setField('departments', colleges[data.selectedCollege] || []);
   }, [data.selectedCollege]);
 
- useEffect(() => {
+ useEffect(() => {  
   if (startDate !== data.startDate) {
     setField('startDate', startDate);
   }

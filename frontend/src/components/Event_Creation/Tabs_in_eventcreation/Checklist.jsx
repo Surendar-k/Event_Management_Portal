@@ -1,4 +1,4 @@
-import {useState} from 'react'
+import { useState, useEffect } from 'react';
 
 const allTasks = {
   online: [
@@ -30,13 +30,24 @@ const allTasks = {
     'Website and Social Media Post-Event Updates',
     'Certificate for Guest & Participants / Feedback From The Participants'
   ]
-}
+};
 
-const Checklist = ({data=[],onChange}) => {
-  const [eventType, setEventType] = useState('')
- 
-  const [showAddTasks, setShowAddTasks] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
+const Checklist = ({ data = [], onChange }) => {
+  const [eventType, setEventType] = useState('');
+  const [showAddTasks, setShowAddTasks] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Automatically determine eventType based on tasks (on mount/update)
+  useEffect(() => {
+    if (data.length > 0 && !eventType) {
+      const allActivities = data.map(item => item.activity);
+      if (allActivities.every(task => allTasks.online.includes(task))) {
+        setEventType('online');
+      } else if (allActivities.every(task => allTasks.offline.includes(task))) {
+        setEventType('offline');
+      }
+    }
+  }, [data]);
 
   const addTask = task => {
     if (!data.some(t => t.activity === task)) {
@@ -45,24 +56,25 @@ const Checklist = ({data=[],onChange}) => {
     }
   };
 
- const removeTask = activity => {
+  const removeTask = activity => {
     const updated = data.filter(t => t.activity !== activity);
     onChange(updated);
   };
 
- const handleChange = (index, field, value) => {
+  const handleChange = (index, field, value) => {
     const updated = [...data];
     updated[index][field] = value;
     onChange(updated);
   };
 
- const filteredTasks = eventType && allTasks[eventType] ?
-    allTasks[eventType].filter(
-      task => task.toLowerCase().includes(searchTerm.toLowerCase()) &&
-              !data.some(t => t.activity === task)
-    ) : [];
-
-
+  const filteredTasks =
+    eventType && allTasks[eventType]
+      ? allTasks[eventType].filter(
+          task =>
+            task.toLowerCase().includes(searchTerm.toLowerCase()) &&
+            !data.some(t => t.activity === task)
+        )
+      : [];
 
   return (
     <div className='mx-auto max-w-7xl rounded-lg bg-white p-8 shadow-lg'>
@@ -81,10 +93,10 @@ const Checklist = ({data=[],onChange}) => {
           id='eventType'
           value={eventType}
           onChange={e => {
-            setEventType(e.target.value)
-            onChange([]);
-            setShowAddTasks(false)
-            setSearchTerm('')
+            setEventType(e.target.value);
+            onChange([]); // reset checklist when type changes
+            setShowAddTasks(false);
+            setSearchTerm('');
           }}
           className='rounded-md border border-gray-400 px-4 py-2 focus:ring-2 focus:ring-gray-600 focus:outline-none'
         >
@@ -123,7 +135,7 @@ const Checklist = ({data=[],onChange}) => {
               </div>
 
               <div
-                style={{maxHeight: 240, overflowY: 'auto'}}
+                style={{ maxHeight: 240, overflowY: 'auto' }}
                 className='rounded-md border border-gray-300 p-3'
               >
                 {filteredTasks.length ? (
@@ -134,7 +146,6 @@ const Checklist = ({data=[],onChange}) => {
                       onClick={() => addTask(task)}
                       role='button'
                       tabIndex={0}
-                     
                     >
                       {task}
                     </div>
@@ -149,91 +160,88 @@ const Checklist = ({data=[],onChange}) => {
           )}
 
           {data.length > 0 ? (
-            <>
-              <div className='overflow-x-auto rounded-lg shadow-md'>
-                <table className='min-w-full table-auto border-collapse'>
-                  <thead className='bg-gray-200 text-gray-900'>
-                    <tr>
-                      <th className='border border-gray-400 px-4 py-3 text-left text-sm font-semibold'>
-                        S.NO
-                      </th>
-                      <th className='border border-gray-400 px-4 py-3 text-left text-sm font-semibold'>
-                        ACTIVITY
-                      </th>
-                      <th className='border border-gray-400 px-4 py-3 text-left text-sm font-semibold'>
-                        IN-CHARGE
-                      </th>
-                      <th className='border border-gray-400 px-4 py-3 text-left text-sm font-semibold'>
-                        DATE
-                      </th>
-                      <th className='border border-gray-400 px-4 py-3 text-left text-sm font-semibold'>
-                        REMARKS
-                      </th>
-                      <th className='border border-gray-400 px-4 py-3 text-center text-sm font-semibold'>
-                        ACTION
-                      </th>
+            <div className='overflow-x-auto rounded-lg shadow-md'>
+              <table className='min-w-full table-auto border-collapse'>
+                <thead className='bg-gray-200 text-gray-900'>
+                  <tr>
+                    <th className='border border-gray-400 px-4 py-3 text-left text-sm font-semibold'>
+                      S.NO
+                    </th>
+                    <th className='border border-gray-400 px-4 py-3 text-left text-sm font-semibold'>
+                      ACTIVITY
+                    </th>
+                    <th className='border border-gray-400 px-4 py-3 text-left text-sm font-semibold'>
+                      IN-CHARGE
+                    </th>
+                    <th className='border border-gray-400 px-4 py-3 text-left text-sm font-semibold'>
+                      DATE
+                    </th>
+                    <th className='border border-gray-400 px-4 py-3 text-left text-sm font-semibold'>
+                      REMARKS
+                    </th>
+                    <th className='border border-gray-400 px-4 py-3 text-center text-sm font-semibold'>
+                      ACTION
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.map((item, index) => (
+                    <tr
+                      key={index}
+                      className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                    >
+                      <td className='border border-gray-300 px-4 py-3 text-center text-sm text-gray-800'>
+                        {index + 1}
+                      </td>
+                      <td className='border border-gray-300 px-4 py-3 text-sm text-gray-900'>
+                        {item.activity}
+                      </td>
+                      <td className='border border-gray-300 px-4 py-3'>
+                        <input
+                          type='text'
+                          value={item.inCharge}
+                          onChange={e =>
+                            handleChange(index, 'inCharge', e.target.value)
+                          }
+                          placeholder='In-charge'
+                          className='w-full rounded-md border border-gray-400 px-3 py-1 focus:ring-2 focus:ring-gray-600 focus:outline-none'
+                        />
+                      </td>
+                      <td className='border border-gray-300 px-4 py-3 text-center'>
+                        <input
+                          type='date'
+                          value={item.date}
+                          onChange={e =>
+                            handleChange(index, 'date', e.target.value)
+                          }
+                          className='mx-auto block w-full max-w-[140px] rounded-md border border-gray-400 px-3 py-1 focus:ring-2 focus:ring-gray-600 focus:outline-none'
+                        />
+                      </td>
+                      <td className='border border-gray-300 px-4 py-3'>
+                        <input
+                          type='text'
+                          value={item.remarks}
+                          onChange={e =>
+                            handleChange(index, 'remarks', e.target.value)
+                          }
+                          placeholder='Remarks'
+                          className='w-full rounded-md border border-gray-400 px-3 py-1 focus:ring-2 focus:ring-gray-600 focus:outline-none'
+                        />
+                      </td>
+                      <td className='border border-gray-300 px-4 py-3 text-center'>
+                        <button
+                          className='font-semibold text-red-600 transition hover:text-red-800'
+                          onClick={() => removeTask(item.activity)}
+                          aria-label={`Remove task ${item.activity}`}
+                        >
+                          Remove
+                        </button>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {data.map((item, index) => (
-                      <tr
-                        key={index}
-                        className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
-                      >
-                        <td className='border border-gray-300 px-4 py-3 text-center text-sm text-gray-800'>
-                          {index + 1}
-                        </td>
-                        <td className='border border-gray-300 px-4 py-3 text-sm text-gray-900'>
-                          {item.activity}
-                        </td>
-                        <td className='border border-gray-300 px-4 py-3'>
-                          <input
-                            type='text'
-                            value={item.inCharge}
-                            onChange={e =>
-                              handleChange(index, 'inCharge', e.target.value)
-                            }
-                            placeholder='In-charge'
-                            className='w-full rounded-md border border-gray-400 px-3 py-1 focus:ring-2 focus:ring-gray-600 focus:outline-none'
-                          />
-                        </td>
-                        <td className='border border-gray-300 px-4 py-3 text-center'>
-                          <input
-                            type='date'
-                            value={item.date}
-                            onChange={e =>
-                              handleChange(index, 'date', e.target.value)
-                            }
-                            className='mx-auto block w-full max-w-[140px] rounded-md border border-gray-400 px-3 py-1 focus:ring-2 focus:ring-gray-600 focus:outline-none'
-                          />
-                        </td>
-                        <td className='border border-gray-300 px-4 py-3'>
-                          <input
-                            type='text'
-                            value={item.remarks}
-                            onChange={e =>
-                              handleChange(index, 'remarks', e.target.value)
-                            }
-                            placeholder='Remarks'
-                            className='w-full rounded-md border border-gray-400 px-3 py-1 focus:ring-2 focus:ring-gray-600 focus:outline-none'
-                          />
-                        </td>
-                        <td className='border border-gray-300 px-4 py-3 text-center'>
-                          <button
-                            className='font-semibold text-red-600 transition hover:text-red-800'
-                            onClick={() => removeTask(item.activity)}
-                            aria-label={`Remove task ${item.activity}`}
-                          >
-                            Remove
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-             
-            </>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
             <p className='text-center text-gray-700 italic'>
               No tasks added yet. Click <strong>+ Add Tasks</strong> to start.
@@ -242,7 +250,7 @@ const Checklist = ({data=[],onChange}) => {
         </>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default Checklist
+export default Checklist;

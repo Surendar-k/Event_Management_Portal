@@ -120,15 +120,23 @@ exports.getEventsByUser = async (req, res) => {
       [facultyId]
     );
 
+    // ✅ Safe JSON parse utility
+    const tryParse = (val, fallback) => {
+      if (typeof val === 'object') return val;
+      try {
+        return JSON.parse(val);
+      } catch {
+        return fallback;
+      }
+    };
+
     const events = rows.map((r) => {
-      // 👇 Place this log to inspect what you actually get from MySQL
       console.log("📦 Raw eventinfo from DB:", r.eventinfo, typeof r.eventinfo);
 
-      const parsedEventInfo = tryParse(r.eventinfo, {}); // still safe with updated logic
       return {
         eventId: r.event_id,
         eventData: {
-          eventInfo: parsedEventInfo,
+          eventInfo: tryParse(r.eventinfo, {}),
           agenda: tryParse(r.agenda, {}),
           financialPlanning: tryParse(r.financialplanning, {}),
           foodTransport: tryParse(r.foodandtransport, {}),
@@ -143,6 +151,7 @@ exports.getEventsByUser = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch events" });
   }
 };
+
 exports.getEventById = async (req, res) => {
   const facultyId = req.session.user?.faculty_id;
   const { eventId } = req.params;
@@ -164,13 +173,15 @@ exports.getEventById = async (req, res) => {
     const row = rows[0];
 
     // Utility to safely parse JSON
-    const tryParse = (val, fallback) => {
-      try {
-        return JSON.parse(val);
-      } catch {
-        return fallback;
-      }
-    };
+   const tryParse = (val, fallback) => {
+  if (typeof val === 'object') return val;
+  try {
+    return JSON.parse(val);
+  } catch {
+    return fallback;
+  }
+};
+
 
     res.json({
       event_id: row.event_id,

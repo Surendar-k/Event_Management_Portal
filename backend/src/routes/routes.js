@@ -36,11 +36,6 @@ router.post(
   authMiddleware.isAuthenticated,
   eventController.saveEventInfo
 );
-router.put(
-  "/events/:id",
-  authMiddleware.isAuthenticated,
-  eventController.saveEventInfo
-);
 
 // ========== Event Logs ============
 router.get(

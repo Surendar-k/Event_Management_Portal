@@ -90,6 +90,8 @@ const FinancialPlanning = forwardRef(({ data = {}, onChange = () => {} }, ref) =
 
   return (
     <div className='max-w-8xl mx-auto space-y-12 rounded-xl px-6 py-10'>
+       <h2 className='mb-4 text-3xl font-bold'>Financial Planning</h2>
+
       <div className='mb-4 flex space-x-4'>
   <button
     className={`rounded-t-lg px-4 py-2 font-medium ${activeTab === 'funding' ? 'bg-gray-200' : 'bg-gray-100'}`}

@@ -60,7 +60,9 @@ router.put(
   eventController.saveEventInfo
 );
 
-
-
+//
+router.get("/user-event/:event_id", authMiddleware.isAuthenticated, eventController.getUserWithEvent);
 
 module.exports = router;
+
+

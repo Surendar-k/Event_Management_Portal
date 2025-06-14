@@ -13,6 +13,8 @@ const parseJSONField = (field, fallback = {}) => {
   if (typeof field === 'object') return field;
   return fallback;
 };
+
+// Save or update event info
 exports.saveEventInfo = async (req, res) => {
   try {
     const {
@@ -23,6 +25,7 @@ exports.saveEventInfo = async (req, res) => {
       checklist,
       status = "draft",
       approvals = {},
+      reviews = {},
       event_id,
     } = req.body;
 
@@ -32,7 +35,7 @@ exports.saveEventInfo = async (req, res) => {
     }
 
     if (event_id) {
-      // Check if event exists
+      // Update existing event
       const [existing] = await db.execute(
         "SELECT * FROM event_info WHERE event_id = ? AND faculty_id = ?",
         [event_id, faculty_id]
@@ -44,7 +47,6 @@ exports.saveEventInfo = async (req, res) => {
 
       const oldData = existing[0];
 
-      // Merge old and new fields safely
       const updatedEventInfo = { ...parseJSONField(oldData.eventinfo), ...eventinfo };
       const updatedAgenda = { ...parseJSONField(oldData.agenda), ...agenda };
       const updatedFinance = { ...parseJSONField(oldData.financialplanning), ...financialplanning };
@@ -52,16 +54,17 @@ exports.saveEventInfo = async (req, res) => {
       const updatedChecklist = Array.isArray(checklist) && checklist.length
         ? checklist
         : parseJSONField(oldData.checklist, []);
-
       const updatedApprovals = Object.keys(approvals).length
         ? approvals
         : parseJSONField(oldData.approvals, {});
+      const updatedReviews = Object.keys(reviews).length
+        ? reviews
+        : parseJSONField(oldData.reviews, {});
 
-      // Update the database
       await db.execute(
         `UPDATE event_info SET
           eventinfo = ?, agenda = ?, financialplanning = ?,
-          foodandtransport = ?, checklist = ?, status = ?, approvals = ?
+          foodandtransport = ?, checklist = ?, status = ?, approvals = ?, reviews = ?
          WHERE event_id = ? AND faculty_id = ?`,
         [
           JSON.stringify(updatedEventInfo),
@@ -71,6 +74,7 @@ exports.saveEventInfo = async (req, res) => {
           JSON.stringify(updatedChecklist),
           status,
           JSON.stringify(updatedApprovals),
+          JSON.stringify(updatedReviews),
           event_id,
           faculty_id,
         ]
@@ -82,8 +86,8 @@ exports.saveEventInfo = async (req, res) => {
       const [result] = await db.execute(
         `INSERT INTO event_info (
           faculty_id, eventinfo, agenda, financialplanning,
-          foodandtransport, checklist, status, approvals
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          foodandtransport, checklist, status, approvals, reviews
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           faculty_id,
           JSON.stringify(eventinfo || {}),
@@ -92,7 +96,8 @@ exports.saveEventInfo = async (req, res) => {
           JSON.stringify(foodandtransport || {}),
           JSON.stringify(checklist || []),
           status,
-          JSON.stringify(approvals || {})
+          JSON.stringify(approvals || {}),
+          JSON.stringify(reviews || {})
         ]
       );
 
@@ -104,52 +109,40 @@ exports.saveEventInfo = async (req, res) => {
   }
 };
 
-//to fetch event in eventlogs
-
-const tryParse = (data, fallback = {}) => {
-  if (typeof data === "object") return data; // already parsed
+// Utility to safely parse JSON fields
+const tryParse = (val, fallback = {}) => {
+  if (typeof val === 'object') return val;
   try {
-    return JSON.parse(data);
-  } catch (err) {
-    console.warn("⚠️ Invalid JSON in DB field (not parsed):", data);
+    return JSON.parse(val);
+  } catch {
+    console.warn("⚠️ Invalid JSON in DB field:", val);
     return fallback;
   }
 };
 
+// Get all events for a faculty user
 exports.getEventsByUser = async (req, res) => {
   const facultyId = req.session.user?.faculty_id;
   if (!facultyId) return res.status(401).json({ error: "Unauthorized" });
 
   try {
     const [rows] = await db.execute(
-      `SELECT event_id, eventinfo, agenda, financialplanning, foodandtransport, checklist FROM event_info WHERE faculty_id = ?`,
+      `SELECT event_id, eventinfo, agenda, financialplanning, foodandtransport, checklist, reviews
+       FROM event_info WHERE faculty_id = ?`,
       [facultyId]
     );
 
-    // ✅ Safe JSON parse utility
-    const tryParse = (val, fallback) => {
-      if (typeof val === 'object') return val;
-      try {
-        return JSON.parse(val);
-      } catch {
-        return fallback;
-      }
-    };
-
-    const events = rows.map((r) => {
-      console.log("📦 Raw eventinfo from DB:", r.eventinfo, typeof r.eventinfo);
-
-      return {
-        eventId: r.event_id,
-        eventData: {
-          eventInfo: tryParse(r.eventinfo, {}),
-          agenda: tryParse(r.agenda, {}),
-          financialPlanning: tryParse(r.financialplanning, {}),
-          foodTransport: tryParse(r.foodandtransport, {}),
-          checklist: tryParse(r.checklist, []),
-        },
-      };
-    });
+    const events = rows.map((r) => ({
+      eventId: r.event_id,
+      eventData: {
+        eventInfo: tryParse(r.eventinfo, {}),
+        agenda: tryParse(r.agenda, {}),
+        financialPlanning: tryParse(r.financialplanning, {}),
+        foodTransport: tryParse(r.foodandtransport, {}),
+        checklist: tryParse(r.checklist, []),
+        reviews: tryParse(r.reviews, {})
+      },
+    }));
 
     res.json(events);
   } catch (err) {
@@ -158,6 +151,7 @@ exports.getEventsByUser = async (req, res) => {
   }
 };
 
+// Get a specific event by ID
 exports.getEventById = async (req, res) => {
   const facultyId = req.session.user?.faculty_id;
   const { eventId } = req.params;
@@ -178,17 +172,6 @@ exports.getEventById = async (req, res) => {
 
     const row = rows[0];
 
-    // Utility to safely parse JSON
-   const tryParse = (val, fallback) => {
-  if (typeof val === 'object') return val;
-  try {
-    return JSON.parse(val);
-  } catch {
-    return fallback;
-  }
-};
-
-
     res.json({
       event_id: row.event_id,
       status: row.status,
@@ -197,6 +180,7 @@ exports.getEventById = async (req, res) => {
       financialplanning: tryParse(row.financialplanning, {}),
       foodandtransport: tryParse(row.foodandtransport, {}),
       checklist: tryParse(row.checklist, []),
+      reviews: tryParse(row.reviews, {})
     });
   } catch (err) {
     console.error("❌ Error fetching event by ID:", err);
@@ -204,6 +188,7 @@ exports.getEventById = async (req, res) => {
   }
 };
 
+// Delete an event
 exports.deleteEvent = async (req, res) => {
   const facultyId = req.session.user?.faculty_id;
   const { eventId } = req.params;
@@ -232,6 +217,28 @@ exports.deleteEvent = async (req, res) => {
 
 
 
+// GET: /api/user-event/:event_id
+exports.getUserWithEvent = async (req, res) => {
+  const facultyId = req.session.user?.faculty_id;
+  const { event_id } = req.params;
 
+  if (!facultyId || !event_id) {
+    return res.status(400).json({ error: "faculty_id or event_id missing" });
+  }
 
+  try {
+    const [userRows] = await db.query("SELECT * FROM login_users WHERE faculty_id = ?", [facultyId]);
+    const [eventRows] = await db.query("SELECT * FROM event_info WHERE event_id = ? AND faculty_id = ?", [event_id, facultyId]);
 
+    if (userRows.length === 0 || eventRows.length === 0) {
+      return res.status(404).json({ error: "User or Event not found" });
+    }
+
+    res.json({
+      user: userRows[0],
+      event: eventRows[0]
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

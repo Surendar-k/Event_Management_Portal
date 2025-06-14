@@ -86,15 +86,19 @@ const EventLogs = () => {
 
   const handleRequestApproval = async () => {
     if (selectedApprovers.length === 0) {
-      alert('Please select at least one approver');
-      return;
-    }
-
+    alert('Please select at least one approver');
+    return;
+  }
     const approvalObj = selectedApprovers.reduce((acc, role) => {
       acc[role.toLowerCase()] = false;
       return acc;
     }, {});
-
+ navigate(`/higherauthority/${selectedEvent.id}`, {
+    state: {
+      eventData: selectedEvent,
+      selectedApprovers,
+    },
+  });
     const updatedEventData = {
       eventinfo: selectedEvent.eventData.eventInfo,
       agenda: selectedEvent.eventData.agenda,
@@ -107,15 +111,23 @@ const EventLogs = () => {
     };
 
     try {
-      await axios.put(`http://localhost:5000/api/events/${selectedEvent.id}`, updatedEventData);
-      setEvents((prev) =>
-        prev.map((ev) =>
-          ev.id === selectedEvent.id
-            ? { ...ev, status: 'submitted', approvals: approvalObj }
-            : ev
-        )
-      );
-      closeApprovalPopup();
+     await axios.put(`http://localhost:5000/api/events/${selectedEvent.id}`, updatedEventData);
+setEvents((prev) =>
+  prev.map((ev) =>
+    ev.id === selectedEvent.id
+      ? { ...ev, status: 'submitted', approvals: approvalObj }
+      : ev
+  )
+);
+closeApprovalPopup();
+navigate(`/higherauthority/${selectedEvent.id}`, {
+  state: {
+    eventData: selectedEvent,
+    selectedApprovers,
+  },
+});
+
+
     } catch (err) {
       console.error('Error requesting approval:', err);
     }

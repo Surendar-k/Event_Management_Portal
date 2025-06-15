@@ -39,30 +39,27 @@ router.post(
 
 // ========== Event Logs ============
 router.get(
-  "/events",
+  "/events/by-user",
   authMiddleware.isAuthenticated,
   eventController.getEventsByUser
 );
+// get event id to edit
 router.get(
-  "/events/:eventId", // ✅ now matches the frontend
+  "/events/:eventId",
   authMiddleware.isAuthenticated,
   eventController.getEventById
 );
-
+//use for delete an event
 router.delete(
   "/events/:eventId",
   authMiddleware.isAuthenticated,
   eventController.deleteEvent
 );
+//use for event update
 router.put(
   "/events/:eventId",
   authMiddleware.isAuthenticated,
   eventController.saveEventInfo
 );
 
-//
-router.get("/user-event/:event_id", authMiddleware.isAuthenticated, eventController.getUserWithEvent);
-
 module.exports = router;
-
-

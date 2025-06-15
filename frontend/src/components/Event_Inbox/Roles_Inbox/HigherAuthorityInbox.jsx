@@ -24,14 +24,25 @@ const isFormComplete = (data) => {
   return (
     data?.eventInfo?.title &&
     data?.eventInfo?.startDate &&
-    data?.eventInfo?.venue &&
+    // remove or relax venue requirement
     Object.keys(data?.agenda || {}).length > 0 &&
-    data?.financialPlanning?.budget &&
-    data?.foodTransport?.foodArrangements &&
+    // optional chaining for budget check
+    (data?.financialPlanning?.budget || data?.financialPlanning?.estimatedCost) &&
+    // allow meals/travels arrays instead of foodArrangements
+    (Array.isArray(data?.foodTransport?.meals) || Array.isArray(data?.foodTransport?.refreshments)) &&
     Array.isArray(data?.checklist) &&
-    data.checklist.length > 0
+    data.checklist.length >= 0
   )
 }
+
+// Helper function to safely parse JSON strings
+const tryParse = (field, fallback = {}) => {
+  try {
+    return typeof field === 'string' ? JSON.parse(field) : field || fallback;
+  } catch {
+    return fallback;
+  }
+};
 
 const HigherAuthorityInbox = () => {
   const [events, setEvents] = useState([])
@@ -45,39 +56,49 @@ const HigherAuthorityInbox = () => {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    fetchEvents()
-  }, [])
-
-  const fetchEvents = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const res = await axios.get('http://localhost:5000/api/events')
-      
-      const normalized = res.data.map((ev) => ({
-        id: ev.eventId || ev.event_id,
-        creatorRole: ev.creatorRole || 'unknown',
-        creatorEmail: ev.creatorEmail || 'unknown@example.com',
-        eventData: {
-          eventInfo: ev.eventData?.eventInfo || {},
-          agenda: ev.eventData?.agenda || {},
-          financialPlanning: ev.eventData?.financialPlanning || {},
-          foodTransport: ev.eventData?.foodTransport || {},
-          checklist: ev.eventData?.checklist || [],
-          reviews: ev.eventData?.reviews || {}
-        },
-        status: ev.status || 'draft',
-        approvals: ev.approvals || {}
-      }))
-
-      setEvents(normalized)
-    } catch (err) {
-      console.error('Error fetching events:', err)
-      setError('Failed to fetch events. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  }
+    const fetchEvents = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        
+        // Updated endpoint to match your backend route
+        const res = await axios.get("http://localhost:5000/api/events/by-user");
+        
+        console.log('Raw API response:', res.data); // Debug log
+        
+        const submittedEvents = res.data.map(ev => {
+          console.log('Processing event:', ev); // Debug log
+          
+          return {
+            id: ev.event_id, // Use event_id from backend
+            status: ev.status,
+            approvals: tryParse(ev.approvals, {}),
+            creatorRole: ev.creator_role || 'Unknown', // Add fallback
+            creatorEmail: ev.creator_email || 'Unknown', // Add fallback
+            eventData: {
+              eventInfo: tryParse(ev.eventinfo, {}),
+              agenda: tryParse(ev.agenda, {}),
+              financialPlanning: tryParse(ev.financialplanning, {}),
+              foodTransport: tryParse(ev.foodandtransport, {}),
+              checklist: tryParse(ev.checklist, []),
+              reviews: tryParse(ev.reviews, {})
+            }
+          }
+        });
+        
+        console.log('Processed events:', submittedEvents); // Debug log
+        setEvents(submittedEvents);
+        
+      } catch (err) {
+        console.error("Error fetching events for approval:", err);
+        setError("Failed to fetch events. Please try again.");
+      } finally {
+        setLoading(false)
+      }
+    };
+    
+    fetchEvents();
+  }, []);
 
   const getStatusAndColor = (ev) => {
     const formComplete = isFormComplete(ev.eventData)
@@ -109,7 +130,7 @@ const HigherAuthorityInbox = () => {
         : { 
             label: 'Approved', 
             color: 'text-green-800', 
-            icon: <FaUser Check className='mr-1' /> 
+            icon: <FaUserCheck className='mr-1' /> 
           }
     }
 
@@ -118,14 +139,17 @@ const HigherAuthorityInbox = () => {
 
   const filteredEvents = useMemo(() => {
     return events.filter(ev => {
+      
       const { label } = getStatusAndColor(ev)
       const statusMatches = statusFilter === 'all' ? true : label.toLowerCase() === statusFilter
       const title = ev.eventData.eventInfo?.title || ''
+      
       const searchMatches = title.toLowerCase().includes(searchTerm.toLowerCase())
       return statusMatches && searchMatches
+      
     })
   }, [events, statusFilter, searchTerm])
-
+console.log("Filtered Events:", filteredEvents)
   const openApprovePopup = ev => {
     setSelectedEvent(ev)
     setShowApprovePopup(true)
@@ -238,9 +262,10 @@ const HigherAuthorityInbox = () => {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded-xl shadow">
-        <div className="flex justify-center items-center h-64">
-          <div className="text-lg text-gray-600">Loading events...</div>
+      <div className='mx-auto mt-10 max-w-7xl rounded-2xl border p-6 shadow-xl'>
+        <div className="text-center py-12">
+          <FaClock className="mx-auto text-6xl text-gray-300 mb-4 animate-spin" />
+          <p className="text-xl text-gray-500">Loading events...</p>
         </div>
       </div>
     )
@@ -248,9 +273,16 @@ const HigherAuthorityInbox = () => {
 
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded-xl shadow">
-        <div className="flex justify-center items-center h-64">
-          <div className="text-lg text-red-600">{error}</div>
+      <div className='mx-auto mt-10 max-w-7xl rounded-2xl border p-6 shadow-xl'>
+        <div className="text-center py-12">
+          <FaTimesCircle className="mx-auto text-6xl text-red-300 mb-4" />
+          <p className="text-xl text-red-500">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Retry
+          </button>
         </div>
       </div>
     )
@@ -267,7 +299,6 @@ const HigherAuthorityInbox = () => {
         style={{color: '#575757', textShadow: '1px 1px 2px rgba(87,87,87,0.2)'}}>Higher Authority Inbox</h1>
 
       <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
-       
         <input
           type="text"
           placeholder="Search by title..."
@@ -288,35 +319,38 @@ const HigherAuthorityInbox = () => {
         </select>
       </div>
 
-      {!filteredEvents.length ? (
+      {!filteredEvents.length ===0? (
         <div className="text-center py-12">
           <FaEnvelopeOpenText className="mx-auto text-6xl text-gray-300 mb-4" />
-          <p className="text-xl text-gray-500">No events found matching your criteria.</p>
+          <p className="text-xl text-gray-500">
+            {events.length === 0 ? "No events found matching your criteria." : "No events match your current filters."}
+          </p>
         </div>
       ) : (
         <div className="space-y-6">
-          {filteredEvents.map(ev => {
-            const { label, color } = getStatusAndColor(ev)
-            const { title, startDate, venue } = ev.eventData.eventInfo || {}
- const approvalStatus = ev.approvals?.[userRole]
-            return (
-              <div key={ev.id}className='rounded-xl border border-gray-300 bg-white p-8 shadow-lg'
+         {filteredEvents.map((ev, index) => {
+  const { label, color } = getStatusAndColor(ev);
+ const { title,startDate, venue, description } = ev.eventData?.eventInfo || {};
+
+  const approvalStatus = ev.approvals?.[userRole];
+
+  return (
+    <div key={ev.id || `event-${index}`} className='rounded-xl border border-gray-300 bg-white p-8 shadow-lg'
+
                 style={{boxShadow: '0 6px 15px rgba(0,0,0,0.1)'}}>
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
                     <h2 className='mb-3 flex items-center gap-3 text-3xl font-bold text-indigo-900'>
                        <FaEnvelopeOpenText />
-                       {title || 'Untitled Event'}
+                      {title || 'Untitled Event'}
                     </h2>
                     
-                  <div className='mb-4 flex flex-wrap gap-4 text-sm font-medium text-gray-700'>
-                  <div className='flex items-center gap-1'>
-                    <FaUserCircle className='text-gray-500' />
-                    Created by {ev.creatorRole} | {ev.creatorEmail}
-                    {ev.creatorEmail}
-                  </div>
-                </div>
-
+                    <div className='mb-4 flex flex-wrap gap-4 text-sm font-medium text-gray-700'>
+                      <div className='flex items-center gap-1'>
+                        <FaUserCircle className='text-gray-500' />
+                        Created by {ev.creatorRole} | {ev.creatorEmail}
+                      </div>
+                    </div>
                   </div>
                   <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${color}`}>
                     {label}
@@ -333,52 +367,52 @@ const HigherAuthorityInbox = () => {
                     <span><strong>Venue:</strong> {venue || 'TBD'}</span>
                   </div>
                 </div>
- <p className='mb-6 border-l-4 border-indigo-400 pl-4 leading-relaxed text-gray-800 italic'>
-                  {ev.eventData?.eventInfo?.description || 'No description'}
+
+                <p className='mb-6 border-l-4 border-indigo-400 pl-4 leading-relaxed text-gray-800 italic'>
+                  {description || 'No description'}
                 </p>
 
-                <p className='mb-4 font-semibold'>
-                  Status:{' '}
+                <div className='mb-4 flex items-center gap-2'>
+                  <span className='font-semibold'>Approval Status:</span>
                   {approvalStatus === true ? (
                     <span className='flex items-center gap-2 font-semibold text-green-700'>
                       <FaCheckCircle /> Approved
                     </span>
                   ) : approvalStatus === false ? (
-                    <span className='flex items-center gap-2 font-semibold text-yellow-700'>
-                      <FaTimesCircle /> Pending
-                    </span>
-                  ) : approvalStatus === 'rejected' ? (
                     <span className='flex items-center gap-2 font-semibold text-red-700'>
                       <FaTimesCircle /> Rejected
                     </span>
                   ) : (
-                    <span className='text-gray-600'>N/A</span>
-                  )}
-                </p>
-
-                <div className='mb-6 flex items-center gap-2 font-medium text-gray-700'>
-                  <p className="flex items-center text-gray-700">
-                    <FaCommentDots className="mr-2 text-purple-500" />
-                    <strong>Your Review:</strong>
-                    <span  className='font-normal text-gray-500 italic'>
-                      {ev.eventData.reviews?.[userRole] || 'No review yet'}
+                    <span className='flex items-center gap-2 font-semibold text-yellow-700'>
+                      <FaClock /> Pending Review
                     </span>
-                  </p>
+                  )}
                 </div>
 
-                <div className='flex flex-wrap gap-6'>
+                <div className='mb-6 flex items-start gap-2 font-medium text-gray-700'>
+                  <FaCommentDots className="mr-2 text-purple-500 mt-1" />
+                  <div>
+                    <strong>Your Review:</strong>
+                    <span className='ml-2 font-normal text-gray-500 italic'>
+                      {ev.eventData.reviews?.[userRole] || 'No review yet'}
+
+                    </span>
+                  </div>
+                </div>
+
+                <div className='flex flex-wrap gap-4'>
                   <button 
                     onClick={() => openApprovePopup(ev)} 
-                    className='flex items-center gap-2 rounded-lg bg-green-700 px-6 py-3 text-white shadow-md transition-shadow hover:bg-green-800'
+                    className='flex items-center gap-2 rounded-lg bg-green-700 px-6 py-3 text-white shadow-md transition-all hover:bg-green-800 hover:shadow-lg'
                   >
-                    <FaCheckCircle size={20} />
+                    <FaCheckCircle size={18} />
                     Approve / Reject
                   </button>
                   <button 
                     onClick={() => openReviewPopup(ev)} 
-                   className='flex items-center gap-2 rounded-lg bg-indigo-700 px-6 py-3 text-white shadow-md transition-shadow hover:bg-indigo-800'
+                   className='flex items-center gap-2 rounded-lg bg-indigo-700 px-6 py-3 text-white shadow-md transition-all hover:bg-indigo-800 hover:shadow-lg'
                   >
-                     <FaEdit size={20} />
+                     <FaEdit size={18} />
                     Add / Edit Review
                   </button>
                 </div>
@@ -430,11 +464,14 @@ const HigherAuthorityInbox = () => {
       {/* Review Popup */}
       {showReviewPopup && selectedEvent && (
         <div className='bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center bg-black px-4'>
-          <div  className='w-full max-w-md rounded-xl bg-white p-8 shadow-xl'
+          <div className='w-full max-w-md rounded-xl bg-white p-8 shadow-xl'
             style={{borderTop: '6px solid #4338ca'}}>
-          
-            <p className='mb-4 text-2xl font-bold text-gray-900'>
-             <FaCommentDots className="inline mr-2 text-blue-500" /> Send Review for"{selectedEvent.eventData.eventInfo?.title || 'Untitled Event'}"
+            <h3 className='mb-4 text-2xl font-bold text-gray-900'>
+              <FaCommentDots className="inline mr-2 text-blue-500" /> 
+              Send Review
+            </h3>
+            <p className="text-gray-600 mb-4">
+              "{selectedEvent.eventData.eventInfo?.title || 'Untitled Event'}"
             </p>
             <textarea
               value={reviewMessage}
@@ -443,7 +480,7 @@ const HigherAuthorityInbox = () => {
               className='mb-6 w-full resize-none rounded-lg border border-gray-300 p-4 focus:ring-2 focus:ring-indigo-600 focus:outline-none'
               rows={4}
             />
-            <div className="flex justify-end space-x-5">
+            <div className="flex justify-end space-x-3">
               <button 
                 onClick={handleSendReview} 
                 className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
@@ -453,7 +490,7 @@ const HigherAuthorityInbox = () => {
               </button>
               <button 
                 onClick={closePopups} 
-                className='rounded-lg border border-gray-300 px-6 py-2 transition hover:bg-gray-100'
+                className='rounded-lg border border-gray-300 px-4 py-2 transition hover:bg-gray-100'
               >
                 Cancel
               </button>

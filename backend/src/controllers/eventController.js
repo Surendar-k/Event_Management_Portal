@@ -1,20 +1,27 @@
 const db = require("../config/db");
 
-// Safe JSON parser
 const parseJSONField = (field, fallback = {}) => {
   if (!field) return fallback;
-  if (typeof field === 'string') {
+  if (typeof field === "string") {
     try {
       return JSON.parse(field);
     } catch {
       return fallback;
     }
   }
-  if (typeof field === 'object') return field;
+  if (typeof field === "object") return field;
   return fallback;
 };
 
-// Save or update event info
+const tryParse = (val, fallback = {}) => {
+  if (typeof val === "object") return val;
+  try {
+    return JSON.parse(val);
+  } catch {
+    return fallback;
+  }
+};
+
 exports.saveEventInfo = async (req, res) => {
   try {
     const {
@@ -30,28 +37,37 @@ exports.saveEventInfo = async (req, res) => {
     } = req.body;
 
     const faculty_id = req.session.user?.faculty_id;
-    if (!faculty_id) {
-      return res.status(401).json({ error: "Unauthorized: Faculty ID not found in session" });
+    const role = req.session.user?.role;
+    const canApprove = ["hod", "dean", "principal"].includes(role);
+
+    if (!faculty_id && !canApprove) {
+      return res.status(401).json({ error: "Unauthorized" });
     }
 
     if (event_id) {
-      // Update existing event
       const [existing] = await db.execute(
-        "SELECT * FROM event_info WHERE event_id = ? AND faculty_id = ?",
-        [event_id, faculty_id]
+        "SELECT * FROM event_info WHERE event_id = ?",
+        [event_id]
       );
-
-      if (existing.length === 0) {
-        return res.status(404).json({ error: "Event not found for update" });
-      }
+      if (existing.length === 0)
+        return res.status(404).json({ error: "Event not found" });
 
       const oldData = existing[0];
 
-      const updatedEventInfo = { ...parseJSONField(oldData.eventinfo), ...eventinfo };
+      const updatedEventInfo = {
+        ...parseJSONField(oldData.eventinfo),
+        ...eventinfo,
+      };
       const updatedAgenda = { ...parseJSONField(oldData.agenda), ...agenda };
-      const updatedFinance = { ...parseJSONField(oldData.financialplanning), ...financialplanning };
-      const updatedFood = { ...parseJSONField(oldData.foodandtransport), ...foodandtransport };
-      const updatedChecklist = Array.isArray(checklist) && checklist.length
+      const updatedFinance = {
+        ...parseJSONField(oldData.financialplanning),
+        ...financialplanning,
+      };
+      const updatedFood = {
+        ...parseJSONField(oldData.foodandtransport),
+        ...foodandtransport,
+      };
+      const updatedChecklist = checklist?.length
         ? checklist
         : parseJSONField(oldData.checklist, []);
       const updatedApprovals = Object.keys(approvals).length
@@ -65,7 +81,7 @@ exports.saveEventInfo = async (req, res) => {
         `UPDATE event_info SET
           eventinfo = ?, agenda = ?, financialplanning = ?,
           foodandtransport = ?, checklist = ?, status = ?, approvals = ?, reviews = ?
-         WHERE event_id = ? AND faculty_id = ?`,
+         WHERE event_id = ?`,
         [
           JSON.stringify(updatedEventInfo),
           JSON.stringify(updatedAgenda),
@@ -76,13 +92,17 @@ exports.saveEventInfo = async (req, res) => {
           JSON.stringify(updatedApprovals),
           JSON.stringify(updatedReviews),
           event_id,
-          faculty_id,
         ]
       );
 
       return res.json({ message: "Event updated successfully", event_id });
     } else {
-      // Create new event
+      if (!faculty_id) {
+        return res
+          .status(403)
+          .json({ error: "Only faculty can create new events" });
+      }
+
       const [result] = await db.execute(
         `INSERT INTO event_info (
           faculty_id, eventinfo, agenda, financialplanning,
@@ -97,50 +117,70 @@ exports.saveEventInfo = async (req, res) => {
           JSON.stringify(checklist || []),
           status,
           JSON.stringify(approvals || {}),
-          JSON.stringify(reviews || {})
+          JSON.stringify(reviews || {}),
         ]
       );
 
-      return res.json({ message: "Event created successfully", event_id: result.insertId });
+      return res.json({
+        message: "Event created successfully",
+        event_id: result.insertId,
+      });
     }
   } catch (error) {
-    console.error("❌ Error saving event info:", error);
+    console.error("Error saving event info:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
-// Utility to safely parse JSON fields
-const tryParse = (val, fallback = {}) => {
-  if (typeof val === 'object') return val;
-  try {
-    return JSON.parse(val);
-  } catch {
-    console.warn("⚠️ Invalid JSON in DB field:", val);
-    return fallback;
-  }
-};
-
-// Get all events for a faculty user
 exports.getEventsByUser = async (req, res) => {
-  const facultyId = req.session.user?.faculty_id;
-  if (!facultyId) return res.status(401).json({ error: "Unauthorized" });
+  const user = req.session.user;
+  const { faculty_id, role, department } = user || {};
+
+  if (!user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  let query = `
+    SELECT ei.event_id, ei.status, ei.eventinfo, ei.agenda, ei.financialplanning,
+           ei.foodandtransport, ei.checklist, ei.approvals, ei.reviews
+    FROM event_info ei
+    JOIN login_users lu ON ei.faculty_id = lu.faculty_id
+  `;
+
+  const conditions = [];
+  const params = [];
+
+  // Role-based filtering
+  if (role === 'faculty') {
+    conditions.push('ei.faculty_id = ?');
+    params.push(faculty_id);
+  } else if (role === 'hod') {
+    conditions.push('lu.department = ?');
+    params.push(department);
+  } else if (role === 'cso' || role === 'principal') {
+    // No filters = access to all events
+  } else {
+    return res.status(403).json({ error: "Forbidden: Invalid role" });
+  }
+
+  // Append WHERE clause if conditions exist
+  if (conditions.length > 0) {
+    query += ' WHERE ' + conditions.join(' AND ');
+  }
 
   try {
-    const [rows] = await db.execute(
-      `SELECT event_id, eventinfo, agenda, financialplanning, foodandtransport, checklist, reviews
-       FROM event_info WHERE faculty_id = ?`,
-      [facultyId]
-    );
+    const [rows] = await db.execute(query, params);
 
     const events = rows.map((r) => ({
       eventId: r.event_id,
+      status: r.status,
+      approvals: tryParse(r.approvals, {}),
       eventData: {
         eventInfo: tryParse(r.eventinfo, {}),
         agenda: tryParse(r.agenda, {}),
         financialPlanning: tryParse(r.financialplanning, {}),
         foodTransport: tryParse(r.foodandtransport, {}),
         checklist: tryParse(r.checklist, []),
-        reviews: tryParse(r.reviews, {})
+        reviews: tryParse(r.reviews, {}),
       },
     }));
 
@@ -151,19 +191,21 @@ exports.getEventsByUser = async (req, res) => {
   }
 };
 
-// Get a specific event by ID
+
 exports.getEventById = async (req, res) => {
   const facultyId = req.session.user?.faculty_id;
+  const role = req.session.user?.role;
+  const canApprove = ["hod", "dean", "principal"].includes(role);
   const { eventId } = req.params;
 
-  if (!facultyId) {
-    return res.status(401).json({ error: "Unauthorized: Faculty ID not found in session" });
+  if (!facultyId && !canApprove) {
+    return res.status(401).json({ error: "Unauthorized" });
   }
 
   try {
     const [rows] = await db.execute(
-      `SELECT * FROM event_info WHERE event_id = ? AND faculty_id = ?`,
-      [eventId, facultyId]
+      "SELECT * FROM event_info WHERE event_id = ?",
+      [eventId]
     );
 
     if (rows.length === 0) {
@@ -180,7 +222,8 @@ exports.getEventById = async (req, res) => {
       financialplanning: tryParse(row.financialplanning, {}),
       foodandtransport: tryParse(row.foodandtransport, {}),
       checklist: tryParse(row.checklist, []),
-      reviews: tryParse(row.reviews, {})
+      reviews: tryParse(row.reviews, {}),
+      approvals: tryParse(row.approvals, {}),
     });
   } catch (err) {
     console.error("❌ Error fetching event by ID:", err);
@@ -188,24 +231,20 @@ exports.getEventById = async (req, res) => {
   }
 };
 
-// Delete an event
 exports.deleteEvent = async (req, res) => {
   const facultyId = req.session.user?.faculty_id;
   const { eventId } = req.params;
-
-  console.log("🗑️ Deleting event with ID:", eventId, "by faculty:", facultyId);
 
   if (!facultyId) return res.status(401).json({ error: "Unauthorized" });
 
   try {
     const [result] = await db.execute(
-      `DELETE FROM event_info WHERE event_id = ? AND faculty_id = ?`,
+      "DELETE FROM event_info WHERE event_id = ? AND faculty_id = ?",
       [eventId, facultyId]
     );
 
     if (result.affectedRows === 0) {
-      console.warn("⚠️ Delete failed. No matching event found.");
-      return res.status(404).json({ error: "Event not found" });
+      return res.status(404).json({ error: "Event not found or unauthorized" });
     }
 
     res.json({ message: "Event deleted" });
@@ -215,30 +254,3 @@ exports.deleteEvent = async (req, res) => {
   }
 };
 
-
-
-// GET: /api/user-event/:event_id
-exports.getUserWithEvent = async (req, res) => {
-  const facultyId = req.session.user?.faculty_id;
-  const { event_id } = req.params;
-
-  if (!facultyId || !event_id) {
-    return res.status(400).json({ error: "faculty_id or event_id missing" });
-  }
-
-  try {
-    const [userRows] = await db.query("SELECT * FROM login_users WHERE faculty_id = ?", [facultyId]);
-    const [eventRows] = await db.query("SELECT * FROM event_info WHERE event_id = ? AND faculty_id = ?", [event_id, facultyId]);
-
-    if (userRows.length === 0 || eventRows.length === 0) {
-      return res.status(404).json({ error: "User or Event not found" });
-    }
-
-    res.json({
-      user: userRows[0],
-      event: eventRows[0]
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};

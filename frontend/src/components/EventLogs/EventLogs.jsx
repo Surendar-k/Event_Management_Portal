@@ -42,31 +42,34 @@ const EventLogs = () => {
   const [selectedEventId, setSelectedEventId] = useState(null);
 
   const navigate = useNavigate();
+const fetchEvents = async () => {
+  try {
+    const res = await axios.get('http://localhost:5000/api/events/by-user', {
+      withCredentials: true, // Important: to send session cookie
+    });
 
-  const fetchEvents = async () => {
-    try {
-      const res = await axios.get('http://localhost:5000/api/events');
-      const normalized = res.data.map((ev) => ({
-        id: ev.eventId,
-        eventData: {
-          eventInfo: ev.eventData.eventInfo || {},
-          agenda: ev.eventData.agenda || {},
-          financialPlanning: ev.eventData.financialPlanning || {},
-          foodTransport: ev.eventData.foodTransport || {},
-          checklist: ev.eventData.checklist || []
-        },
-        status: ev.status || 'draft',
-        approvals: ev.approvals || {}
-      }));
-      setEvents(normalized);
-    } catch (err) {
-      console.error('Error fetching events:', err);
-    }
-  };
+    const normalized = res.data.map((ev) => ({
+      id: ev.eventId,
+      eventData: {
+        eventInfo: ev.eventData.eventInfo || {},
+        agenda: ev.eventData.agenda || {},
+        financialPlanning: ev.eventData.financialPlanning || {},
+        foodTransport: ev.eventData.foodTransport || {},
+        checklist: ev.eventData.checklist || []
+      },
+      status: ev.status || 'draft',
+      approvals: ev.approvals || {}
+    }));
 
-  useEffect(() => {
-    fetchEvents();
-  }, []);
+    setEvents(normalized);
+  } catch (err) {
+    console.error('❌ Error fetching events:', err.response?.data || err.message);
+  }
+};
+
+useEffect(() => {
+  fetchEvents();
+}, []);
 
   const handleEdit = (eventId) => {
     navigate(`/create-event/${eventId}`);
@@ -83,55 +86,47 @@ const EventLogs = () => {
     setSelectedApprovers([]);
     setShowApprovalPopup(false);
   };
-
-  const handleRequestApproval = async () => {
-    if (selectedApprovers.length === 0) {
+const handleRequestApproval = async () => {
+  if (selectedApprovers.length === 0) {
     alert('Please select at least one approver');
     return;
   }
-    const approvalObj = selectedApprovers.reduce((acc, role) => {
-      acc[role.toLowerCase()] = false;
-      return acc;
-    }, {});
- navigate(`/higherauthority/${selectedEvent.id}`, {
-    state: {
-      eventData: selectedEvent,
-      selectedApprovers,
-    },
-  });
-    const updatedEventData = {
-      eventinfo: selectedEvent.eventData.eventInfo,
-      agenda: selectedEvent.eventData.agenda,
-      financialplanning: selectedEvent.eventData.financialPlanning,
-      foodandtransport: selectedEvent.eventData.foodTransport,
-      checklist: selectedEvent.eventData.checklist,
-      status: 'submitted',
-      approvals: approvalObj,
-      event_id: selectedEvent.id
-    };
 
-    try {
-     await axios.put(`http://localhost:5000/api/events/${selectedEvent.id}`, updatedEventData);
-setEvents((prev) =>
-  prev.map((ev) =>
-    ev.id === selectedEvent.id
-      ? { ...ev, status: 'submitted', approvals: approvalObj }
-      : ev
-  )
-);
-closeApprovalPopup();
-navigate(`/higherauthority/${selectedEvent.id}`, {
-  state: {
-    eventData: selectedEvent,
-    selectedApprovers,
-  },
-});
+  const approvalObj = selectedApprovers.reduce((acc, role) => {
+    acc[role.toLowerCase()] = false;
+    return acc;
+  }, {});
 
-
-    } catch (err) {
-      console.error('Error requesting approval:', err);
-    }
+  const updatedEventData = {
+    eventinfo: selectedEvent.eventData.eventInfo,
+    agenda: selectedEvent.eventData.agenda,
+    financialplanning: selectedEvent.eventData.financialPlanning,
+    foodandtransport: selectedEvent.eventData.foodTransport,
+    checklist: selectedEvent.eventData.checklist,
+    status: 'submitted',
+    approvals: approvalObj,
+    event_id: selectedEvent.id
   };
+
+  try {
+    await axios.put(`http://localhost:5000/api/events/${selectedEvent.id}`, updatedEventData);
+
+    setEvents((prev) =>
+      prev.map((ev) =>
+        ev.id === selectedEvent.id
+          ? { ...ev, status: 'submitted', approvals: approvalObj }
+          : ev
+      )
+    );
+
+    closeApprovalPopup();
+
+    // ✅ Do not navigate — allow HigherAuthority.jsx to pick it up automatically
+  } catch (err) {
+    console.error('Error requesting approval:', err);
+  }
+};
+
 
   const handleCancelApprovalClick = (event) => {
     setEventToCancel(event);

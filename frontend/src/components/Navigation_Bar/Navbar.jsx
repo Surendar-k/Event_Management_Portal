@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import {useState, useEffect, useRef} from 'react'
+import {useNavigate, useLocation} from 'react-router-dom'
 import ksrLogo from '../../assets/ksr-logo.png'
 import axios from 'axios'
 
@@ -26,7 +26,7 @@ const Navbar = () => {
     }
   }
 
-  const handleNavigate = (path) => {
+  const handleNavigate = path => {
     setActiveTab(path)
     navigate(path)
   }
@@ -46,7 +46,7 @@ const Navbar = () => {
   }
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = event => {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setShowProfile(false)
       }
@@ -57,12 +57,14 @@ const Navbar = () => {
 
   const activeStyle = 'bg-orange-400 text-white rounded-md px-3 py-1 shadow-lg'
 
-  const isHigherAuthority = ['hod', 'principal', 'cso'].includes(role?.toLowerCase())
+  const isHigherAuthority = ['hod', 'principal', 'cso'].includes(
+    role?.toLowerCase()
+  )
 
   const navLinks = [
-    { label: 'Create Event', path: '/create-event' },
-    { label: 'Report Generation', path: '/report-generation' },
-    { label: 'Event Logs', path: '/event-logs' },
+    {label: 'Create Event', path: '/create-event'},
+    {label: 'Report Generation', path: '/report-generation'},
+    {label: 'Event Logs', path: '/event-logs'},
     {
       label: 'Inbox',
       path: isHigherAuthority ? '/higherauthority-inbox' : '/faculty-inbox'
@@ -83,13 +85,15 @@ const Navbar = () => {
       </div>
 
       {/* Navigation Links */}
-      <ul className='flex flex-wrap justify-center gap-8 text-xl font-semibold sm:justify-start'>
-        {navLinks.map(({ label, path }) => (
+      <ul className='flex flex-wrap justify-center gap-4 text-xl font-semibold sm:justify-start'>
+        {navLinks.map(({label, path}) => (
           <li key={path}>
             <button
               onClick={() => handleNavigate(path)}
-              className={`rounded-md px-3 py-2 transition duration-200 ${
-                activeTab === path ? activeStyle : 'hover:bg-orange-600 hover:text-white'
+              className={`rounded-md px-3 py-2 text-base transition duration-200 ${
+                activeTab === path
+                  ? activeStyle
+                  : 'hover:bg-orange-600 hover:text-white'
               }`}
             >
               {label}
@@ -122,12 +126,12 @@ const Navbar = () => {
             </h2>
             <div className='flex flex-col gap-3'>
               {[
-                { label: 'Name', value: user.faculty_name },
-                { label: 'Designation', value: user.designation },
-                { label: 'Department', value: user.department },
-                { label: 'Institution', value: user.institution_name },
-                { label: 'Faculty ID', value: user.faculty_id }
-              ].map(({ label, value }) => (
+                {label: 'Name', value: user.faculty_name},
+                {label: 'Designation', value: user.designation},
+                {label: 'Department', value: user.department},
+                {label: 'Institution', value: user.institution_name},
+                {label: 'Faculty ID', value: user.faculty_id}
+              ].map(({label, value}) => (
                 <div
                   key={label}
                   className='flex flex-wrap items-center gap-2 rounded-md bg-gray-50 p-2'

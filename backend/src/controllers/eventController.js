@@ -132,46 +132,47 @@ exports.saveEventInfo = async (req, res) => {
     res.status(500).json({error: 'Internal server error'})
   }
 }
+
+// Get events by role with safe approval checks
 exports.getEventsByUser = async (req, res) => {
   const user = req.session.user
-  const {faculty_id, role, department} = user || {}
+  if (!user) return res.status(401).json({error: 'Unauthorized'})
 
-  if (!user) {
-    return res.status(401).json({error: 'Unauthorized'})
-  }
-
-  let query = `
-    SELECT ei.event_id, ei.status, ei.eventinfo, ei.agenda, ei.financialplanning,
-           ei.foodandtransport, ei.checklist, ei.approvals, ei.reviews
-    FROM event_info ei
-    JOIN login_users lu ON ei.faculty_id = lu.faculty_id
-  `
-
-  const conditions = []
-  const params = []
-
-  // Role-based filtering
-  if (role === 'faculty') {
-    conditions.push('ei.faculty_id = ?')
-    params.push(faculty_id)
-  } else if (role === 'hod') {
-    conditions.push('lu.department = ?')
-    params.push(department)
-  } else if (role === 'cso' || role === 'principal') {
-    // No filters = access to all events
-  } else {
-    return res.status(403).json({error: 'Forbidden: Invalid role'})
-  }
-
-  // Append WHERE clause if conditions exist
-  if (conditions.length > 0) {
-    query += ' WHERE ' + conditions.join(' AND ')
-  }
+  const {faculty_id, role, department} = user
 
   try {
-    const [rows] = await db.execute(query, params)
+    const [rows] = await db.execute(`
+      SELECT ei.*, lu.department
+      FROM event_info ei
+      JOIN login_users lu ON ei.faculty_id = lu.faculty_id
+    `)
 
-    const events = rows.map(r => ({
+    const visibleEvents = rows.filter(row => {
+      const isCreator = row.faculty_id === faculty_id
+      const status = row.status
+      const approvals = tryParse(row.approvals, {}) || {}
+
+      if (role === 'faculty') {
+        return (
+          isCreator || (status === 'approved' && row.department === department)
+        )
+      }
+
+      if (role === 'hod') {
+        return (
+          row.department === department &&
+          (approvals?.hod !== undefined || status === 'approved')
+        )
+      }
+
+      if (role === 'cso' || role === 'principal') {
+        return approvals?.[role] !== undefined || status === 'approved'
+      }
+
+      return false
+    })
+
+    const events = visibleEvents.map(r => ({
       eventId: r.event_id,
       status: r.status,
       approvals: tryParse(r.approvals, {}),
@@ -187,32 +188,52 @@ exports.getEventsByUser = async (req, res) => {
 
     res.json(events)
   } catch (err) {
-    console.error('❌ Failed to fetch events:', err)
+    console.error('❌ Error fetching events:', err)
     res.status(500).json({error: 'Failed to fetch events'})
   }
 }
 
 exports.getEventById = async (req, res) => {
-  const facultyId = req.session.user?.faculty_id
-  const role = req.session.user?.role
-  const canApprove = ['hod', 'dean', 'principal'].includes(role)
-  const {eventId} = req.params
+  const user = req.session.user
+  if (!user) return res.status(401).json({error: 'Unauthorized'})
 
-  if (!facultyId && !canApprove) {
-    return res.status(401).json({error: 'Unauthorized'})
-  }
+  const {faculty_id, role, department} = user
+  const {eventId} = req.params
 
   try {
     const [rows] = await db.execute(
-      'SELECT * FROM event_info WHERE event_id = ?',
+      `
+      SELECT ei.*, lu.department
+      FROM event_info ei
+      JOIN login_users lu ON ei.faculty_id = lu.faculty_id
+      WHERE ei.event_id = ?
+    `,
       [eventId]
     )
 
-    if (rows.length === 0) {
+    if (rows.length === 0)
       return res.status(404).json({error: 'Event not found'})
-    }
 
     const row = rows[0]
+    const isCreator = row.faculty_id === faculty_id
+    const status = row.status
+    const approvals = tryParse(row.approvals, {}) || {}
+    const creatorDept = row.department
+
+    let allowed = false
+
+    if (role === 'faculty') {
+      allowed =
+        isCreator || (status === 'approved' && creatorDept === department)
+    } else if (role === 'hod') {
+      allowed =
+        creatorDept === department &&
+        (approvals?.hod !== undefined || status === 'approved')
+    } else if (role === 'cso' || role === 'principal') {
+      allowed = approvals?.[role] !== undefined || status === 'approved'
+    }
+
+    if (!allowed) return res.status(403).json({error: 'Forbidden'})
 
     res.json({
       event_id: row.event_id,
@@ -223,7 +244,7 @@ exports.getEventById = async (req, res) => {
       foodandtransport: tryParse(row.foodandtransport, {}),
       checklist: tryParse(row.checklist, []),
       reviews: tryParse(row.reviews, {}),
-      approvals: tryParse(row.approvals, {})
+      approvals: approvals
     })
   } catch (err) {
     console.error('❌ Error fetching event by ID:', err)

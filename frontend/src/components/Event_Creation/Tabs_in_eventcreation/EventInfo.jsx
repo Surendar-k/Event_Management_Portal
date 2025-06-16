@@ -199,7 +199,7 @@ useEffect(() => {
     </div>
 
     <div>
-      <label className='block mb-1 font-medium text-gray-700'>Venue Type</label>
+      <label className='block mb-1 font-medium text-gray-700'>Mode of Conduct</label>
       <select
         value={data.venueCategory}
         onChange={e => setField('venueCategory', e.target.value)}
@@ -287,7 +287,8 @@ useEffect(() => {
   <label className='block mb-1 font-medium text-gray-700'>No. of Hours</label>
   <input
     type='number'
-            value={data.numHours || ''}
+         value={data.numHours ?? ''}
+
     readOnly
     className='w-full rounded border border-gray-400 bg-gray-200 p-2 text-gray-800'
   />

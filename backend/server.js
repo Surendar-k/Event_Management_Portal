@@ -11,7 +11,7 @@ const mysql = require('mysql2/promise')
   const connection = await mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: '12345678'
+    password: 'Surendar@19'
   })
 
   await connection.query(`CREATE DATABASE IF NOT EXISTS app`)

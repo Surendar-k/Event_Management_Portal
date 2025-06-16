@@ -1,359 +1,277 @@
-import React, {useState, useMemo} from 'react'
-import {
-  FaArrowLeft,
-  FaChalkboardTeacher,
-  FaCalendarAlt,
-  FaClipboardList,
-  FaUtensils,
-  FaMoneyBill,
-  FaImages,
-  FaFilePdf,
-  FaFileExcel,
-  FaSearch
-} from 'react-icons/fa'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
-import * as XLSX from 'xlsx'
-import {saveAs} from 'file-saver'
+import React, { useState, useMemo, useEffect } from 'react'
+import {FaUniversity,FaMapMarkerAlt,FaBuilding, FaArrowLeft,FaBusAlt,FaSearch, FaBullseye, FaFlagCheckered, FaCalendarAlt, FaChalkboardTeacher, FaClipboardList, FaFilePdf, FaFileExcel, FaMoneyBill, FaUtensils, FaImages } from 'react-icons/fa';
+
+import ExportButtons from './ExportButtons';
+
+import axios from 'axios'
 
 const ReportGeneration = () => {
-  const events = [
-    {
-      id: 1,
-      title: 'AI Symposium 2025',
-      institution: 'RMD Engineering College',
-      college: 'School of Computer Science',
-      department: 'AI & DS',
-      leadCoordinator: 'Dr. Raj Kumar',
-      facultyCoordinators: ['Prof. Anitha', 'Prof. Karthik'],
-      startDate: '2025-07-20',
-      endDate: '2025-07-21',
-      noOfDays: 2,
-      natureOfEvent: 'Symposium',
-      venueType: 'Auditorium',
-      venue: 'Main Block Auditorium',
-      audience: 'Students',
-      scope: 'National',
-      fundingSource: 'College Sponsored',
-      speakers: [
-        {
-          name: 'Dr. A.P. Ramesh',
-          designation: 'Chief Data Scientist',
-          affiliation: 'Infosys',
-          contact: '9876543210',
-          email: 'ramesh@infosys.com'
-        }
-      ],
-      estimatedParticipation: {
-        students: 150,
-        faculty: 20,
-        total: 170
-      },
-      guestServices: {
-        accommodation: 'Provided',
-        transportation: 'Not Required',
-        dining: 'Buffet Lunch & Tea'
-      },
-      technicalSetup: {
-        av: 'Projector + Mic',
-        speakers: '2 Surround Speakers',
-        ac: 'Central AC',
-        units: 4,
-        materials: 'Laptop, Clicker',
-        photography: 'Yes',
-        videography: 'Yes',
-        lighting: 'Standard Lighting',
-        liveStream: 'YouTube',
-        additional: 'Banner Backdrop'
-      },
-      objectives:
-        'The event aims to bring together industry leaders and students to discuss the latest trends in Artificial Intelligence.',
-      outcomes:
-        'Participants gained exposure to real-world AI applications and improved networking with professionals.',
-      sessionDetails: [
-        {
-          date: '2025-07-20',
-          from: '10:00 AM',
-          to: '11:30 AM',
-          topic: 'Ethics in AI',
-          speaker: 'Dr. Ramesh'
-        },
-        {
-          date: '2025-07-21',
-          from: '11:45 AM',
-          to: '1:00 PM',
-          topic: 'Future of Machine Learning',
-          speaker: 'Dr. Ramesh'
-        }
-      ],
-      financialPlanning: [
-        {source: 'College Fund', amount: 20000, remarks: 'Stage & Setup'},
-        {source: 'Department Budget', amount: 10000, remarks: 'Guest Gifts'}
-      ],
-      foodTravel: [
-        {
-          date: '2025-07-20',
-          mealType: 'Lunch',
-          menu: 'Rice, Curry, Sweets, Juice',
-          servedAt: 'Seminar Hall',
-          note: 'Pure Veg Only'
-        }
-      ],
-      checklist: [
-        'Event Agenda Finalized',
-        'Guest Invitations Sent',
-        'Flex Banners Installed',
-        'AV Equipment Setup',
-        'Certificates Prepared'
-      ]
-    },
-    {
-      id: 2,
-      title: 'ML Workshop 2024',
-      institution: 'XYZ Engineering College',
-      college: 'School of Information Technology',
-      department: 'Machine Learning',
-      leadCoordinator: 'Dr. Suresh',
-      facultyCoordinators: ['Prof. Meena', 'Prof. Hari'],
-      startDate: '2024-05-15',
-      endDate: '2024-05-16',
-      noOfDays: 2,
-      natureOfEvent: 'Workshop',
-      venueType: 'Lab',
-      venue: 'Computer Lab 3',
-      audience: 'Students',
-      scope: 'State',
-      fundingSource: 'Department Budget',
-      speakers: [
-        {
-          name: 'Dr. Kavita',
-          designation: 'ML Specialist',
-          affiliation: 'Google',
-          contact: '9123456780',
-          email: 'kavita@google.com'
-        }
-      ],
-      estimatedParticipation: {
-        students: 100,
-        faculty: 15,
-        total: 115
-      },
-      guestServices: {
-        accommodation: 'Not Provided',
-        transportation: 'Required',
-        dining: 'Snacks & Tea'
-      },
-      technicalSetup: {
-        av: 'Projector',
-        speakers: 'Single Speaker',
-        ac: 'Window AC',
-        units: 2,
-        materials: 'Laptops',
-        photography: 'No',
-        videography: 'No',
-        lighting: 'Normal Lighting',
-        liveStream: 'None',
-        additional: 'Whiteboard'
-      },
-      objectives:
-        'Hands-on workshop on machine learning algorithms and practical applications.',
-      outcomes:
-        'Improved practical knowledge and project exposure for students.',
-      sessionDetails: [
-        {
-          date: '2024-05-15',
-          from: '09:30 AM',
-          to: '12:00 PM',
-          topic: 'Intro to ML',
-          speaker: 'Dr. Kavita'
-        },
-        {
-          date: '2024-05-16',
-          from: '01:00 PM',
-          to: '04:00 PM',
-          topic: 'ML Projects',
-          speaker: 'Dr. Kavita'
-        }
-      ],
-      financialPlanning: [
-        {source: 'Department Budget', amount: 15000, remarks: 'Materials'}
-      ],
-      foodTravel: [
-        {
-          date: '2024-05-15',
-          mealType: 'Tea',
-          menu: 'Tea, Biscuits',
-          servedAt: 'Lab Lobby',
-          note: 'N/A'
-        }
-      ],
-      checklist: [
-        'Workshop Plan Finalized',
-        'Invitations Sent',
-        'Equipment Checked',
-        'Certificates Ready'
-      ]
-    }
-  ]
+  const [events, setEvents] = useState([])
 
-  // Filter & search state
+
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all') // all, completed, upcoming
+  const [statusFilter, setStatusFilter] = useState('all')
   const [collegeFilter, setCollegeFilter] = useState('')
   const [startDateFilter, setStartDateFilter] = useState('')
   const [endDateFilter, setEndDateFilter] = useState('')
-
-  // Selected event state
   const [selectedEvent, setSelectedEvent] = useState(null)
 
-  // Get today's date for status calculation
-  const today = new Date()
 
-  // Helper: determine event status
-  const getStatus = event => {
-    const endDate = new Date(event.endDate)
-    return endDate < today ? 'completed' : 'upcoming'
-  }
 
-  // Unique colleges for filter dropdown
+const getStatus = (event) => {
+  const today = new Date();
+  return new Date(event.endDate) < today ? 'completed' : 'upcoming';
+};
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const res = await axios.get('http://localhost:5000/api/events/by-user', {
+          withCredentials: true // required for session cookies
+        });
+        setEvents(res.data);
+      } catch (err) {
+        console.error('Error fetching events:', err);
+        // eslint-disable-next-line no-undef
+        setError(err.response?.data?.error || 'Failed to load events');
+      }
+    };
+
+    fetchEvents();
+  }, []);
   const colleges = Array.from(new Set(events.map(e => e.college)))
+const filteredEvents = useMemo(() => {
+  return events.filter(event => {
+    const title = (event?.eventData?.eventInfo?.title || '').toLowerCase();
+    const search = (searchTerm || '').toLowerCase();
 
-  // Filtered events memoized
-  const filteredEvents = useMemo(() => {
-    return events.filter(event => {
-      // Filter by search term in title (case insensitive)
-      if (
-        searchTerm &&
-        !event.title.toLowerCase().includes(searchTerm.toLowerCase())
-      ) {
-        return false
-      }
+    if (search && !title.includes(search)) return false;
 
-      // Filter by status
-      const status = getStatus(event)
-      if (statusFilter !== 'all' && statusFilter !== status) {
-        return false
-      }
+    const status = getStatus(event);
+    if (statusFilter !== 'all' && statusFilter !== status) return false;
 
-      // Filter by college
-      if (collegeFilter && event.college !== collegeFilter) {
-        return false
-      }
+    const college = event?.eventData?.eventInfo?.college || '';
+    if (collegeFilter && college !== collegeFilter) return false;
 
-      // Filter by date range (startDateFilter to endDateFilter)
-      if (
-        startDateFilter &&
-        new Date(event.startDate) < new Date(startDateFilter)
-      ) {
-        return false
-      }
-      if (
-        endDateFilter &&
-        new Date(event.startDate) > new Date(endDateFilter)
-      ) {
-        return false
-      }
+    const eventStartDateStr = event?.eventData?.eventInfo?.startDate;
+    const eventStartDate = eventStartDateStr ? new Date(eventStartDateStr) : null;
 
-      return true
-    })
-  }, [
-    searchTerm,
-    statusFilter,
-    collegeFilter,
-    startDateFilter,
-    endDateFilter,
-    events
-  ])
-
-  // Handle image uploads
-  const handleImageUpload = e => {
-    const files = Array.from(e.target.files)
-    if (!selectedEvent) return
-    const updatedImages = selectedEvent.uploadedImages
-      ? [...selectedEvent.uploadedImages, ...files]
-      : files
-    setSelectedEvent({...selectedEvent, uploadedImages: updatedImages})
-  }
-
-  // Convert image file to base64 for PDF embedding
-  const getBase64 = file => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.readAsDataURL(file)
-      reader.onload = () => resolve(reader.result)
-      reader.onerror = error => reject(error)
-    })
-  }
-
-  // Export event report to PDF with embedded images
-  const exportToPDF = async () => {
-    if (!selectedEvent) return
-
-    const doc = new jsPDF()
-    doc.setFontSize(16)
-    doc.text(selectedEvent.title + ' Report', 14, 20)
-
-    autoTable(doc, {
-      startY: 30,
-      head: [['Field', 'Details']],
-      body: [
-        ['Institution', selectedEvent.institution],
-        ['Department', selectedEvent.department],
-        ['Start Date', selectedEvent.startDate],
-        ['End Date', selectedEvent.endDate],
-        ['Venue', selectedEvent.venue],
-        ['Funding', selectedEvent.fundingSource]
-      ]
-    })
-
-    if (
-      selectedEvent.uploadedImages &&
-      selectedEvent.uploadedImages.length > 0
-    ) {
-      let y = doc.autoTable.previous.finalY + 10
-      doc.text('Uploaded Images:', 14, y)
-      y += 5
-
-      for (const imgFile of selectedEvent.uploadedImages) {
-        const base64 = await getBase64(imgFile)
-        doc.addImage(base64, 'JPEG', 14, y, 60, 45)
-        y += 50
-        if (y > 250) {
-          doc.addPage()
-          y = 20
-        }
-      }
+    if (startDateFilter && eventStartDate && eventStartDate < new Date(startDateFilter)) {
+      return false;
     }
 
-    doc.save(`${selectedEvent.title}-report.pdf`)
-  }
+    if (endDateFilter && eventStartDate && eventStartDate > new Date(endDateFilter)) {
+      return false;
+    }
 
-  // Export event report to Excel with image filenames
-  const exportToExcel = () => {
-    if (!selectedEvent) return
+    return true;
+  });
+}, [
+  searchTerm,
+  statusFilter,
+  collegeFilter,
+  startDateFilter,
+  endDateFilter,
+  events
+]);
 
-    const wb = XLSX.utils.book_new()
-    const ws = XLSX.utils.json_to_sheet([
-      {
-        Title: selectedEvent.title,
-        Institution: selectedEvent.institution,
-        Department: selectedEvent.department,
-        StartDate: selectedEvent.startDate,
-        EndDate: selectedEvent.endDate,
-        Venue: selectedEvent.venue,
-        Funding: selectedEvent.fundingSource,
-        UploadedImages: selectedEvent.uploadedImages
-          ? selectedEvent.uploadedImages.map(f => f.name).join(', ')
-          : ''
-      }
-    ])
 
-    XLSX.utils.book_append_sheet(wb, ws, 'Event Report')
-    const excelBuffer = XLSX.write(wb, {bookType: 'xlsx', type: 'array'})
-    saveAs(new Blob([excelBuffer]), `${selectedEvent.title}-report.xlsx`)
-  }
 
-  if (!selectedEvent) {
+ 
+const handleImageUpload = (e) => {
+  const files = Array.from(e.target.files);
+  setSelectedEvent(prev => ({
+    ...prev,
+    uploadedImages: [...prev.uploadedImages, ...files],
+  }));
+};
+// const exportToPDF = async () => {
+//   if (!selectedEvent) return;
+
+//   const doc = new jsPDF();
+//   doc.setFontSize(16);
+//   doc.text(`${selectedEvent.title || 'Event'} Report`, 14, 20);
+
+//   const formatValue = (val) => (val ? String(val) : 'N/A');
+
+//   autoTable(doc, {
+//     startY: 30,
+//     head: [['Field', 'Details']],
+//     theme: 'striped',
+    
+//     body: [
+//       ['College', formatValue(selectedEvent.college)],
+//       ['Department', formatValue(selectedEvent.department)],
+//       ['Lead Coordinator', formatValue(selectedEvent.leadCoordinator)],
+//       ['Faculty Coordinators', formatValue(Array.isArray(selectedEvent.facultyCoordinators) ? selectedEvent.facultyCoordinators.join(', ') : selectedEvent.facultyCoordinators)],
+//       ['Start Date', formatValue(selectedEvent.startDate)],
+//       ['End Date', formatValue(selectedEvent.endDate)],
+//       ['Days', formatValue(selectedEvent.numDays)],
+//       ['Venue Type', formatValue(selectedEvent.venueType)],
+//       ['Venue Category', formatValue(selectedEvent.venueCategory)],
+//       ['Venue', formatValue(selectedEvent.venue)],
+//       ['Audience', formatValue(selectedEvent.audience)],
+//       ['Scope', formatValue(selectedEvent.scope)],
+//       ['Funding', formatValue(selectedEvent.fundingSource)],
+//       ['Status', getStatus(selectedEvent)],
+//     ],
+//   });
+
+
+//   let currentY = (doc.autoTable?.previous?.finalY || 40) + 10;
+// const renderSectionTable = (title, columns, rows) => {
+//   // Add new page if not enough space
+//   if (currentY > 250) {
+//     doc.addPage();
+//     currentY = 20;
+//   }
+
+//   // Section Title
+//   doc.setFontSize(14);
+//   doc.text(`${title}:`, 14, currentY);
+
+//   // Now immediately call the table, starting just *below* the title
+//   autoTable(doc, {
+//     startY: currentY + 6, // Space below the title
+//     head: [columns],
+//     body: rows,
+//     margin: { left: 14, right: 14 },
+//     theme: 'striped',
+//     styles: {
+//       cellPadding: 2,
+//       fontSize: 11,
+//     },
+//   });
+
+//   // Update currentY after table ends — this prevents overlap
+//   return (doc.autoTable?.previous?.finalY ?? (currentY + 6)) + 15;
+// };
+
+
+
+
+
+//   // Guest Services
+//   const gs = selectedEvent.guestServices || {};
+//   renderSectionTable(
+//     'Guest Services',
+//     ['Accommodation', 'Transportation', 'Dining'],
+//     [[gs.accommodation || '-', gs.transportation || '-', gs.dining || '-']]
+//   );
+
+//   // Technical Setup
+//   if (selectedEvent.technicalSetup && typeof selectedEvent.technicalSetup === 'object') {
+//     const rows = Object.entries(selectedEvent.technicalSetup).map(([key, val]) => [
+//       key.replace(/([A-Z])/g, ' $1'),
+//       Array.isArray(val) ? val.join(', ') : val,
+//     ]);
+//     renderSectionTable('Technical Setup', ['Type', 'Details'], rows);
+//   }
+
+//   // Objectives & Outcomes
+//   if (selectedEvent.objectives || selectedEvent.outcomes) {
+//     renderSectionTable('Objectives', ['Details'], [[formatValue(selectedEvent.objectives)]]);
+//     renderSectionTable('Outcomes', ['Details'], [[formatValue(selectedEvent.outcomes)]]);
+//   }
+
+//   // Speakers
+//   if (Array.isArray(selectedEvent.speakers) && selectedEvent.speakers.length > 0) {
+//     const rows = selectedEvent.speakers.map(s => [
+//       s.name || '-', s.designation || '-', s.affiliation || '-', s.contact || '-', s.email || '-',
+//     ]);
+//     renderSectionTable('Speakers', ['Name', 'Designation', 'Affiliation', 'Contact', 'Email'], rows);
+//   }
+
+//   // Session Details
+//   if (Array.isArray(selectedEvent.sessionDetails)) {
+//     const rows = selectedEvent.sessionDetails.map(s => [
+//       s.date || '-', s.activity || '-', s.inCharge || '-', s.remarks || '-',
+//     ]);
+//     renderSectionTable('Session Details', ['Date', 'Activity', 'In-Charge', 'Remarks'], rows);
+//   }
+
+//   // Financial Planning
+//   if (Array.isArray(selectedEvent.financialPlanning)) {
+//     const rows = selectedEvent.financialPlanning.map(f => [
+//       f.source || '-', `₹${f.amount}`, f.remarks || '-',
+//     ]);
+//     renderSectionTable('Financial Planning', ['Source', 'Amount', 'Remarks'], rows);
+//   }
+
+//   // Food & Travel
+//   if (Array.isArray(selectedEvent.foodTravel)) {
+//     const rows = selectedEvent.foodTravel.map(f => [
+//       f.date || '-', f.mealType || '-', f.menu || '-', f.servedAt || '-', f.note || '-',
+//     ]);
+//     renderSectionTable('Food & Travel', ['Date', 'Meal', 'Menu', 'Served At', 'Note'], rows);
+//   }
+
+//   // Checklist
+//   if (Array.isArray(selectedEvent.checklist)) {
+//     const rows = selectedEvent.checklist.map(c => [
+//       c.activity || '-', c.date || '-', c.inCharge || '-', c.remarks || '-',
+//     ]);
+//     renderSectionTable('Checklist', ['Activity', 'Date', 'In-Charge', 'Remarks'], rows);
+//   }
+
+//   // Uploaded Images
+//   const getBase64 = (file) =>
+//     new Promise((resolve, reject) => {
+//       const reader = new FileReader();
+//       reader.readAsDataURL(file);
+//       reader.onload = () => resolve(reader.result);
+//       reader.onerror = reject;
+//     });
+
+//   if (selectedEvent.uploadedImages?.length) {
+//     if (currentY > 250) {
+//       doc.addPage();
+//       currentY = 20;
+//     }
+//     doc.setFontSize(14);
+//     doc.text('Uploaded Images:', 14, currentY); currentY += 5;
+
+//     for (const imgFile of selectedEvent.uploadedImages) {
+//       const base64 = await getBase64(imgFile);
+//       doc.addImage(base64, 'JPEG', 14, currentY, 60, 45);
+//       currentY += 50;
+//       if (currentY > 250) {
+//         doc.addPage();
+//         currentY = 20;
+//       }
+//     }
+//   }
+
+//   doc.save(`${selectedEvent.title || 'event'}-report.pdf`);
+// };
+
+
+//   const exportToExcel = () => {
+//     if (!selectedEvent) return
+
+//     const wb = XLSX.utils.book_new()
+//     const ws = XLSX.utils.json_to_sheet([
+//       {
+//         Title: selectedEvent.title,
+//         College: selectedEvent.college,
+//         Department: selectedEvent.department,
+//         StartDate: selectedEvent.startDate,
+//         EndDate: selectedEvent.endDate,
+//         Venue: selectedEvent.venue,
+//         Funding: selectedEvent.fundingSource,
+//         UploadedImages: selectedEvent.uploadedImages
+//           ? selectedEvent.uploadedImages.map(f => f.name).join(', ')
+//           : ''
+//       }
+//     ])
+
+//     XLSX.utils.book_append_sheet(wb, ws, 'Event Report')
+//     const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+//     saveAs(new Blob([excelBuffer]), `${selectedEvent.title}-report.xlsx`)
+//   }
+console.log("🧾 selectedEvent data:", selectedEvent);
+
+if (!selectedEvent) {
     return (
       <div
         className='mx-auto mt-10 max-w-7xl rounded-2xl border p-6 shadow-xl'
@@ -363,24 +281,12 @@ const ReportGeneration = () => {
           borderColor: '#ddd'
         }}
       >
-        <h1
-          className='mb-8 text-center text-4xl font-extrabold'
-          style={{
-            color: '#575757',
-            textShadow: '1px 1px 2px rgba(87,87,87,0.2)'
-          }}
-        >
+        <h1 className='mb-8 text-center text-4xl font-extrabold text-gray-700'>
           Event Reports
         </h1>
+
         {/* Filters */}
-        <div
-          className='mb-6 flex flex-col rounded-lg p-4 shadow md:flex-row md:items-center md:gap-4'
-          style={{
-            background:
-              'linear-gradient(135deg,rgb(0, 0, 0) 0%,rgb(100, 99, 99) 50%  ,rgb(164, 161, 161) 100%)',
-            borderColor: '#ddd'
-          }}
-        >
+        <div className='mb-6 flex flex-col rounded-lg p-4 shadow md:flex-row md:items-center md:gap-4 bg-gradient-to-r from-black via-gray-700 to-gray-400'>
           <div className='mb-4 flex flex-1 items-center rounded border px-3 py-2 text-white md:mb-0'>
             <FaSearch className='mr-2 text-white' />
             <input
@@ -388,12 +294,12 @@ const ReportGeneration = () => {
               placeholder='Search event title...'
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className='w-full outline-none'
+              className='w-full bg-transparent outline-none placeholder-white'
             />
           </div>
 
           <select
-            className='mb-4 rounded border px-3 py-2 text-white md:mb-0'
+            className='mb-4 rounded border px-3 py-2 text-white bg-transparent md:mb-0'
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
           >
@@ -409,18 +315,19 @@ const ReportGeneration = () => {
           </select>
 
           <select
-            className='mb-4 rounded border px-3 py-2 text-white md:mb-0'
+            className='mb-4 rounded border px-3 py-2 text-white bg-transparent md:mb-0'
             value={collegeFilter}
             onChange={e => setCollegeFilter(e.target.value)}
           >
             <option value='' className='text-black'>
               All Colleges
             </option>
-            {colleges.map(col => (
-              <option key={col} value={col} className='text-black'>
-                {col}
-              </option>
-            ))}
+            {colleges.map((col, idx) => (
+  <option key={`${col}-${idx}`} value={col} className='text-black'>
+    {col}
+  </option>
+))}
+
           </select>
 
           <div className='flex items-center gap-2 text-white'>
@@ -432,7 +339,7 @@ const ReportGeneration = () => {
               id='startDateFilter'
               value={startDateFilter}
               onChange={e => setStartDateFilter(e.target.value)}
-              className='rounded border px-2 py-1'
+              className='rounded border px-2 py-1 text-black'
             />
           </div>
 
@@ -445,47 +352,102 @@ const ReportGeneration = () => {
               id='endDateFilter'
               value={endDateFilter}
               onChange={e => setEndDateFilter(e.target.value)}
-              className='rounded border px-2 py-1'
+              className='rounded border px-2 py-1 text-black'
             />
           </div>
         </div>
 
-        {/* Event list */}
+        {/* Event List */}
         <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
           {filteredEvents.length > 0 ? (
-            filteredEvents.map(event => {
-              const status = getStatus(event)
+           filteredEvents.map((event, index) => {
+  const status = getStatus(event);
               return (
                 <div
-                  key={event.id}
-                  onClick={() =>
-                    setSelectedEvent({...event, uploadedImages: []})
-                  }
-                  className='relative cursor-pointer rounded-xl border-l-4 border-blue-500 bg-white p-5 shadow-md transition-all hover:shadow-lg'
-                >
-                  <h2 className='mb-2 text-2xl font-semibold'>{event.title}</h2>
-                  <p className='mb-1 text-sm'>
-                    <strong>Department:</strong> {event.department}
-                  </p>
-                  <p className='mb-1 text-sm'>
-                    <strong>Dates:</strong> {event.startDate} → {event.endDate}
-                  </p>
-                  <p className='mb-1 text-sm'>
-                    <strong>Venue:</strong> {event.venue}
-                  </p>
-                  <p
-                    className={`inline-block rounded px-2 py-1 text-xs font-semibold ${
-                      status === 'completed'
-                        ? 'bg-green-200 text-green-800'
-                        : 'bg-yellow-200 text-yellow-800'
-                    }`}
-                  >
-                    {status === 'completed' ? 'Completed' : 'Upcoming'}
-                  </p>
+                 key={event.id || index}
+      onClick={() =>
+  setSelectedEvent({
+    ...event,
+    ...event.eventData?.eventInfo,
+    ...event.eventData?.additionalInfo, // if needed
 
-                  <p className='mt-2 text-xs text-gray-500'>
-                    <strong>College:</strong> {event.college}
+    checklist: event.eventData?.checklist || [],
+    uploadedImages: event.eventData?.uploadedImages || [],
+
+    // Basic Info
+    technicalSetup: event.eventData?.eventInfo?.technicalSetup || {},
+    speakers: event.eventData?.eventInfo?.speakers || [],
+    fundingSource: event.eventData?.eventInfo?.fundingSource || '',
+    college: event.eventData?.eventInfo?.selectedCollege || '',
+    department: event.eventData?.eventInfo?.selectedDepartment || '',
+    facultyCoordinators: event.eventData?.eventInfo?.selectedCoordinators?.join(', ') || '',
+    scope: event.eventData?.eventInfo?.scope || '',
+    venue: event.eventData?.eventInfo?.venue || '',
+    venueType: event.eventData?.eventInfo?.venueType || '',
+    venueCategory: event.eventData?.eventInfo?.venueCategory || '',
+    audience: event.eventData?.eventInfo?.audience || '',
+    startDate: event.eventData?.eventInfo?.startDate || '',
+    endDate: event.eventData?.eventInfo?.endDate || '',
+    startTime: event.eventData?.eventInfo?.startTime || '',
+    endTime: event.eventData?.eventInfo?.endTime || '',
+    numDays: event.eventData?.eventInfo?.numDays || '',
+    numHours: event.eventData?.eventInfo?.numHours || '',
+
+    // Corrected paths:
+    objectives: event.eventData?.agenda?.objectives || 'N/A',
+    outcomes: event.eventData?.agenda?.outcomes || 'N/A',
+    sessions: event.eventData?.agenda?.sessions || [],
+ financialPlanning: [
+  ...(event.eventData?.financialPlanning?.funding?.map(f => ({ ...f, type: 'Funding' })) || []),
+  ...(event.eventData?.financialPlanning?.budget?.map(b => ({ ...b, type: 'Budget' })) || [])
+],
+foodTravel: event.eventData?.foodTransport?.meals || [],
+transportation: event.eventData?.foodTransport?.travels || [],
+
+  })
+}
+
+
+                 className='relative cursor-pointer rounded-xl border-l-4 border-blue-500 bg-white p-6 shadow-md transition-all hover:shadow-lg'
+                >
+                  <div className="relative  mb-5">
+  <h2 className='text-2xl font-bold text-blue-600 flex items-center gap-2'>
+    <FaCalendarAlt className='text-blue-500' />
+    {event.eventData.eventInfo?.title || 'Untitled Event'}
+  </h2>
+
+  <p
+    className={`absolute right-0 top-0 rounded px-2 py-1 text-xs font-semibold ${
+      status === 'completed'
+        ? 'bg-green-200 text-green-800'
+        : 'bg-yellow-200 text-yellow-800'
+    }`}
+  >
+    {status.charAt(0).toUpperCase() + status.slice(1)}
+  </p>
+</div>
+
+                  
+                  
+                  <p className='mb-2 flex items-center text-sm'>
+                    <FaBuilding className='mr-2 text-gray-600' />
+                    <strong>Department:</strong>{event.eventData.eventInfo?.selectedDepartment}
+                    
                   </p>
+                  <p className='mb-2 flex items-center text-sm'>
+                  <FaCalendarAlt className='mr-2 text-gray-600' />
+                    <strong>Dates:</strong> {event.eventData.eventInfo?.startDate} → {event.eventData.eventInfo?.endDate}
+                  </p>
+                  <p className='mb-2 flex items-center text-sm'>
+                     <FaMapMarkerAlt className='mr-2 text-gray-600' />
+                    <strong>Venue:</strong> {event.eventData.eventInfo?.venue}
+                  </p>
+                  
+                 <p className='mt-2 flex items-center text-xs text-gray-500'>
+                  <FaUniversity className='mr-2' />
+  <strong>College:</strong> {event.eventData.eventInfo?.selectedCollege}
+</p>
+
                 </div>
               )
             })
@@ -499,186 +461,399 @@ const ReportGeneration = () => {
     )
   }
 
-  // ... The rest of the selectedEvent UI remains the same as your original with minor UI polish
+// Selected Event View
+return (
+  <div className='mx-auto max-w-6xl rounded-xl bg-gradient-to-br from-white via-blue-50 to-white p-6 shadow-xl'>
+    <button
+      onClick={() => setSelectedEvent(null)}
+      className='mb-6 flex items-center gap-2 rounded bg-gray-100 px-4 py-2 text-gray-800 hover:bg-gray-200'
+    >
+      
+      <FaArrowLeft /> Back
+    </button>
 
-  return (
-    <div className='mx-auto max-w-6xl rounded-xl bg-gradient-to-br from-white via-blue-50 to-white p-6 shadow-xl'>
-      <button
-        onClick={() => setSelectedEvent(null)}
-        className='mb-6 flex items-center gap-2 rounded bg-gray-100 px-4 py-2 text-gray-800 hover:bg-gray-200'
-      >
-        <FaArrowLeft /> Back
-      </button>
-
-      <div className='mb-6 flex justify-end gap-4'>
-        <button
-          onClick={exportToPDF}
-          className='flex items-center gap-2 rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600'
-        >
-          <FaFilePdf /> Export PDF
-        </button>
-        <button
-          onClick={exportToExcel}
-          className='flex items-center gap-2 rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700'
-        >
-          <FaFileExcel /> Export Excel
-        </button>
-      </div>
-
-      <h1 className='mb-8 text-center text-3xl font-bold text-blue-900'>
-        {selectedEvent.title} Report
-      </h1>
-
-      <Section title='Event Details' icon={<FaCalendarAlt />}>
-        <GridTwo>
-          <Item label='Institution' value={selectedEvent.institution} />
-          <Item label='College' value={selectedEvent.college} />
-          <Item label='Department' value={selectedEvent.department} />
-          <Item
-            label='Lead Coordinator'
-            value={selectedEvent.leadCoordinator}
-          />
-          <Item
-            label='Faculty Coordinators'
-            value={selectedEvent.facultyCoordinators.join(', ')}
-          />
-          <Item label='Start Date' value={selectedEvent.startDate} />
-          <Item label='End Date' value={selectedEvent.endDate} />
-          <Item label='Days' value={selectedEvent.noOfDays} />
-          <Item label='Nature' value={selectedEvent.natureOfEvent} />
-          <Item label='Venue Type' value={selectedEvent.venueType} />
-          <Item label='Venue' value={selectedEvent.venue} />
-          <Item label='Audience' value={selectedEvent.audience} />
-          <Item label='Scope' value={selectedEvent.scope} />
-          <Item label='Funding' value={selectedEvent.fundingSource} />
-          <Item
-            label='Status'
-            value={
-              getStatus(selectedEvent) === 'completed'
-                ? 'Completed'
-                : 'Upcoming'
-            }
-          />
-        </GridTwo>
-      </Section>
-      <Section title='Speakers' icon={<FaChalkboardTeacher />}>
-        {selectedEvent.speakers.map((s, i) => (
-          <Card key={i}>
-            <Item label='Name' value={s.name} />
-            <Item label='Designation' value={s.designation} />
-            <Item label='Affiliation' value={s.affiliation} />
-            <Item label='Contact' value={s.contact} />
-            <Item label='Email' value={s.email} />
-          </Card>
-        ))}
-      </Section>
-
-      <Section title='Guest Services' icon={<FaClipboardList />}>
-        <GridTwo>
-          <Item
-            label='Accommodation'
-            value={selectedEvent.guestServices.accommodation}
-          />
-          <Item
-            label='Transportation'
-            value={selectedEvent.guestServices.transportation}
-          />
-          <Item label='Dining' value={selectedEvent.guestServices.dining} />
-        </GridTwo>
-      </Section>
-
-      <Section title='Technical Setup'>
-        {Object.entries(selectedEvent.technicalSetup).map(([key, val]) => (
-          <p key={key}>
-            <strong>{key.replace(/([A-Z])/g, ' $1')}:</strong> {val}
-          </p>
-        ))}
-      </Section>
-
-      <Section title='Objectives & Outcomes'>
-        <p className='mb-2'>
-          <strong>Objectives:</strong> {selectedEvent.objectives}
-        </p>
-        <p>
-          <strong>Outcomes:</strong> {selectedEvent.outcomes}
-        </p>
-      </Section>
-
-      <Section title='Sessions'>
-        {selectedEvent.sessionDetails.map((s, i) => (
-          <Card key={i}>
-            <Item label='Date' value={s.date} />
-            <Item label='From' value={s.from} />
-            <Item label='To' value={s.to} />
-            <Item label='Topic' value={s.topic} />
-            <Item label='Speaker' value={s.speaker} />
-          </Card>
-        ))}
-      </Section>
-
-      <Section title='Financial Planning' icon={<FaMoneyBill />}>
-        {selectedEvent.financialPlanning.map((f, i) => (
-          <Card key={i}>
-            <Item label='Source' value={f.source} />
-            <Item label='Amount' value={`₹${f.amount}`} />
-            <Item label='Remarks' value={f.remarks} />
-          </Card>
-        ))}
-      </Section>
-
-      <Section title='Food & Travel' icon={<FaUtensils />}>
-        {selectedEvent.foodTravel.map((f, i) => (
-          <Card key={i}>
-            <Item label='Date' value={f.date} />
-            <Item label='Meal' value={f.mealType} />
-            <Item label='Menu' value={f.menu} />
-            <Item label='Served At' value={f.servedAt} />
-            <Item label='Note' value={f.note} />
-          </Card>
-        ))}
-      </Section>
-
-      <Section title='Checklist'>
-        <ul className='list-disc space-y-1 pl-6'>
-          {selectedEvent.checklist.map((task, i) => (
-            <li key={i}>{task}</li>
-          ))}
-        </ul>
-      </Section>
-
-      <Section title='Images' icon={<FaImages />}>
-        {/* Image Upload */}
-        <input
-          type='file'
-          multiple
-          accept='image/*'
-          onChange={handleImageUpload}
-          className='mb-4'
-        />
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3'>
-          {selectedEvent.uploadedImages &&
-          selectedEvent.uploadedImages.length > 0 ? (
-            selectedEvent.uploadedImages.map((file, i) => (
-              <img
-                key={i}
-                src={URL.createObjectURL(file)}
-                alt={`Uploaded ${i + 1}`}
-                className='h-44 w-full rounded-md object-cover shadow-md transition-transform duration-300 hover:scale-105'
-              />
-            ))
-          ) : (
-            <p className='text-gray-500'>No images uploaded yet.</p>
-          )}
-        </div>
-      </Section>
+    <div className='mb-6 flex justify-end gap-4'>
+    <ExportButtons selectedEvent={selectedEvent} />
     </div>
-  )
+
+    <h1 className='mb-8 text-center text-3xl font-bold text-blue-900'>
+      {selectedEvent.title || 'Untitled Event'} Report
+    </h1>
+
+   <Section title='Event Details' icon={<FaCalendarAlt />}>
+  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 rounded-xl bg-white p-6 shadow-md border border-gray-200 text-sm">
+    
+    {/* Group 1 */}
+    <Item label='College' value={selectedEvent.college || 'N/A'} />
+    <Item label='Department' value={selectedEvent.department || 'N/A'} />
+    <Item label='Scope' value={selectedEvent.scope || 'N/A'} />
+    
+    {/* Group 2 */}
+    <Item label='Venue Mode' value={selectedEvent.venueType || 'N/A'} />
+    <Item label='Mode of Conduct' value={selectedEvent.venueCategory || 'N/A'} />
+    <Item label='Venue' value={selectedEvent.venue || 'N/A'} />
+    
+    {/* Group 3 */}
+    <Item label='Start Date' value={selectedEvent.startDate || 'N/A'} />
+    <Item label='End Date' value={selectedEvent.endDate || 'N/A'} />
+    <Item label='No. of Days' value={selectedEvent.numDays || 'N/A'} />
+    
+    {/* Group 4 */}
+    <Item label='Start Time' value={selectedEvent.startTime || 'N/A'} />
+    <Item label='End Time' value={selectedEvent.endTime || 'N/A'} />
+    <Item label='No. of Hours' value={selectedEvent.numHours || 'N/A'} />
+    
+    {/* Group 5 */}
+    <Item label='Funding Source' value={selectedEvent.fundingSource || 'N/A'} />
+    <Item label='Lead Coordinator' value={selectedEvent.leadCoordinator || 'N/A'} />
+    <Item label='Faculty Coordinators' value={selectedEvent.facultyCoordinators || 'N/A'} />
+
+    {/* Status */}
+    <Item
+      label='Status'
+      value={
+        getStatus(selectedEvent) === 'completed'
+          ? 'Completed'
+          : 'Upcoming'
+      }
+    />
+
+  </div>
+</Section>
+
+
+
+
+
+{/* Speakers */}
+{Array.isArray(selectedEvent.speakers) && selectedEvent.speakers.length > 0 && (
+  <Section title='Speakers' icon={<FaChalkboardTeacher />}>
+    <table className='w-full table-auto border border-gray-300'>
+      <thead className='bg-gray-100'>
+        <tr>
+          <th className='border px-4 py-2'>#</th>
+          <th className='border px-4 py-2'>Name</th>
+          <th className='border px-4 py-2'>Designation</th>
+          <th className='border px-4 py-2'>Affiliation</th>
+          <th className='border px-4 py-2'>Contact</th>
+          <th className='border px-4 py-2'>Email</th>
+        </tr>
+      </thead>
+      <tbody>
+        {selectedEvent.speakers.map((s, i) => (
+          <tr key={i} className='hover:bg-gray-50'>
+            <td className='border px-4 py-2 text-center'>{i + 1}</td>
+            <td className='border px-4 py-2'>{s.name}</td>
+            <td className='border px-4 py-2'>{s.designation}</td>
+            <td className='border px-4 py-2'>{s.affiliation}</td>
+            <td className='border px-4 py-2'>{s.contact}</td>
+            <td className='border px-4 py-2'>{s.email}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </Section>
+)}
+
+
+{/* Guest Services */}
+<Section title='Guest Services' icon={<FaClipboardList />}>
+  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    {[
+      { label: 'Accommodation', value: selectedEvent.guestServices?.accommodation },
+      { label: 'Transportation', value: selectedEvent.guestServices?.transportation },
+      { label: 'Dining', value: selectedEvent.guestServices?.dining }
+    ].map((item, idx) => (
+      <div
+        key={idx}
+        className="rounded-xl border bg-white p-4 shadow-sm transition hover:shadow-md"
+      >
+        <h4 className="text-sm font-medium text-gray-500">{item.label}</h4>
+        <p
+          className={`mt-1 text-lg font-semibold ${
+            item.value === 'Yes' ? 'text-green-600' : item.value === 'No' ? 'text-red-500' : 'text-gray-700'
+          }`}
+        >
+          {item.value || 'N/A'}
+        </p>
+      </div>
+    ))}
+  </div>
+</Section>
+
+
+    {/* Technical Setup */}
+    <Section title='Technical Setup'>
+      <table className='w-full table-auto border border-gray-300'>
+        <thead>
+          <tr className='bg-gray-100'>
+            <th className='border px-4 py-2 text-left'>Field</th>
+            <th className='border px-4 py-2 text-left'>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Object.entries(selectedEvent.technicalSetup || {}).map(([key, val]) => (
+            <tr key={key}>
+              <td className='border px-4 py-2 font-medium'>
+                {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+              </td>
+              <td className='border px-4 py-2'>
+                {Array.isArray(val) ? val.join(', ') : String(val)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </Section>
+
+{/* Objectives & Outcomes */}
+<Section title='Objectives & Outcomes'>
+  <div className="rounded-xl bg-gradient-to-br from-gray-50 to-white p-6 shadow-md space-y-6 border border-gray-200">
+    
+    {/* Objectives Block */}
+    <div className="flex items-start gap-4">
+      <FaBullseye className="mt-1 h-5 w-5 text-blue-600" />
+      <div>
+        <h4 className="text-sm font-semibold text-gray-700 mb-1">Objectives</h4>
+        <p className="text-gray-800 text-base leading-relaxed">
+          {selectedEvent.objectives || 'Not Provided'}
+        </p>
+      </div>
+    </div>
+
+    {/* Outcomes Block */}
+    <div className="flex items-start gap-4">
+      <FaFlagCheckered className="mt-1 h-5 w-5 text-green-600" />
+      <div>
+        <h4 className="text-sm font-semibold text-gray-700 mb-1">Outcomes</h4>
+        <p className="text-gray-800 text-base leading-relaxed">
+          {selectedEvent.outcomes || 'Not Provided'}
+        </p>
+      </div>
+    </div>
+    
+  </div>
+</Section>
+
+
+   {/* Sessions */}
+{Array.isArray(selectedEvent.sessions) && selectedEvent.sessions.length > 0 && (
+  <Section title='Sessions'>
+    <table className='w-full table-auto border border-gray-300'>
+      <thead className='bg-gray-100'>
+        <tr>
+          <th className='border px-4 py-2 text-left'>Topic</th>
+          <th className='border px-4 py-2 text-left'>Speaker</th>
+          <th className='border px-4 py-2 text-left'>Date</th>
+          <th className='border px-4 py-2 text-left'>Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        {selectedEvent.sessions.map((session, i) => (
+          <tr key={i}>
+            <td className='border px-4 py-2'>{session.topic}</td>
+            <td className='border px-4 py-2'>{session.speakerName}</td>
+            <td className='border px-4 py-2'>{session.sessionDate}</td>
+            <td className='border px-4 py-2'>{`${session.fromTime} - ${session.toTime}`}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </Section>
+)}
+
+
+    {/* Checklist */}
+    <Section title='Checklist'>
+      <table className='w-full table-auto border border-gray-300'>
+        <thead>
+          <tr className='bg-gray-100'>
+            <th className='border px-4 py-2'>Activity</th>
+            <th className='border px-4 py-2'>Date</th>
+            <th className='border px-4 py-2'>In-Charge</th>
+            <th className='border px-4 py-2'>Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.isArray(selectedEvent.checklist) &&
+            selectedEvent.checklist.map((task, i) => (
+              <tr key={i}>
+                <td className='border px-4 py-2'>{task.activity}</td>
+                <td className='border px-4 py-2'>{task.date}</td>
+                <td className='border px-4 py-2'>{task.inCharge}</td>
+                <td className='border px-4 py-2'>{task.remarks}</td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
+    </Section>
+{/* Financial Planning */}
+{Array.isArray(selectedEvent.financialPlanning) && selectedEvent.financialPlanning.length > 0 && (
+  <Section title='Financial Planning' icon={<FaMoneyBill />}>
+    {/* Funding Section */}
+    {selectedEvent.financialPlanning.some(fp => fp.type === 'Funding') && (
+      <>
+        <h3 className='mb-3 mt-6 text-xl font-semibold text-green-700'>Funding</h3>
+        <div className="overflow-x-auto">
+          <table className='min-w-full border border-gray-300 rounded-xl shadow-sm'>
+            <thead className='bg-green-50 text-green-900'>
+              <tr>
+                <th className='w-1/3 border px-4 py-2 text-left'>Source</th>
+                <th className='w-1/3 border px-4 py-2 text-left'>Amount</th>
+                <th className='w-1/3 border px-4 py-2 text-left'>Remarks</th>
+              </tr>
+            </thead>
+            <tbody className='bg-white'>
+              {selectedEvent.financialPlanning
+                .filter(fp => fp.type === 'Funding')
+                .map((f, i) => (
+                  <tr key={`funding-${i}`} className="hover:bg-gray-50">
+                    <td className='w-1/3 border px-4 py-2'>{f.source}</td>
+                    <td className='w-1/3 border px-4 py-2 text-green-700 font-medium'>₹{f.amount}</td>
+                    <td className='w-1/3 border px-4 py-2'>{f.remarks || 'N/A'}</td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      </>
+    )}
+
+    {/* Estimated Budget Section */}
+    {selectedEvent.financialPlanning.some(fp => fp.type === 'Budget') && (
+      <>
+        <h3 className='mb-3 mt-6 text-xl font-semibold text-indigo-700'>Estimated Budget</h3>
+        <div className="overflow-x-auto">
+          <table className='min-w-full border border-gray-300 rounded-xl shadow-sm'>
+            <thead className='bg-indigo-50 text-indigo-900'>
+              <tr>
+                <th className='w-1/3 border px-4 py-2 text-left'>Particular</th>
+                <th className='w-1/3 border px-4 py-2 text-left'>Amount</th>
+                <th className='w-1/3 border px-4 py-2 text-left'>Remark</th>
+              </tr>
+            </thead>
+            <tbody className='bg-white'>
+              {selectedEvent.financialPlanning
+                .filter(fp => fp.type === 'Budget')
+                .map((b, i) => (
+                  <tr key={`budget-${i}`} className="hover:bg-gray-50">
+                    <td className='w-1/3 border px-4 py-2'>{b.particular}</td>
+                    <td className='w-1/3 border px-4 py-2 text-indigo-700 font-medium'>₹{b.amount}</td>
+                    <td className='w-1/3 border px-4 py-2'>{b.remark || 'N/A'}</td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      </>
+    )}
+  </Section>
+)}
+
+{/* Food & Travel */}
+{Array.isArray(selectedEvent.foodTravel) && selectedEvent.foodTravel.length > 0 && (
+  <Section title="Food & Travel" icon={<FaUtensils />}>
+    <div className="overflow-x-auto rounded-xl border border-gray-300 shadow-md">
+      <table className="min-w-full divide-y divide-gray-300 text-sm text-gray-700">
+        <thead className="bg-gradient-to-r from-gray-100 to-gray-200 text-xs font-semibold uppercase tracking-wider text-gray-600">
+          <tr>
+            <th className="px-5 py-3 text-left">Date</th>
+            <th className="px-5 py-3 text-left">Meal</th>
+            <th className="px-5 py-3 text-left">Menu</th>
+            <th className="px-5 py-3 text-left">Served At</th>
+            <th className="px-5 py-3 text-left">Note</th>
+            <th className="px-5 py-3 text-left">Category</th>
+            <th className="px-5 py-3 text-left">Time</th>
+            <th className="px-5 py-3 text-left">Person Count</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-200 bg-white">
+          {selectedEvent.foodTravel.map((f, i) => (
+            <tr key={i} className="hover:bg-gray-50 transition-colors">
+              <td className="px-5 py-3">{f.from} → {f.to}</td>
+              <td className="px-5 py-3">{f.mealType}</td>
+              <td className="px-5 py-3">{f.menu}</td>
+              <td className="px-5 py-3">{f.servedAt}</td>
+              <td className="px-5 py-3">{f.note}</td>
+              <td className="px-5 py-3">{f.category}</td>
+              <td className="px-5 py-3">{f.time}</td>
+              <td className="px-5 py-3">{f.personCount}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </Section>
+)}
+
+
+
+{/* Transportation Details */}
+{Array.isArray(selectedEvent.transportation) && selectedEvent.transportation.length > 0 && (
+  <Section title="Transportation Details" icon={<FaBusAlt />}>
+    <div className="overflow-x-auto rounded-xl border border-gray-300 shadow-md">
+      <table className="min-w-full divide-y divide-gray-300 text-sm text-gray-700">
+        <thead className="bg-gradient-to-r from-gray-100 to-gray-200 text-xs font-semibold uppercase tracking-wider text-gray-600">
+          <tr>
+            <th className="px-5 py-3 text-left">Date</th>
+            <th className="px-5 py-3 text-left">Mode</th>
+            <th className="px-5 py-3 text-left">Pickup</th>
+            <th className="px-5 py-3 text-left">Drop</th>
+            <th className="px-5 py-3 text-left">Time</th>
+            <th className="px-5 py-3 text-left">Remarks</th>
+            <th className="px-5 py-3 text-left">Category</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-200 bg-white">
+          {selectedEvent.transportation.map((t, i) => (
+            <tr key={i} className="hover:bg-gray-50 transition-colors">
+              <td className="px-5 py-3">{t.date}</td>
+              <td className="px-5 py-3">{t.mode}</td>
+              <td className="px-5 py-3">{t.pickup}</td>
+              <td className="px-5 py-3">{t.drop}</td>
+              <td className="px-5 py-3">{t.time}</td>
+              <td className="px-5 py-3">{t.remarks}</td>
+              <td className="px-5 py-3">{t.category}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </Section>
+)}
+
+    {/* Uploaded Images */}
+    <Section title='Images' icon={<FaImages />}>
+      <input
+        type='file'
+        multiple
+        accept='image/*'
+        onChange={handleImageUpload}
+        className='mb-4'
+      />
+      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3'>
+        {selectedEvent?.uploadedImages?.length > 0 ? (
+  selectedEvent.uploadedImages.map((file, i) => (
+    <img
+      key={i}
+      src={URL.createObjectURL(file)}
+      alt={`Uploaded ${i + 1}`}
+      className='h-44 w-full rounded-md object-cover shadow-md transition-transform duration-300 hover:scale-105'
+    />
+  ))
+) : (
+  <p className='text-gray-500'>No images uploaded yet.</p>
+)}
+
+      </div>
+    </Section>
+  </div>
+)
+
 }
 
-// Your reusable components Section, GridTwo, Card, Item remain unchanged
-
 // Reusable Components
-const Section = ({title, children, icon}) => (
+const Section = ({ title, children, icon }) => (
   <div className='mb-10 border-b pb-4'>
     <h2 className='mb-4 flex items-center gap-2 border-l-4 border-blue-500 pl-3 text-2xl font-semibold text-blue-900'>
       {icon} {title}
@@ -687,17 +862,17 @@ const Section = ({title, children, icon}) => (
   </div>
 )
 
-const GridTwo = ({children}) => (
+const GridTwo = ({ children }) => (
   <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>{children}</div>
 )
 
-const Card = ({children}) => (
+const Card = ({ children }) => (
   <div className='mb-4 rounded-lg border border-gray-200 bg-white p-5 shadow-sm'>
     <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>{children}</div>
   </div>
 )
 
-const Item = ({label, value}) => (
+const Item = ({ label, value }) => (
   <div className='flex flex-col space-y-1 text-sm'>
     <span className='font-medium text-gray-500'>{label}</span>
     <span className='text-gray-900'>{value}</span>

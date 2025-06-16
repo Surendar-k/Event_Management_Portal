@@ -23,17 +23,18 @@ const tryParse = (val, fallback = {}) => {
   }
 }
 
+//FIXME: if already exists update not insert
 exports.saveEventInfo = async (req, res) => {
   try {
     const {
-      eventinfo,
-      agenda,
-      financialplanning,
-      foodandtransport,
+      eventinfo = {},
+      agenda = {},
+      financialplanning = {},
+      foodandtransport = {},
       checklist,
       status = 'draft',
-      approvals = {},
-      reviews = {},
+      approvals,
+      reviews,
       event_id
     } = req.body
 
@@ -53,30 +54,21 @@ exports.saveEventInfo = async (req, res) => {
       if (existing.length === 0)
         return res.status(404).json({error: 'Event not found'})
 
-      const oldData = existing[0]
+      const old = existing[0]
 
-      const updatedEventInfo = {
-        ...parseJSONField(oldData.eventinfo),
-        ...eventinfo
-      }
-      const updatedAgenda = {...parseJSONField(oldData.agenda), ...agenda}
+      const updatedEventInfo = {...parseJSONField(old.eventinfo), ...eventinfo}
+      const updatedAgenda = {...parseJSONField(old.agenda), ...agenda}
       const updatedFinance = {
-        ...parseJSONField(oldData.financialplanning),
+        ...parseJSONField(old.financialplanning),
         ...financialplanning
       }
       const updatedFood = {
-        ...parseJSONField(oldData.foodandtransport),
+        ...parseJSONField(old.foodandtransport),
         ...foodandtransport
       }
-      const updatedChecklist = checklist?.length
-        ? checklist
-        : parseJSONField(oldData.checklist, [])
-      const updatedApprovals = Object.keys(approvals).length
-        ? approvals
-        : parseJSONField(oldData.approvals, {})
-      const updatedReviews = Object.keys(reviews).length
-        ? reviews
-        : parseJSONField(oldData.reviews, {})
+      const updatedChecklist = checklist ?? parseJSONField(old.checklist, [])
+      const updatedApprovals = approvals ?? parseJSONField(old.approvals, {})
+      const updatedReviews = reviews ?? parseJSONField(old.reviews, {})
 
       await db.execute(
         `UPDATE event_info SET
@@ -111,14 +103,14 @@ exports.saveEventInfo = async (req, res) => {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           faculty_id,
-          JSON.stringify(eventinfo || {}),
-          JSON.stringify(agenda || {}),
-          JSON.stringify(financialplanning || {}),
-          JSON.stringify(foodandtransport || {}),
-          JSON.stringify(checklist || []),
+          JSON.stringify(eventinfo),
+          JSON.stringify(agenda),
+          JSON.stringify(financialplanning),
+          JSON.stringify(foodandtransport),
+          JSON.stringify(checklist ?? []),
           status,
-          JSON.stringify(approvals || {}),
-          JSON.stringify(reviews || {})
+          JSON.stringify(approvals ?? {}),
+          JSON.stringify(reviews ?? {})
         ]
       )
 
@@ -128,7 +120,7 @@ exports.saveEventInfo = async (req, res) => {
       })
     }
   } catch (error) {
-    console.error('Error saving event info:', error)
+    console.error('❌ Error saving event info:', error)
     res.status(500).json({error: 'Internal server error'})
   }
 }

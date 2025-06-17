@@ -7,7 +7,8 @@ import {
   FaClock,
   FaClipboardList,
   FaExclamationTriangle,
-  FaUserCheck
+  FaUserCheck,
+  FaCalendarAlt,
 } from 'react-icons/fa';
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
@@ -222,8 +223,19 @@ const handleRequestApproval = async () => {
     return { label: 'Unknown', color: 'text-gray-800', icon: null };
   };
 
-  const filteredEvents = useMemo(() => {
-    return events.filter((ev) => {
+const filteredEvents = useMemo(() => {
+  return events
+    .filter((ev) => {
+      // Exclude fully approved events
+      const formComplete = isFormComplete(ev.eventData);
+      if (ev.status === 'submitted' && formComplete) {
+        const allApproved = Object.values(ev.approvals || {}).every((v) => v === true);
+        if (allApproved) return false; // ❌ Don't show fully approved events
+      }
+
+      return true; // ✅ Show all others
+    })
+    .filter((ev) => {
       const { label } = getStatusAndColor(ev);
       const matchesStatus =
         statusFilter === 'all' ? true : label.toLowerCase() === statusFilter;
@@ -231,117 +243,119 @@ const handleRequestApproval = async () => {
       const matchesSearch = title.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesStatus && matchesSearch;
     });
-  }, [events, statusFilter, searchTerm]);
+}, [events, statusFilter, searchTerm]);
+
 
   return (
     <>
-      <div className='mx-auto mt-10 max-w-7xl rounded-2xl border p-6 shadow-xl'>
-        <h1 className='mb-8 text-center text-4xl font-extrabold'>Logs of created Events</h1>
+      <div className='mx-auto mt-10 max-w-7xl rounded-2xl border p-8 shadow-2xl font-sans'>
+  <h1 className='mb-10 text-center text-5xl font-extrabold text-gray-800'>
+    <span className='inline-flex items-center gap-2'>
+      
+      Logs of Created Events
+    </span>
+  </h1>
 
-        {/* Filter Controls */}
-        <div className='mb-8 flex flex-col justify-between gap-4 md:flex-row'>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className='border-black-300 rounded-lg border bg-black px-4 py-2 text-lg font-medium text-white'
+  {/* Filter Controls */}
+  <div className='mb-10 flex flex-col justify-between gap-4 md:flex-row'>
+    <select
+      value={statusFilter}
+      onChange={(e) => setStatusFilter(e.target.value)}
+      className='rounded-lg border border-gray-400 bg-black px-4 py-3 text-lg font-medium text-white focus:outline-none'
+    >
+      <option value='all'>All Statuses</option>
+      <option value='draft'>Draft</option>
+      <option value='pending approval'>Pending Approval</option>
+      <option value='approval sent'>Approval Sent</option>
+      <option value='approved'>Approved</option>
+    </select>
+
+    <input
+      type='text'
+      placeholder='🔍 Search by event name'
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      className='w-full rounded-lg border border-gray-400 bg-black px-4 py-3 text-lg font-medium text-white placeholder-gray-300 md:w-96'
+    />
+  </div>
+
+  {filteredEvents.length === 0 ? (
+    <p className='text-center text-xl italic text-gray-500'>No events found.</p>
+  ) : (
+    <section className='space-y-10'>
+      {filteredEvents.map((ev) => {
+        const { label: status, color: statusColor, icon: statusIcon } = getStatusAndColor(ev);
+        const eventInfo = ev.eventData.eventInfo || {};
+        const title = eventInfo.title || 'Untitled Event';
+        const date = eventInfo.startDate || '-';
+        const location = eventInfo.venue || '-';
+
+        return (
+          <article
+            key={ev.id}
+            className='flex flex-col items-center justify-between gap-6 rounded-2xl border bg-[#f0f0f0] px-8 py-6 shadow-lg transition-all hover:shadow-2xl md:flex-row md:py-8'
           >
-            <option value='all'>All Statuses</option>
-            <option value='draft'>Draft</option>
-            <option value='pending approval'>Pending Approval</option>
-            <option value='approval sent'>Approval Sent</option>
-            <option value='approved'>Approved</option>
-          </select>
+            <div className='w-full flex-1'>
+              <h2 className='mb-3 flex items-center gap-3 text-3xl font-bold text-gray-800'>
+                <FaCalendarAlt className='text-blue-600' />
+                {title}
+              </h2>
+              <dl className='space-y-2 text-lg text-gray-700'>
+                <div>
+                  <dt className='inline font-semibold'>📅 Date:</dt>{' '}
+                  <dd className='inline'>{date}</dd>
+                </div>
+                <div>
+                  <dt className='inline font-semibold'>📍 Location:</dt>{' '}
+                  <dd className='inline'>{location}</dd>
+                </div>
+              </dl>
+              <p className='mt-4 inline-block cursor-default rounded-full px-4 py-2 text-base font-semibold tracking-wide select-none'>
+                <span className={`${statusColor} flex items-center gap-2`}>
+                  {statusIcon} {status}
+                </span>
+              </p>
+            </div>
 
-          <input
-            type='text'
-            placeholder='Search by event name'
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className='w-full rounded-lg border border-gray-300 bg-black px-4 py-2 text-lg font-medium text-white md:w-80'
-          />
-        </div>
+            <div className='flex flex-wrap justify-end gap-3 md:flex-col'>
+              <button
+                onClick={() => handleEdit(ev.id)}
+                className='flex items-center gap-2 rounded-xl bg-yellow-500 px-6 py-2 text-lg font-semibold text-white transition hover:bg-yellow-600'
+              >
+                <FaEdit /> Edit
+              </button>
 
-        {filteredEvents.length === 0 ? (
-          <p className='text-center text-lg text-gray-500 italic'>No events found.</p>
-        ) : (
-          <section className='space-y-8'>
-            {filteredEvents.map((ev) => {
-              const { label: status, color: statusColor, icon: statusIcon } = getStatusAndColor(ev);
-
-              const eventInfo = ev.eventData.eventInfo || {};
-              const title = eventInfo.title || 'Untitled Event';
-              console.log("Rendering title:", title);
-              
-
-              const date = eventInfo.startDate || '-';
-              const location = eventInfo.venue || '-';
-
-              return (
-                <article
-                  key={ev.id}
-                  className='flex flex-col items-center justify-between gap-6 rounded-2xl border bg-[#d7d7d7] px-6 py-6 shadow-md transition duration-300 hover:shadow-2xl md:flex-row md:px-10 md:py-8'
+              {(status === 'Draft' || status === 'Pending Approval') && (
+                <button
+                  onClick={() => openApprovalPopup(ev)}
+                  className='flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-2 text-lg font-semibold text-white transition hover:bg-indigo-700'
                 >
-                  <div className='w-full flex-1'>
-                    <h2 className='mb-2 flex items-center gap-2 truncate text-2xl font-bold text-gray-800 md:text-3xl'>
-                      {title}
-                    </h2>
-                    <dl className='space-y-1 text-lg text-gray-600'>
-                      <div>
-                        <dt className='inline font-semibold'>Date:</dt>{' '}
-                        <dd className='inline'>{date}</dd>
-                      </div>
-                      <div>
-                        <dt className='inline font-semibold'>Location:</dt>{' '}
-                        <dd className='inline'>{location}</dd>
-                      </div>
-                    </dl>
-                    <p className='mt-4 inline-block cursor-default rounded-full px-4 py-1 text-sm font-semibold tracking-wide select-none'>
-                      <span className={`${statusColor} flex items-center`}>
-                        {statusIcon} {status}
-                      </span>
-                    </p>
-                  </div>
+                  <FaPaperPlane /> Request Approval
+                </button>
+              )}
 
-                  <div className='flex flex-wrap justify-end gap-3 md:flex-col'>
-                    <button
-                    onClick={() => handleEdit(ev.id)}
+              {status === 'Approval Sent' && (
+                <button
+                  onClick={() => handleCancelApprovalClick(ev)}
+                  className='flex items-center gap-2 rounded-xl bg-red-600 px-6 py-2 text-lg font-semibold text-white transition hover:bg-red-700'
+                >
+                  <FaTimesCircle /> Cancel Approval
+                </button>
+              )}
 
-                      className='flex items-center gap-2 rounded-xl bg-yellow-400 px-6 py-2 font-semibold text-white transition hover:bg-yellow-500'
-                    >
-                      <FaEdit /> Edit
-                    </button>
-
-                    {(status === 'Draft' || status === 'Pending Approval') && (
-                      <button
-                        onClick={() => openApprovalPopup(ev)}
-                        className='flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-2 font-semibold text-white transition hover:bg-indigo-700'
-                      >
-                        <FaPaperPlane /> Request Approval
-                      </button>
-                    )}
-
-                    {status === 'Approval Sent' && (
-                      <button
-                        onClick={() => handleCancelApprovalClick(ev)}
-                        className='flex items-center gap-2 rounded-xl bg-red-600 px-6 py-2 font-semibold text-white transition hover:bg-red-700'
-                      >
-                        <FaTimesCircle /> Cancel Approval
-                      </button>
-                    )}
-
-                    <button
-                      onClick={() => openModal(ev.id)}
-                      className='flex items-center gap-2 rounded-xl bg-gray-600 px-6 py-2 font-semibold text-white transition hover:bg-gray-700'
-                    >
-                      <FaTrashAlt /> Delete
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
-          </section>
-        )}
-      </div>
+              <button
+                onClick={() => openModal(ev.id)}
+                className='flex items-center gap-2 rounded-xl bg-gray-600 px-6 py-2 text-lg font-semibold text-white transition hover:bg-gray-700'
+              >
+                <FaTrashAlt /> Delete
+              </button>
+            </div>
+          </article>
+        );
+      })}
+    </section>
+  )}
+</div>
 
       {showApprovalPopup && selectedEvent && (
         <div

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react'
-import {FaUniversity,FaMapMarkerAlt,FaBuilding, FaArrowLeft,FaBusAlt,FaSearch, FaBullseye, FaFlagCheckered, FaCalendarAlt, FaChalkboardTeacher, FaClipboardList, FaFilePdf, FaFileExcel, FaMoneyBill, FaUtensils, FaImages } from 'react-icons/fa';
+import {FaCheckCircle,FaUniversity,FaMapMarkerAlt,FaBuilding, FaArrowLeft,FaBusAlt,FaSearch, FaBullseye, FaFlagCheckered, FaCalendarAlt, FaChalkboardTeacher, FaClipboardList, FaFilePdf, FaFileExcel, FaMoneyBill, FaUtensils, FaImages } from 'react-icons/fa';
 
 import ExportButtons from './ExportButtons';
 
@@ -362,6 +362,7 @@ if (!selectedEvent) {
           {filteredEvents.length > 0 ? (
            filteredEvents.map((event, index) => {
   const status = getStatus(event);
+  const approvals = event.eventData?.approvals || {};
               return (
                 <div
                  key={event.id || index}
@@ -411,17 +412,17 @@ transportation: event.eventData?.foodTransport?.travels || [],
                  className='relative cursor-pointer rounded-xl border-l-4 border-blue-500 bg-white p-6 shadow-md transition-all hover:shadow-lg'
                 >
                   <div className="relative  mb-5">
-  <h2 className='text-2xl font-bold text-blue-600 flex items-center gap-2'>
+  <h2 className='text-2xl font-bold text-blue-700 flex items-center gap-2'>
     <FaCalendarAlt className='text-blue-500' />
     {event.eventData.eventInfo?.title || 'Untitled Event'}
   </h2>
 
   <p
-    className={`absolute right-0 top-0 rounded px-2 py-1 text-xs font-semibold ${
-      status === 'completed'
-        ? 'bg-green-200 text-green-800'
-        : 'bg-yellow-200 text-yellow-800'
-    }`}
+    className={`absolute right-0 top-0 rounded px-3 py-1 text-sm font-semibold ${
+                status === 'completed'
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-yellow-100 text-yellow-800'
+              }`}
   >
     {status.charAt(0).toUpperCase() + status.slice(1)}
   </p>
@@ -429,25 +430,53 @@ transportation: event.eventData?.foodTransport?.travels || [],
 
                   
                   
-                  <p className='mb-2 flex items-center text-sm'>
+                  <p className='flex items-center'>
                     <FaBuilding className='mr-2 text-gray-600' />
                     <strong>Department:</strong>{event.eventData.eventInfo?.selectedDepartment}
                     
                   </p>
-                  <p className='mb-2 flex items-center text-sm'>
+                  <p className='flex items-center'>
                   <FaCalendarAlt className='mr-2 text-gray-600' />
                     <strong>Dates:</strong> {event.eventData.eventInfo?.startDate} → {event.eventData.eventInfo?.endDate}
                   </p>
-                  <p className='mb-2 flex items-center text-sm'>
+                  <p className='flex items-center'>
                      <FaMapMarkerAlt className='mr-2 text-gray-600' />
                     <strong>Venue:</strong> {event.eventData.eventInfo?.venue}
                   </p>
                   
-                 <p className='mt-2 flex items-center text-xs text-gray-500'>
+                 <p className='flex items-center text-sm text-gray-500'>
                   <FaUniversity className='mr-2' />
   <strong>College:</strong> {event.eventData.eventInfo?.selectedCollege}
 </p>
-
+{/* Approval Section */}
+          <div className='mt-4 border-t pt-4'>
+            <h4 className='mb-2 text-lg font-semibold text-gray-800 flex items-center gap-2'>
+              <FaCheckCircle className='text-green-500' /> Approvals
+            </h4>
+            <div className='flex flex-wrap gap-3 text-sm'>
+              <span
+                className={`px-3 py-1 rounded-full font-semibold ${
+                  approvals?.hod ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                }`}
+              >
+                HOD: {approvals?.hod ? 'Approved' : 'Pending'}
+              </span>
+              <span
+                className={`px-3 py-1 rounded-full font-semibold ${
+                  approvals?.principal ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                }`}
+              >
+                Principal: {approvals?.principal ? 'Approved' : 'Pending'}
+              </span>
+              <span
+                className={`px-3 py-1 rounded-full font-semibold ${
+                  approvals?.cso ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                }`}
+              >
+                CSO: {approvals?.cso ? 'Approved' : 'Pending'}
+              </span>
+            </div>
+          </div>
                 </div>
               )
             })

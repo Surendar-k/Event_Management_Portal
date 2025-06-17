@@ -151,14 +151,20 @@ exports.getEventsByUser = async (req, res) => {
       }
 
       if (role === 'hod') {
+        // See own created events OR dept events where HOD has to approve OR approved
         return (
-          row.department === department &&
-          (approvals?.hod !== undefined || status === 'approved')
+          isCreator ||
+          (row.department === department &&
+            (Object.prototype.hasOwnProperty.call(approvals, 'hod') ||
+              status === 'approved'))
         )
       }
 
       if (role === 'cso' || role === 'principal') {
-        return approvals?.[role] !== undefined || status === 'approved'
+        return (
+          Object.prototype.hasOwnProperty.call(approvals, role) ||
+          status === 'approved'
+        )
       }
 
       return false

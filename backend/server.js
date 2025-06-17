@@ -6,12 +6,12 @@ const routes = require('./src/routes/routes')
 const app = express()
 const PORT = 5000
 const mysql = require('mysql2/promise')
-
+require('dotenv').config()
 ;(async () => {
   const connection = await mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'Surendar@19'
+    password: process.env.DB_PASSWORD
   })
 
   await connection.query(`CREATE DATABASE IF NOT EXISTS app`)

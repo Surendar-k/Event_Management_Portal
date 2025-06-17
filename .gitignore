@@ -23,3 +23,5 @@ Thumbs.db
 # General
 *.local
 *.swp
+
+.env

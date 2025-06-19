@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useMemo} from 'react'
+import React, { useState, useEffect,useMemo } from 'react';
 import {
   FaCheckCircle,
   FaTimesCircle,
@@ -13,91 +13,89 @@ import {
   FaUserCheck,
   FaClipboardList,
   FaUser
-} from 'react-icons/fa'
-import axios from 'axios'
+} from 'react-icons/fa';
+import axios from 'axios';
 
-axios.defaults.withCredentials = true
+axios.defaults.withCredentials = true;
 
-const userRole = 'hod' // Hardcoded for this demo
-
+// ✅ Checks if event form is complete
 const isFormComplete = data => {
   return (
     data?.eventInfo?.title &&
     data?.eventInfo?.startDate &&
-    // remove or relax venue requirement
     Object.keys(data?.agenda || {}).length > 0 &&
-    // optional chaining for budget check
-    (data?.financialPlanning?.budget ||
-      data?.financialPlanning?.estimatedCost) &&
-    // allow meals/travels arrays instead of foodArrangements
-    (Array.isArray(data?.foodTransport?.meals) ||
-      Array.isArray(data?.foodTransport?.refreshments)) &&
-    Array.isArray(data?.checklist) &&
-    data.checklist.length >= 0
-  )
-}
+    (data?.financialPlanning?.budget || data?.financialPlanning?.estimatedCost) &&
+    (Array.isArray(data?.foodTransport?.meals) || Array.isArray(data?.foodTransport?.refreshments)) &&
+    Array.isArray(data?.checklist)
+  );
+};
 
-// Helper function to safely parse JSON strings
+// ✅ Safe JSON parse helper
 const tryParse = (field, fallback = {}) => {
   try {
     if (typeof field === 'string' && field.trim() !== '') {
-      return JSON.parse(field)
+      return JSON.parse(field);
     }
-    return field !== undefined && field !== null ? field : fallback
+    return field !== undefined && field !== null ? field : fallback;
   } catch {
-    return fallback
+    return fallback;
   }
-}
+};
 
 const HigherAuthorityInbox = () => {
-  const [events, setEvents] = useState([])
-  const [selectedEvent, setSelectedEvent] = useState(null)
-  const [showApprovePopup, setShowApprovePopup] = useState(false)
-  const [showReviewPopup, setShowReviewPopup] = useState(false)
-  const [reviewMessage, setReviewMessage] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [searchTerm, setSearchTerm] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-useEffect(() => {
-  const fetchEvents = async () => {
-    try {
-      setLoading(true)
-      setError(null)
+  const [events, setEvents] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [showApprovePopup, setShowApprovePopup] = useState(false);
+  const [showReviewPopup, setShowReviewPopup] = useState(false);
+  const [reviewMessage, setReviewMessage] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [userRole, setUserRole] = useState(null);
+console.log('Executing for role:', userRole)
+  useEffect(() => {
+    const fetchUserRoleAndEvents = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-    
-      const res = await axios.get('http://localhost:5000/api/with-approvals', {
-  withCredentials: true
-});
+        // 1. Get user role from session
+        const sessionRes = await axios.get('http://localhost:5000/api/session');
+        const role = sessionRes.data?.user?.role;
+        if (!role) throw new Error('User role not found in session');
+        setUserRole(role);
 
-      const submittedEvents = res.data.map(ev => ({
-        id: ev.eventId,
-        status: ev.status,
-        approvals: tryParse(ev.approvals, {}),
-        creatorRole: ev.creatorRole || 'Unknown',
-        creatorEmail: ev.creatorEmail || 'Unknown',
-        eventData: {
-          eventInfo: tryParse(ev.eventData?.eventInfo, {}),
-          agenda: tryParse(ev.eventData?.agenda, {}),
-          financialPlanning: tryParse(ev.eventData?.financialPlanning, {}),
-          foodTransport: tryParse(ev.eventData?.foodTransport, {}),
-          checklist: tryParse(ev.eventData?.checklist, []),
-          reviews: tryParse(ev.eventData?.reviews, {})
-        }
-      }))
+        // 2. Get events that need approval by this role
+        const res = await axios.get('http://localhost:5000/api/with-approvals');
 
-      setEvents(submittedEvents)
-    } catch (err) {
-      console.error('Error fetching events for approval:', err)
-      setError('Failed to fetch events. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  }
+        const submittedEvents = res.data.map(ev => ({
+          id: ev.id,
+          status: ev.status,
+          approvals: tryParse(ev.approvals, {}),
+          creatorRole: ev.creatorRole || 'Unknown',
+          creatorEmail: ev.creatorEmail || 'Unknown',
+          eventData: {
+            eventInfo: tryParse(ev.eventData?.eventInfo, {}),
+            agenda: tryParse(ev.eventData?.agenda, {}),
+            financialPlanning: tryParse(ev.eventData?.financialPlanning, {}),
+            foodTransport: tryParse(ev.eventData?.foodTransport, {}),
+            checklist: tryParse(ev.eventData?.checklist, []),
+            reviews: tryParse(ev.eventData?.reviews, {})
+          }
+        }));
 
-  fetchEvents()
-}, [])
+        setEvents(submittedEvents);
+      } catch (err) {
+        console.error('Error fetching session or events:', err);
+        setError('Session expired or events failed to load.');
+      } finally {
+        setLoading(false);
+      }
+    };
 
+    fetchUserRoleAndEvents();
+  }, []);
   const getStatusAndColor = ev => {
     const formComplete = isFormComplete(ev.eventData)
 

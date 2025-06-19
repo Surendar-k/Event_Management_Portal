@@ -193,6 +193,12 @@ exports.getEventsByUser = async (req, res) => {
 }
 
 exports.getEventsWithApprovals = async (req, res) => {
+  const userRole = req.user?.role; // Get from session/middleware
+
+  if (!userRole) {
+    return res.status(403).json({ error: 'User role not found in session' });
+  }
+
   const query = `
     SELECT * 
     FROM event_info 
@@ -203,23 +209,32 @@ exports.getEventsWithApprovals = async (req, res) => {
   try {
     const [rows] = await db.execute(query);
 
-    const parsedRows = rows.map(row => ({
-      id: row.event_id,
-      facultyId: row.faculty_id,
-      status: row.status,
-      creatorRole: row.creatorRole || 'Unknown',     // optional
-      creatorEmail: row.creatorEmail || 'Unknown',   // optional
-      approvals: tryParse(row.approvals, {}),
-      reviews: tryParse(row.reviews, {}),
-      eventData: {
-        eventInfo: tryParse(row.eventinfo, {}),
-        agenda: tryParse(row.agenda, {}),
-        financialPlanning: tryParse(row.financialplanning, {}),
-        foodTransport: tryParse(row.foodandtransport, {}),
-        checklist: tryParse(row.checklist, []),
-        reviews: tryParse(row.reviews, {})
-      }
-    }));
+    const parsedRows = rows
+      .map(row => {
+        const approvals = tryParse(row.approvals, {});
+        const hasRoleInApprovals = Object.keys(approvals).includes(userRole);
+
+        if (!hasRoleInApprovals) return null; // skip if role not in approvals
+
+        return {
+          id: row.event_id,
+          facultyId: row.faculty_id,
+          status: row.status,
+          creatorRole: row.creatorRole || 'Unknown',
+          creatorEmail: row.creatorEmail || 'Unknown',
+          approvals,
+          reviews: tryParse(row.reviews, {}),
+          eventData: {
+            eventInfo: tryParse(row.eventinfo, {}),
+            agenda: tryParse(row.agenda, {}),
+            financialPlanning: tryParse(row.financialplanning, {}),
+            foodTransport: tryParse(row.foodandtransport, {}),
+            checklist: tryParse(row.checklist, []),
+            reviews: tryParse(row.reviews, {})
+          }
+        };
+      })
+      .filter(Boolean); // remove nulls
 
     res.status(200).json(parsedRows);
   } catch (error) {

@@ -13,7 +13,8 @@ exports.login = async (req, res) => {
       return res.status(401).json({error: 'User not found'})
 
     const user = rows[0]
-    const expectedPassword = `${user.faculty_name.toLowerCase()}@${user.faculty_id}`
+    const expectedPassword = `${user.faculty_name.replace(/^(Dr\.|Mr\.|Ms\.)\s*/i, '').replace(/\s+/g, '').toLowerCase()}@${user.faculty_id}`;
+
 
     if (password !== expectedPassword) {
       return res.status(401).json({error: 'Invalid password'})

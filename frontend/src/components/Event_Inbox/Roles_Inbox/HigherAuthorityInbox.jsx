@@ -53,6 +53,7 @@ const HigherAuthorityInbox = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userRole, setUserRole] = useState(null);
+  
 console.log('Executing for role:', userRole)
   useEffect(() => {
     const fetchUserRoleAndEvents = async () => {
@@ -98,6 +99,8 @@ console.log('Executing for role:', userRole)
 
     fetchUserRoleAndEvents();
   }, []);
+ 
+
   const getStatusAndColor = ev => {
     const formComplete = isFormComplete(ev.eventData)
 
@@ -359,7 +362,7 @@ console.log('Executing for role:', userRole)
         <div className='space-y-6'>
           {filteredEvents.map((ev, index) => {
             const {label, color} = getStatusAndColor(ev)
-            const {title, startDate, venue,} =
+            const {title, startDate, venue,venueType} =
               ev.eventData?.eventInfo || {}
                const description = ev.eventData?.agenda?.objectives || '';
 
@@ -403,6 +406,12 @@ console.log('Executing for role:', userRole)
                     <FaMapMarkerAlt className='text-indigo-600' />
                     <span>
                       <strong>Venue:</strong> {venue || 'TBD'}
+                    </span>
+                  </div>
+                  <div className='flex items-center gap-2'>
+                    <FaMapMarkerAlt className='text-indigo-600' />
+                    <span>
+                      <strong>VenueType:</strong> {venueType || 'TBD'}
                     </span>
                   </div>
                 </div>
@@ -453,6 +462,8 @@ console.log('Executing for role:', userRole)
                     <FaEdit size={18} />
                     Add / Edit Review
                   </button>
+                  
+                  
                 </div>
               </div>
             )

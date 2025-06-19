@@ -68,13 +68,14 @@ console.log('Executing for role:', userRole)
 
         // 2. Get events that need approval by this role
         const res = await axios.get('http://localhost:5000/api/with-approvals');
+       
 
         const submittedEvents = res.data.map(ev => ({
           id: ev.id,
           status: ev.status,
           approvals: tryParse(ev.approvals, {}),
-          creatorRole: ev.role || 'Unknown',
-          creatorEmail: ev.mail || 'Unknown',
+          creatorRole: ev.creatorRole || 'Unknown',
+          creatorEmail: ev.creatorEmail || 'Unknown',
           faculty_name:ev.faculty_name ||"Unknown",
           eventData: {
             eventInfo: tryParse(ev.eventData?.eventInfo, {}),
@@ -358,8 +359,9 @@ console.log('Executing for role:', userRole)
         <div className='space-y-6'>
           {filteredEvents.map((ev, index) => {
             const {label, color} = getStatusAndColor(ev)
-            const {title, startDate, venue, description} =
+            const {title, startDate, venue,} =
               ev.eventData?.eventInfo || {}
+               const description = ev.eventData?.agenda?.objectives || '';
 
             const approvalStatus = ev.approvals?.[userRole]
             //FIXME: fix the DB default for pending

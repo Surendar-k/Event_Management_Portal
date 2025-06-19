@@ -124,54 +124,20 @@ exports.saveEventInfo = async (req, res) => {
     res.status(500).json({error: 'Internal server error'})
   }
 }
-
-// Get events by role with safe approval checks
 exports.getEventsByUser = async (req, res) => {
-  const user = req.session.user
-  if (!user) return res.status(401).json({error: 'Unauthorized'})
+  const user = req.session.user;
+  if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
-  const {faculty_id, role, department} = user
+  const { faculty_id } = user;
 
   try {
-    const [rows] = await db.execute(`
-      SELECT ei.*, lu.department
-      FROM event_info ei
-      JOIN login_users lu ON ei.faculty_id = lu.faculty_id
-    `)
+    // Get only events created by the logged-in user
+    const [rows] = await db.execute(
+      `SELECT * FROM event_info WHERE faculty_id = ?`,
+      [faculty_id]
+    );
 
-    const visibleEvents = rows.filter(row => {
-      const isCreator = row.faculty_id === faculty_id
-      const status = row.status
-      const approvals = tryParse(row.approvals, {}) || {}
-
-      if (role === 'faculty') {
-        return (
-          isCreator || (status === 'approved' && row.department === department)
-        )
-      }
-
-      if (role === 'hod') {
-        // See own created events OR dept events where HOD has to approve OR approved
-        return (
-          isCreator ||
-          (row.department === department &&
-            (Object.prototype.hasOwnProperty.call(approvals, 'hod') ||
-              status === 'approved'))
-        )
-      }
-
-      if (role === 'cso' || role === 'principal') {
-        return (
-          isCreator ||
-          Object.prototype.hasOwnProperty.call(approvals, role) ||
-          status === 'approved'
-        )
-      }
-
-      return false
-    })
-
-    const events = visibleEvents.map(r => ({
+    const events = rows.map(r => ({
       eventId: r.event_id,
       status: r.status,
       approvals: tryParse(r.approvals, {}),
@@ -183,14 +149,15 @@ exports.getEventsByUser = async (req, res) => {
         checklist: tryParse(r.checklist, []),
         reviews: tryParse(r.reviews, {})
       }
-    }))
+    }));
 
-    res.json(events)
+    res.json(events);
   } catch (err) {
-    console.error('❌ Error fetching events:', err)
-    res.status(500).json({error: 'Failed to fetch events'})
+    console.error('❌ Error fetching events by creator:', err);
+    res.status(500).json({ error: 'Failed to fetch user-created events' });
   }
-}
+};
+
 
 exports.getEventsWithApprovals = async (req, res) => {
   const userRole = req.user?.role; // Get from session/middleware

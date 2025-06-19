@@ -192,6 +192,50 @@ exports.getEventsByUser = async (req, res) => {
   }
 }
 
+exports.getEventsWithApprovals = async (req, res) => {
+  const query = `
+    SELECT * 
+    FROM event_info 
+    WHERE approvals IS NOT NULL 
+      AND JSON_LENGTH(approvals) > 0;
+  `;
+
+  try {
+    const [rows] = await db.execute(query);
+
+    const parsedRows = rows.map(row => ({
+      id: row.event_id,
+      facultyId: row.faculty_id,
+      status: row.status,
+      creatorRole: row.creatorRole || 'Unknown',     // optional
+      creatorEmail: row.creatorEmail || 'Unknown',   // optional
+      approvals: tryParse(row.approvals, {}),
+      reviews: tryParse(row.reviews, {}),
+      eventData: {
+        eventInfo: tryParse(row.eventinfo, {}),
+        agenda: tryParse(row.agenda, {}),
+        financialPlanning: tryParse(row.financialplanning, {}),
+        foodTransport: tryParse(row.foodandtransport, {}),
+        checklist: tryParse(row.checklist, []),
+        reviews: tryParse(row.reviews, {})
+      }
+    }));
+
+    res.status(200).json(parsedRows);
+  } catch (error) {
+    console.error('Error fetching events with approvals:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+
+
+
+
+
+
+
+
 exports.getEventById = async (req, res) => {
   const user = req.session.user
   if (!user) return res.status(401).json({error: 'Unauthorized'})

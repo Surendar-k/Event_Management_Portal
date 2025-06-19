@@ -59,42 +59,44 @@ const HigherAuthorityInbox = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+useEffect(() => {
+  const fetchEvents = async () => {
+    try {
+      setLoading(true)
+      setError(null)
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        setLoading(true)
-        setError(null)
+    
+      const res = await axios.get('http://localhost:5000/api/with-approvals', {
+  withCredentials: true
+});
 
-        const res = await axios.get('http://localhost:5000/api/events/by-user')
+      const submittedEvents = res.data.map(ev => ({
+        id: ev.eventId,
+        status: ev.status,
+        approvals: tryParse(ev.approvals, {}),
+        creatorRole: ev.creatorRole || 'Unknown',
+        creatorEmail: ev.creatorEmail || 'Unknown',
+        eventData: {
+          eventInfo: tryParse(ev.eventData?.eventInfo, {}),
+          agenda: tryParse(ev.eventData?.agenda, {}),
+          financialPlanning: tryParse(ev.eventData?.financialPlanning, {}),
+          foodTransport: tryParse(ev.eventData?.foodTransport, {}),
+          checklist: tryParse(ev.eventData?.checklist, []),
+          reviews: tryParse(ev.eventData?.reviews, {})
+        }
+      }))
 
-        const submittedEvents = res.data.map(ev => ({
-          id: ev.eventId,
-          status: ev.status,
-          approvals: tryParse(ev.approvals, {}),
-          creatorRole: ev.creatorRole || 'Unknown',
-          creatorEmail: ev.creatorEmail || 'Unknown',
-          eventData: {
-            eventInfo: tryParse(ev.eventData?.eventInfo, {}),
-            agenda: tryParse(ev.eventData?.agenda, {}),
-            financialPlanning: tryParse(ev.eventData?.financialPlanning, {}),
-            foodTransport: tryParse(ev.eventData?.foodTransport, {}),
-            checklist: tryParse(ev.eventData?.checklist, []),
-            reviews: tryParse(ev.eventData?.reviews, {})
-          }
-        }))
-
-        setEvents(submittedEvents)
-      } catch (err) {
-        console.error('Error fetching events for approval:', err)
-        setError('Failed to fetch events. Please try again.')
-      } finally {
-        setLoading(false)
-      }
+      setEvents(submittedEvents)
+    } catch (err) {
+      console.error('Error fetching events for approval:', err)
+      setError('Failed to fetch events. Please try again.')
+    } finally {
+      setLoading(false)
     }
+  }
 
-    fetchEvents()
-  }, [])
+  fetchEvents()
+}, [])
 
   const getStatusAndColor = ev => {
     const formComplete = isFormComplete(ev.eventData)

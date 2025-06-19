@@ -62,4 +62,6 @@ router.put(
   eventController.saveEventInfo
 );
 
+//inbox
+router.get("/with-approvals", authMiddleware.isAuthenticated, eventController.getEventsWithApprovals);
 module.exports = router;

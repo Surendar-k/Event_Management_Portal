@@ -73,8 +73,9 @@ console.log('Executing for role:', userRole)
           id: ev.id,
           status: ev.status,
           approvals: tryParse(ev.approvals, {}),
-          creatorRole: ev.creatorRole || 'Unknown',
-          creatorEmail: ev.creatorEmail || 'Unknown',
+          creatorRole: ev.role || 'Unknown',
+          creatorEmail: ev.mail || 'Unknown',
+          faculty_name:ev.faculty_name ||"Unknown",
           eventData: {
             eventInfo: tryParse(ev.eventData?.eventInfo, {}),
             agenda: tryParse(ev.eventData?.agenda, {}),
@@ -378,7 +379,7 @@ console.log('Executing for role:', userRole)
                     <div className='mb-4 flex flex-wrap gap-4 text-sm font-medium text-gray-700'>
                       <div className='flex items-center gap-1'>
                         <FaUserCircle className='text-gray-500' />
-                        Created by {ev.creatorRole} | {ev.creatorEmail}
+                        Created by {ev.creatorRole} | {ev.faculty_name}
                       </div>
                     </div>
                   </div>

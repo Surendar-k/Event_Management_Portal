@@ -221,12 +221,12 @@ exports.getEventsWithApprovals = async (req, res) => {
   if (!userRole) {
     return res.status(403).json({ error: 'User role not found in session' });
   }
-
-  const query = `
-    SELECT * 
-    FROM event_info 
-    WHERE approvals IS NOT NULL 
-      AND JSON_LENGTH(approvals) > 0;
+ const query = `
+    SELECT ei.*, lu.faculty_name, lu.role
+    FROM event_info ei
+    JOIN login_users lu ON ei.faculty_id = lu.faculty_id
+    WHERE ei.approvals IS NOT NULL 
+      AND JSON_LENGTH(ei.approvals) > 0;
   `;
 
   try {
@@ -243,8 +243,10 @@ exports.getEventsWithApprovals = async (req, res) => {
           id: row.event_id,
           facultyId: row.faculty_id,
           status: row.status,
-          creatorRole: row.creatorRole || 'Unknown',
-          creatorEmail: row.creatorEmail || 'Unknown',
+        creatorRole: row.role || 'Unknown',
+creatorEmail: row.email || 'Unknown',
+
+          faculty_name :row.faculty_name || 'Unknown',
           approvals,
           reviews: tryParse(row.reviews, {}),
           eventData: {

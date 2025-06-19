@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, { useState, useEffect } from 'react';
 import {
   FaCalendarAlt,
   FaCheckCircle,
@@ -6,152 +6,39 @@ import {
   FaTimesCircle,
   FaEnvelopeOpenText,
   FaTrashAlt
-} from 'react-icons/fa'
+} from 'react-icons/fa';
+import axios from 'axios';
 
-const sampleEvents = [
-  {
-    id: 'event1',
-    creatorRole: 'faculty',
-    creatorEmail: 'faculty1@school.edu',
-    status: 'submitted',
-    approvals: {
-      hod: false,
-      principal: false,
-      cso: false
-    },
-    reviews: {
-      hod: null,
-      principal: null,
-      cso: null
-    },
-    eventData: {
-      eventInfo: {
-        title: 'AI Seminar',
-        date: '2025-07-20',
-        location: 'Auditorium',
-        description: 'A seminar on Artificial Intelligence by industry experts.'
-      }
-    }
-  },
-  {
-    id: 'event2',
-    creatorRole: 'faculty',
-    creatorEmail: 'faculty2@school.edu',
-    status: 'submitted',
-    approvals: {
-      hod: true,
-      principal: false,
-      cso: false
-    },
-    reviews: {
-      hod: 'Looks good to me.',
-      principal: null,
-      cso: null
-    },
-    eventData: {
-      eventInfo: {
-        title: 'Robotics Workshop',
-        date: '2025-07-22',
-        location: 'Lab 1',
-        description: 'Hands-on robotics workshop for beginners.'
-      }
-    }
-  },
-  {
-    id: 'event3',
-    creatorRole: 'hod',
-    creatorEmail: 'hod1@school.edu',
-    status: 'submitted',
-    approvals: {
-      principal: false,
-      cso: false
-    },
-    reviews: {
-      principal: null,
-      cso: null
-    },
-    eventData: {
-      eventInfo: {
-        title: 'Data Science Workshop',
-        date: '2025-07-25',
-        location: 'Lab 3',
-        description: 'A workshop focused on Data Science techniques and tools.'
-      }
-    }
-  },
-  {
-    id: 'event4',
-    creatorRole: 'principal',
-    creatorEmail: 'principal@school.edu',
-    status: 'submitted',
-    approvals: {
-      cso: false
-    },
-    reviews: {
-      cso: null
-    },
-    eventData: {
-      eventInfo: {
-        title: 'Annual Day',
-        date: '2025-08-15',
-        location: 'Main Hall',
-        description:
-          'School annual day celebration with performances and awards.'
-      }
-    }
-  },
-  {
-    id: 'event5',
-    creatorRole: 'faculty',
-    creatorEmail: 'faculty3@school.edu',
-    status: 'submitted',
-    approvals: {
-      hod: 'rejected',
-      principal: false,
-      cso: false
-    },
-    reviews: {
-      hod: 'The event schedule clashes with exams. Please reschedule.',
-      principal: null,
-      cso: null
-    },
-    eventData: {
-      eventInfo: {
-        title: 'Math Olympiad',
-        date: '2025-07-30',
-        location: 'Room 101',
-        description: 'Inter-school math competition for high school students.'
-      }
-    }
-  }
-]
+axios.defaults.withCredentials = true;
 
 const approvalStatusIcon = status => {
   switch (status) {
     case true:
-      return (
-        <FaCheckCircle className='text-xl text-green-600' title='Approved' />
-      )
+      return <FaCheckCircle className='text-xl text-green-600' title='Approved' />;
     case false:
-      return <FaClock className='text-xl text-yellow-500' title='Pending' />
+      return <FaClock className='text-xl text-yellow-500' title='Pending' />;
     case 'rejected':
-      return <FaTimesCircle className='text-xl text-red-500' title='Rejected' />
+      return <FaTimesCircle className='text-xl text-red-500' title='Rejected' />;
     default:
-      return (
-        <FaEnvelopeOpenText
-          className='text-xl text-gray-400'
-          title='No Status'
-        />
-      )
+      return <FaEnvelopeOpenText className='text-xl text-gray-400' title='No Status' />;
   }
-}
+};
 
 const approvalStatusText = status => {
-  if (status === true) return 'Approved'
-  if (status === false) return 'Pending'
-  if (status === 'rejected') return 'Rejected'
-  return 'N/A'
-}
+  if (status === true) return 'Approved';
+  if (status === false) return 'Pending';
+  if (status === 'rejected') return 'Rejected';
+  return 'N/A';
+};
+
+const tryParse = (field, fallback = {}) => {
+  try {
+    if (typeof field === 'string') return JSON.parse(field);
+    return field ?? fallback;
+  } catch {
+    return fallback;
+  }
+};
 
 const eventColors = [
   'bg-blue-50',
@@ -160,167 +47,157 @@ const eventColors = [
   'bg-pink-50',
   'bg-purple-50',
   'bg-orange-50'
-]
+];
 
 const FacultyInbox = () => {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [events, setEvents] = useState(sampleEvents) // state to track events
+  const [searchTerm, setSearchTerm] = useState('');
+  const [events, setEvents] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedEventId, setSelectedEventId] = useState(null);
 
-  const [showModal, setShowModal] = useState(false)
-  const [selectedEventId, setSelectedEventId] = useState(null)
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const res = await axios.get('http://localhost:5000/api/events/by-user');
+       const parsed = res.data.map(ev => ({
+  id: ev.eventId,
+  approvals: tryParse(ev.approvals, {}),
+  expectedApprovals: ev.expectedApprovals || [],
+  creatorRole: ev.creatorRole || 'Unknown',
+  creatorEmail: ev.creatorEmail || 'Unknown',
+  eventData: {
+    eventInfo: tryParse(ev.eventData?.eventInfo, {}),
+    reviews: tryParse(ev.eventData?.reviews, {})
+  }
+}));
+
+        setEvents(parsed);
+      } catch (err) {
+        console.error('Failed to fetch events:', err);
+      }
+    };
+
+    fetchEvents();
+  }, []);
 
   const openModal = id => {
-    setSelectedEventId(id)
-    setShowModal(true)
-  }
+    setSelectedEventId(id);
+    setShowModal(true);
+  };
 
   const closeModal = () => {
-    setShowModal(false)
-    setSelectedEventId(null)
-  }
+    setShowModal(false);
+    setSelectedEventId(null);
+  };
 
-  const confirmDelete = () => {
-    setEvents(events.filter(ev => ev.id !== selectedEventId))
-    closeModal()
-  }
+  const confirmDelete = async () => {
+    try {
+      await axios.delete(`http://localhost:5000/api/events/${selectedEventId}`);
+      setEvents(events.filter(ev => ev.id !== selectedEventId));
+      closeModal();
+    } catch (err) {
+      console.error('Failed to delete event:', err);
+    }
+  };
 
   const filteredEvents = events.filter(ev =>
-    ev.eventData.eventInfo.title
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-  )
+    ev.eventData?.eventInfo?.title?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div
-      className='mx-auto mt-10 max-w-7xl rounded-2xl border p-6 shadow-xl'
-      style={{
-        background:
-          'linear-gradient(135deg, #f0eaea 0%, #fff 50%, #f0eaea 100%)',
-        borderColor: '#ddd'
-      }}
-    >
-      <h1
-        className='mb-8 text-center text-4xl font-extrabold'
-        style={{color: '#575757', textShadow: '1px 1px 2px rgba(87,87,87,0.2)'}}
-      >
-        Event Inbox
-      </h1>
+    <div className='mx-auto max-w-6xl px-4 py-12'>
+      <h1 className='mb-10 text-center text-4xl font-bold text-gray-800'>📥 Faculty Event Inbox</h1>
 
       <div className='mx-auto mb-10 max-w-md'>
         <input
           type='text'
-          placeholder='Search by event name...'
-          className='w-full rounded-lg border border-gray-300 bg-black px-4 py-2 text-white shadow focus:ring-2 focus:ring-indigo-500 focus:outline-none'
+          placeholder='🔍 Search events...'
+          className='w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
         />
       </div>
 
       {filteredEvents.length === 0 ? (
-        <p className='text-center text-lg text-gray-500'>No events found.</p>
+        <p className='text-center text-lg text-gray-500'>No matching events found.</p>
       ) : (
         <div className='space-y-10'>
           {filteredEvents.map((ev, index) => (
             <div
               key={ev.id}
-              className={`rounded-xl border border-gray-300 p-8 shadow-lg transition duration-300 hover:shadow-2xl ${eventColors[index % eventColors.length]}`}
+              className={`rounded-2xl border border-gray-200 p-6 shadow-md hover:shadow-lg transition duration-300 ${eventColors[index % eventColors.length]}`}
             >
-              <div className='mb-6 flex items-center justify-between'>
-                <div className='flex items-center space-x-4'>
-                  <FaCalendarAlt className='text-3xl text-indigo-600' />
+              <div className='flex items-start justify-between'>
+                <div className='flex items-start space-x-4'>
+                  <FaCalendarAlt className='mt-1 text-2xl text-indigo-500' />
                   <div>
-                    <h2 className='text-3xl font-semibold text-gray-900'>
+                    <h2 className='text-2xl font-semibold text-gray-900'>
                       {ev.eventData.eventInfo.title}
                     </h2>
-                    <p className='text-sm text-gray-600 capitalize'>
-                      Created by {ev.creatorRole} &nbsp;|&nbsp;{' '}
-                      {ev.creatorEmail}
+                    <p className='text-sm text-gray-600'>
+                      Created by <strong>{ev.creatorRole}</strong> | {ev.creatorEmail}
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => openModal(ev.id)}
-                  className='text-red-600 transition hover:text-red-800'
+                  className='rounded-full p-2 text-red-500 hover:bg-red-100'
                   title='Delete this event'
                 >
-                  <FaTrashAlt className='text-2xl' />
+                  <FaTrashAlt />
                 </button>
               </div>
 
-              <div className='mb-6 grid grid-cols-1 gap-6 md:grid-cols-3'>
-                <div>
-                  <p className='text-gray-700'>
-                    <span className='font-semibold'>Date:</span>{' '}
-                    {ev.eventData.eventInfo.date}
-                  </p>
-                </div>
-                <div>
-                  <p className='text-gray-700'>
-                    <span className='font-semibold'>Location:</span>{' '}
-                    {ev.eventData.eventInfo.location}
-                  </p>
-                </div>
-                <div>
-                  <p className='text-gray-700 italic'>
-                    {ev.eventData.eventInfo.description}
-                  </p>
-                </div>
+              <div className='mt-6 grid grid-cols-1 gap-4 md:grid-cols-3 text-gray-700'>
+                <p><strong>Date:</strong> {ev.eventData.eventInfo.date || 'N/A'}</p>
+                <p><strong>Location:</strong> {ev.eventData.eventInfo.location || 'N/A'}</p>
+                <p className='italic text-gray-600'>{ev.eventData.eventInfo.description || ''}</p>
               </div>
 
-              <h3 className='mb-3 text-xl font-semibold text-gray-800'>
-                Approvals
-              </h3>
-              <div className='mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3'>
-                {Object.entries(ev.approvals).map(([role, status]) => (
-                  <div
-                    key={role}
-                    className='flex items-center space-x-3 rounded-lg border bg-white p-4 shadow-sm'
-                  >
-                    {approvalStatusIcon(status)}
-                    <div>
-                      <p className='font-semibold text-gray-900 capitalize'>
-                        {role}
-                      </p>
-                      <p
-                        className={`${
-                          status === true
-                            ? 'text-green-600'
-                            : status === false
-                              ? 'text-yellow-600'
+              <div className='mt-6'>
+                <h3 className='mb-3 text-lg font-semibold text-gray-800'>Approvals</h3>
+                <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
+                  {Object.entries(ev.approvals).map(([role, status]) => (
+                    <div
+                      key={role}
+                      className='flex items-center space-x-3 rounded-md border bg-white p-3 shadow-sm'
+                    >
+                      {approvalStatusIcon(status)}
+                      <div>
+                        <p className='font-semibold capitalize text-gray-800'>{role}</p>
+                        <p
+                          className={`text-sm ${
+                            status === true
+                              ? 'text-green-600'
                               : status === 'rejected'
-                                ? 'text-red-600'
-                                : 'text-gray-500'
-                        }`}
-                      >
-                        {approvalStatusText(status)}
-                      </p>
+                              ? 'text-red-600'
+                              : 'text-yellow-600'
+                          }`}
+                        >
+                          {approvalStatusText(status)}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
 
-              <h3 className='mb-3 text-xl font-semibold text-gray-800'>
-                Review Comments
-              </h3>
-              <div className='space-y-3'>
-                {Object.entries(ev.reviews).some(([comment]) => comment) ? (
-                  Object.entries(ev.reviews).map(([role, comment]) =>
+              <div className='mt-6'>
+                <h3 className='mb-3 text-lg font-semibold text-gray-800'>Review Comments</h3>
+                {Object.values(ev.eventData.reviews).some(comment => comment) ? (
+                  Object.entries(ev.eventData.reviews).map(([role, comment]) =>
                     comment ? (
                       <div
                         key={role}
-                        className='rounded-md border-l-4 border-indigo-500 bg-indigo-100 p-4'
+                        className='rounded-md border-l-4 border-indigo-500 bg-indigo-50 px-4 py-3'
                       >
-                        <p className='mb-1 font-semibold capitalize'>
-                          {role} says:
-                        </p>
-                        <p className='text-gray-800 italic'>"{comment}"</p>
+                        <p className='mb-1 font-semibold capitalize text-indigo-700'>{role} says:</p>
+                        <p className='italic text-gray-700'>"{comment}"</p>
                       </div>
                     ) : null
                   )
                 ) : (
-                  <p className='text-gray-500 italic'>
-                    No review comments yet.
-                  </p>
+                  <p className='text-sm italic text-gray-500'>No review comments available.</p>
                 )}
               </div>
             </div>
@@ -330,17 +207,14 @@ const FacultyInbox = () => {
 
       {/* Modal */}
       {showModal && (
-        <div className='bg-opacity-40 fixed inset-0 z-50 flex items-center justify-center bg-black'>
-          <div
-            className='relative w-full max-w-lg rounded-3xl bg-white p-8 shadow-2xl sm:p-10'
-            style={{borderTop: '6px solid rgb(197, 34, 34)'}}
-          >
-            <h2 className='mb-4 text-lg font-bold'>Confirm Deletion</h2>
-            <p className='mb-6'>Are you sure you want to delete this event?</p>
-            <div className='flex justify-end gap-4'>
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50'>
+          <div className='w-full max-w-md rounded-xl bg-white p-8 shadow-lg'>
+            <h2 className='mb-4 text-xl font-bold text-gray-800'>Confirm Deletion</h2>
+            <p className='mb-6 text-gray-600'>Are you sure you want to delete this event?</p>
+            <div className='flex justify-end space-x-4'>
               <button
                 onClick={closeModal}
-                className='rounded bg-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-400'
+                className='rounded bg-gray-200 px-4 py-2 text-gray-800 hover:bg-gray-300'
               >
                 Cancel
               </button>
@@ -355,7 +229,7 @@ const FacultyInbox = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default FacultyInbox
+export default FacultyInbox;

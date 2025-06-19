@@ -181,8 +181,8 @@ const CreateEvent = () => {
   };
 
   return (
-    <div className="mx-auto mt-10 max-w-7xl rounded-2xl border p-6 shadow-xl bg-gradient-to-r from-gray-100 via-white to-gray-100 border-gray-300">
-      <h1 className="mb-8 text-center text-4xl font-extrabold text-gray-700">
+    <div className="mx-auto mt-10 max-w-8xl text-lg rounded-2xl border p-6 shadow-xl bg-gradient-to-r from-gray-100 via-white to-gray-100 border-gray-300">
+      <h1 className="mb-8 text-center text-5xl font-extrabold text-gray-700">
         {isEditMode ? 'Edit Event' : 'Create New Event'}
       </h1>
 

@@ -162,6 +162,7 @@ exports.getEventsByUser = async (req, res) => {
 
       if (role === 'cso' || role === 'principal') {
         return (
+          isCreator ||
           Object.prototype.hasOwnProperty.call(approvals, role) ||
           status === 'approved'
         )

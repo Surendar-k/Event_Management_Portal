@@ -248,7 +248,7 @@ const filteredEvents = useMemo(() => {
 
   return (
     <>
-      <div className='mx-auto mt-10 max-w-7xl rounded-2xl border p-8 shadow-2xl font-sans'>
+      <div className='mx-auto mt-10  p-8 shadow-2xl font-sans'>
   <h1 className='mb-10 text-center text-5xl font-extrabold text-gray-800'>
     <span className='inline-flex items-center gap-2'>
       

@@ -65,10 +65,13 @@ const Navbar = () => {
     {label: 'Create Event', path: '/create-event'},
     {label: 'Report Generation', path: '/report-generation'},
     {label: 'Event Logs', path: '/event-logs'},
-    {
+    ...(isHigherAuthority
+    ? [{ label: 'Create User', path: '/create-user' }]
+    : []),
+      {
       label: 'Inbox',
       path: isHigherAuthority ? '/higherauthority-inbox' : '/faculty-inbox'
-    }
+    },
   ]
 
   return (

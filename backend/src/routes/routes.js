@@ -6,7 +6,7 @@ const path = require("path");
 const loginController = require("../controllers/loginController");
 const authMiddleware = require("../middleware/authMiddleware");
 const eventController = require("../controllers/eventController");
-
+const { createUser } = require('../middleware/authController');
 const upload = multer({
   dest: path.join(__dirname, "..", "uploads"),
   limits: { fileSize: 5 * 1024 * 1024 }, // max 5MB
@@ -67,6 +67,12 @@ router.get(
   eventController.getDraftEventsForLogs
 );
 
+router.post(
+  '/api/users',
+  isAuthenticated, // first check if user is logged in
+  requireRole(['principal', 'hod', 'cso']), // then check role
+  createUser
+);
 //inbox
 router.get("/with-approvals", authMiddleware.isAuthenticated, eventController.getEventsWithApprovals);
 module.exports = router;

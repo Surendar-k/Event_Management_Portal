@@ -107,3 +107,15 @@ exports.session = (req, res) => {
     res.status(401).json({error: 'Not logged in'})
   }
 }
+
+
+// DELETE /api/users/:faculty_id
+exports.deleteUser = async (req, res) => {
+  const { faculty_id } = req.params;
+  try {
+    await db.query('DELETE FROM login_users WHERE faculty_id = ?', [faculty_id]);
+    res.json({ message: 'User deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

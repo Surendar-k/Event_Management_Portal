@@ -7,6 +7,7 @@ import EventLogs from './components/EventLogs/EventLogs';
 
 import FacultyInbox from './components/Event_Inbox/Roles_Inbox/FacultyInbox';
 import HigherAuthorityInbox from './components/Event_Inbox/Roles_Inbox/HigherAuthorityInbox';
+import CreateUserForm from './components/Login_Page/CreateUserForm';
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
           <Route path='/higherauthority-inbox' element={<HigherAuthorityInbox />} />
           <Route path="/higherauthority/:eventId" element={<HigherAuthorityInbox />} />
           <Route path='/report-generation' element={<ReportGeneration />} />
+          <Route path='/create-user' element={<CreateUserForm />} />
         </Route>
       </Routes>
     </BrowserRouter>

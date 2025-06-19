@@ -65,6 +65,7 @@ const FacultyInbox = () => {
   expectedApprovals: ev.expectedApprovals || [],
   creatorRole: ev.creatorRole || 'Unknown',
   creatorEmail: ev.creatorEmail || 'Unknown',
+  faculty_name :ev.faculty_name || "Unknown",
   eventData: {
     eventInfo: tryParse(ev.eventData?.eventInfo, {}),
     reviews: tryParse(ev.eventData?.reviews, {})
@@ -135,7 +136,7 @@ const FacultyInbox = () => {
                       {ev.eventData.eventInfo.title}
                     </h2>
                     <p className='text-sm text-gray-600'>
-                      Created by <strong>{ev.eventData.creatorRole}</strong> | {ev.eventData.eventInfo.email}
+                      Created by <strong>{ev.creatorRole}</strong> | {ev.faculty_name}
                     </p>
                   </div>
                 </div>

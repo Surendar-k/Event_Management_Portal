@@ -132,15 +132,21 @@ exports.getEventsByUser = async (req, res) => {
 
   try {
     // Get only events created by the logged-in user
-    const [rows] = await db.execute(
-      `SELECT * FROM event_info WHERE faculty_id = ?`,
-      [faculty_id]
-    );
+  const [rows] = await db.execute(
+  `SELECT ei.*, lu.faculty_name, lu.role 
+   FROM event_info ei 
+   JOIN login_users lu ON ei.faculty_id = lu.faculty_id 
+   WHERE ei.faculty_id = ?`,
+  [faculty_id]
+);
+
 
     const events = rows.map(r => ({
       eventId: r.event_id,
       status: r.status,
       approvals: tryParse(r.approvals, {}),
+      creatorRole: r.role || 'Unknown',
+  faculty_name: r.faculty_name || 'Unknown',
       eventData: {
         eventInfo: tryParse(r.eventinfo, {}),
         agenda: tryParse(r.agenda, {}),

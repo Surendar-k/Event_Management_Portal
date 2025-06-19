@@ -45,7 +45,7 @@ const EventLogs = () => {
   const navigate = useNavigate();
 const fetchEvents = async () => {
   try {
-    const res = await axios.get('http://localhost:5000/api/events/by-user', {
+    const res = await axios.get('http://localhost:5000/api/draft-logs', {
       withCredentials: true, // Important: to send session cookie
     });
 
@@ -200,7 +200,7 @@ const handleRequestApproval = async () => {
 
     if (formComplete && ev.status === 'draft')
       return {
-        label: 'Pending Approval',
+        label: 'Form Completed',
         color: 'text-purple-800',
         icon: <FaClipboardList className='mr-2 inline' />
       };

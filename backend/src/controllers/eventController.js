@@ -159,6 +159,56 @@ exports.getEventsByUser = async (req, res) => {
 };
 
 
+
+exports.getDraftEventsForLogs = async (req, res) => {
+  const user = req.session.user;
+  if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+  const { faculty_id } = user;
+
+  try {
+    const [rows] = await db.execute(
+      `SELECT * FROM event_info WHERE faculty_id = ? AND status = 'draft'`,
+      [faculty_id]
+    );
+
+    const events = rows
+      .map(r => {
+        const approvals = tryParse(r.approvals, {});
+        const approverKeys = Object.keys(approvals);
+
+        // If no approvers were selected, show the event (still draft)
+        if (approverKeys.length === 0) return r;
+
+        // Check if any of the selected approvers have not yet approved
+        const pendingExists = approverKeys.some(key => approvals[key] !== true);
+
+        return pendingExists ? r : null;
+      })
+      .filter(Boolean); // remove fully-approved draft events
+
+    const mappedEvents = events.map(r => ({
+      eventId: r.event_id,
+      status: r.status,
+      approvals: tryParse(r.approvals, {}),
+      eventData: {
+        eventInfo: tryParse(r.eventinfo, {}),
+        agenda: tryParse(r.agenda, {}),
+        financialPlanning: tryParse(r.financialplanning, {}),
+        foodTransport: tryParse(r.foodandtransport, {}),
+        checklist: tryParse(r.checklist, []),
+        reviews: tryParse(r.reviews, {})
+      }
+    }));
+
+    res.json(mappedEvents);
+  } catch (err) {
+    console.error('❌ Error fetching draft events for logs:', err);
+    res.status(500).json({ error: 'Failed to fetch event logs' });
+  }
+};
+
+
 exports.getEventsWithApprovals = async (req, res) => {
   const userRole = req.user?.role; // Get from session/middleware
 

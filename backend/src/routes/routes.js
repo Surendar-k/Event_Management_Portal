@@ -61,6 +61,11 @@ router.put(
   authMiddleware.isAuthenticated,
   eventController.saveEventInfo
 );
+router.get(
+  '/draft-logs',
+  authMiddleware.isAuthenticated, // ensure user is logged in
+  eventController.getDraftEventsForLogs
+);
 
 //inbox
 router.get("/with-approvals", authMiddleware.isAuthenticated, eventController.getEventsWithApprovals);

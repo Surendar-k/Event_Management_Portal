@@ -174,7 +174,7 @@ if (!selectedEvent) {
           {filteredEvents.length > 0 ? (
            filteredEvents.map((event, index) => {
   const status = getStatus(event);
-  const approvals = event.eventData?.approvals || {};
+ const { approvals, } = event;
               return (
                 <div
                  key={event.id || index}

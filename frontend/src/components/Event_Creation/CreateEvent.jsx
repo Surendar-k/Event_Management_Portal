@@ -53,6 +53,7 @@ const CreateEvent = () => {
   const [checklist, setChecklist] = useState(defaultState.checklist);
   const [financialPlanning, setFinancialPlanning] = useState(defaultState.financialPlanning);
   const [foodAndTransport, setFoodAndTransport] = useState(defaultState.foodAndTransport);
+const [loginName, setLoginName] = useState('');
 
   useEffect(() => {
     const resetToDefault = () => {
@@ -63,6 +64,7 @@ const CreateEvent = () => {
       setChecklist(defaultState.checklist);
       setFinancialPlanning(defaultState.financialPlanning);
       setFoodAndTransport(defaultState.foodAndTransport);
+      
     };
 
     if (isEditMode) {
@@ -71,7 +73,8 @@ const CreateEvent = () => {
           const res = await fetch(`http://localhost:5000/api/events/${eventId}`, {
             credentials: 'include',
           });
-          const data = await res.json();
+        const data = await res.json();
+    
 
           if (res.ok && data.eventinfo) {
             setEventInfo(data.eventinfo);
@@ -147,6 +150,7 @@ const CreateEvent = () => {
             setStartDate={setStartDate}
             endDate={endDate}
             setEndDate={setEndDate}
+            loginName={loginName}
           />
         );
       case 'agenda':
@@ -179,6 +183,21 @@ const CreateEvent = () => {
         return null;
     }
   };
+useEffect(() => {
+  const fetchSession = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/session', {
+        credentials: 'include'
+      });
+      const data = await res.json();
+      setLoginName(data?.user?.faculty_name || '');
+    } catch (err) {
+      console.error('❌ Failed to fetch session:', err);
+    }
+  };
+
+  fetchSession();
+}, []);
 
   return (
     <div className="mx-auto mt-10 max-w-8xl text-lg rounded-2xl border p-6 shadow-xl bg-gradient-to-r from-gray-100 via-white to-gray-100 border-gray-300">

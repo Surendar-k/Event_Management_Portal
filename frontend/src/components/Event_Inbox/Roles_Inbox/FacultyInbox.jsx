@@ -135,7 +135,7 @@ const FacultyInbox = () => {
                       {ev.eventData.eventInfo.title}
                     </h2>
                     <p className='text-sm text-gray-600'>
-                      Created by <strong>{ev.creatorRole}</strong> | {ev.creatorEmail}
+                      Created by <strong>{ev.eventData.creatorRole}</strong> | {ev.eventData.eventInfo.email}
                     </p>
                   </div>
                 </div>

@@ -140,22 +140,29 @@ exports.getEventsByUser = async (req, res) => {
   [faculty_id]
 );
 
+const events = rows.map(r => {
+  const eventInfo = tryParse(r.eventinfo, {});
 
-    const events = rows.map(r => ({
-      eventId: r.event_id,
-      status: r.status,
-      approvals: tryParse(r.approvals, {}),
-      creatorRole: r.role || 'Unknown',
-  faculty_name: r.faculty_name || 'Unknown',
-      eventData: {
-        eventInfo: tryParse(r.eventinfo, {}),
-        agenda: tryParse(r.agenda, {}),
-        financialPlanning: tryParse(r.financialplanning, {}),
-        foodTransport: tryParse(r.foodandtransport, {}),
-        checklist: tryParse(r.checklist, []),
-        reviews: tryParse(r.reviews, {})
-      }
-    }));
+  return {
+    eventId: r.event_id,
+    status: r.status,
+    approvals: tryParse(r.approvals, {}),
+    creatorRole: r.role || 'Unknown',
+    faculty_name: r.faculty_name || 'Unknown',
+    startDate: eventInfo.startDate || 'Unknown',  // ✅ from eventInfo
+    endDate: eventInfo.endDate || 'Unknown',      // ✅ from eventInfo
+    VenueType: eventInfo.venue || eventInfo.location || 'Unknown',  // fallback if `location` missing
+    eventData: {
+      eventInfo: eventInfo,
+      agenda: tryParse(r.agenda, {}),
+      financialPlanning: tryParse(r.financialplanning, {}),
+      foodTransport: tryParse(r.foodandtransport, {}),
+      checklist: tryParse(r.checklist, []),
+      reviews: tryParse(r.reviews, {})
+    }
+  };
+});
+
 
     res.json(events);
   } catch (err) {

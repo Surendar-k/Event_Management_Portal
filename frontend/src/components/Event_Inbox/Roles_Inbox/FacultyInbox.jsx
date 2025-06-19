@@ -56,30 +56,38 @@ const FacultyInbox = () => {
   const [selectedEventId, setSelectedEventId] = useState(null);
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const res = await axios.get('http://localhost:5000/api/events/by-user');
-       const parsed = res.data.map(ev => ({
-  id: ev.eventId,
-  approvals: tryParse(ev.approvals, {}),
-  expectedApprovals: ev.expectedApprovals || [],
-  creatorRole: ev.creatorRole || 'Unknown',
-  creatorEmail: ev.creatorEmail || 'Unknown',
-  faculty_name :ev.faculty_name || "Unknown",
-  eventData: {
-    eventInfo: tryParse(ev.eventData?.eventInfo, {}),
-    reviews: tryParse(ev.eventData?.reviews, {})
-  }
-}));
+  const fetchEvents = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/api/events/by-user');
 
-        setEvents(parsed);
-      } catch (err) {
-        console.error('Failed to fetch events:', err);
-      }
-    };
+      const parsed = res.data.map(ev => {
+        const info = tryParse(ev.eventData?.eventInfo, {});
+        return {
+          id: ev.eventId,
+          approvals: tryParse(ev.approvals, {}),
+          expectedApprovals: ev.expectedApprovals || [],
+          creatorRole: ev.creatorRole || 'Unknown',
+          creatorEmail: ev.creatorEmail || 'Unknown',
+          faculty_name: ev.faculty_name || "Unknown",
+          startDate: info.startDate || 'N/A',
+          endDate: info.endDate || 'N/A',
+          venueType: info.venueType || 'N/A',
+          eventData: {
+            eventInfo: info,
+            reviews: tryParse(ev.eventData?.reviews, {})
+          }
+        };
+      });
 
-    fetchEvents();
-  }, []);
+      setEvents(parsed);
+    } catch (err) {
+      console.error('Failed to fetch events:', err);
+    }
+  };
+
+  fetchEvents();
+}, []);
+
 
   const openModal = id => {
     setSelectedEventId(id);
@@ -150,8 +158,11 @@ const FacultyInbox = () => {
               </div>
 
               <div className='mt-6 grid grid-cols-1 gap-4 md:grid-cols-3 text-gray-700'>
-                <p><strong>Date:</strong> {ev.eventData.eventInfo.date || 'N/A'}</p>
-                <p><strong>Location:</strong> {ev.eventData.eventInfo.location || 'N/A'}</p>
+                <p><strong>StartDate:</strong>{ev.startDate || 'N/A'}</p>
+                 <p><strong>EndDate:</strong>{ev.endDate || 'N/A'}</p>
+                <p><strong>Location:</strong> {ev.venueType || 'N/A'}</p>
+                
+                
                 <p className='italic text-gray-600'>{ev.eventData.eventInfo.description || ''}</p>
               </div>
 

@@ -216,13 +216,17 @@ exports.getDraftEventsForLogs = async (req, res) => {
 
 
 exports.getEventsWithApprovals = async (req, res) => {
-  const userRole = req.user?.role; // Get from session/middleware
+  const user = req.user; // Get from session/middleware
 
-  if (!userRole) {
+  if (!user || !user.role) {
     return res.status(403).json({ error: 'User role not found in session' });
   }
- const query = `
-    SELECT ei.*, lu.faculty_name, lu.role
+
+  const userRole = user.role;
+  const userDept = user.department;
+
+  const query = `
+    SELECT ei.*, lu.faculty_name, lu.role, lu.department AS creator_dept, lu.email
     FROM event_info ei
     JOIN login_users lu ON ei.faculty_id = lu.faculty_id
     WHERE ei.approvals IS NOT NULL 
@@ -237,16 +241,21 @@ exports.getEventsWithApprovals = async (req, res) => {
         const approvals = tryParse(row.approvals, {});
         const hasRoleInApprovals = Object.keys(approvals).includes(userRole);
 
-        if (!hasRoleInApprovals) return null; // skip if role not in approvals
+        // Skip if this user's role is not in the approvals object
+        if (!hasRoleInApprovals) return null;
+
+        // Additional filter for HODs: only events from their department
+        if (userRole === 'hod' && row.creator_dept !== userDept) {
+          return null;
+        }
 
         return {
           id: row.event_id,
           facultyId: row.faculty_id,
           status: row.status,
-        creatorRole: row.role || 'Unknown',
-creatorEmail: row.email || 'Unknown',
-
-          faculty_name :row.faculty_name || 'Unknown',
+          creatorRole: row.role || 'Unknown',
+          creatorEmail: row.email || 'Unknown',
+          faculty_name: row.faculty_name || 'Unknown',
           approvals,
           reviews: tryParse(row.reviews, {}),
           eventData: {
@@ -259,7 +268,7 @@ creatorEmail: row.email || 'Unknown',
           }
         };
       })
-      .filter(Boolean); // remove nulls
+      .filter(Boolean); // Remove nulls
 
     res.status(200).json(parsedRows);
   } catch (error) {

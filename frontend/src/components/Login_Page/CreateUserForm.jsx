@@ -158,161 +158,160 @@ useEffect(() => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto mt-10 p-8 bg-gradient-to-b from-blue-50 via-white to-white rounded-3xl shadow-xl">
-      <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold text-blue-800 tracking-wide">
-          👨‍🏫 User Management Panel
-        </h1>
-        {user && (
-          <p className="mt-2 text-lg text-gray-600">
-            Logged in as <strong>{user.faculty_name}</strong> ({user.role})
-          </p>
-        )}
-      </div>
-
-      {/* Tabs */}
-      <div className="flex justify-center mb-8 gap-6">
-        <button
-          onClick={() => setActiveTab('create')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl text-lg font-medium shadow-md transition ${
-            activeTab === 'create'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          <UserPlusIcon className="h-5 w-5" />
-          Create User
-        </button>
-        <button
-          onClick={() => setActiveTab('list')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl text-lg font-medium shadow-md transition ${
-            activeTab === 'list'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          <UsersIcon className="h-5 w-5" />
-          View Users
-        </button>
-      </div>
-
-      {/* Create Form */}
-      {activeTab === 'create' && (
-        <>
-          {error && <p className="text-red-600 text-center mb-4">{error}</p>}
-          {message && <p className="text-green-600 text-center mb-4">{message}</p>}
-
-          <form onSubmit={handleSubmit} className="space-y-5 text-lg">
-            {[
-              ['faculty_id', 'Faculty ID', 'Enter faculty ID (e.g., 1001)'],
-              ['faculty_name', 'Faculty Name', 'Enter full name'],
-              ['designation', 'Designation', 'e.g., Assistant Professor'],
-              ['department', 'Department', 'e.g., IT'],
-              ['institution_name', 'Institution Name', 'e.g., K.S.R. Institutions'],
-              ['email', 'Email', 'e.g., user@shanmugha.edu.in']
-            ].map(([name, label, placeholder]) => (
-              <div key={name}>
-                <label className="block text-gray-800 font-medium mb-1">{label}</label>
-                <input
-                  type={name === 'email' ? 'email' : 'text'}
-                  name={name}
-                  value={form[name]}
-                  onChange={handleChange}
-                  placeholder={placeholder}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
-                  disabled={
-                    name === 'department' && user?.role === 'hod'
-                      ? true
-                      : false
-                  }
-                />
-              </div>
-            ))}
-
-            <div>
-              <label className="block text-gray-800 font-medium mb-1">Role</label>
-              <select
-                name="role"
-                value={form.role}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
-                disabled={user?.role === 'hod'}
-              >
-                <option value="faculty">Faculty</option>
-                {user?.role !== 'hod' && (
-                  <>
-                    <option value="hod">HOD</option>
-                    <option value="cso">CSO</option>
-                    <option value="principal">Principal</option>
-                  </>
-                )}
-              </select>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full bg-blue-700 hover:bg-blue-800 text-white text-lg font-semibold py-3 rounded-xl transition"
-            >
-              🚀 Create User
-            </button>
-          </form>
-        </>
-      )}
-
-      {/* User List Table */}
-      {activeTab === 'list' && (
-        <div className="overflow-x-auto mt-6">
-          <table className="min-w-full text-base text-left border rounded-xl shadow-sm bg-white">
-            <thead className="bg-blue-100 text-blue-900 uppercase font-bold">
-              <tr>
-                {[
-                  'Faculty ID',
-                  'Name',
-                  'Designation',
-                  'Department',
-                  'Institution',
-                  'Email',
-                  'Role',
-                  'Actions'
-                ].map(header => (
-                  <th key={header} className="px-4 py-3 border">
-                    {header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {users.map(u => (
-                <tr key={u.faculty_id} className="hover:bg-blue-50">
-                  <td className="px-4 py-3 border">{u.faculty_id}</td>
-                  <td className="px-4 py-3 border">{u.faculty_name}</td>
-                  <td className="px-4 py-3 border">{u.designation}</td>
-                  <td className="px-4 py-3 border">{u.department}</td>
-                  <td className="px-4 py-3 border">{u.institution_name}</td>
-                  <td className="px-4 py-3 border">{u.email}</td>
-                  <td className="px-4 py-3 border capitalize">{u.role}</td>
-                  <td className="px-4 py-3 border">
-                    {u.faculty_id !== user?.faculty_id ? (
-                      <button
-                        onClick={() => handleDelete(u.faculty_id)}
-                        className="flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-full text-sm"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                        Delete
-                      </button>
-                    ) : (
-                      <span className="text-gray-400 text-sm">Self</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+    
+  <div className="max-w-7xl mx-auto mt-12 px-6 py-10 bg-white/70 backdrop-blur-md rounded-3xl shadow-2xl border border-blue-200">
+    <div className="mb-10 text-center">
+      <h1 className="text-4xl font-bold text-blue-900 tracking-wider">
+        ⚙️ User Management Panel
+      </h1>
+      {user && (
+        <p className="mt-2 text-lg text-gray-700 font-medium">
+          Logged in as <span className="text-blue-800 font-semibold">{user.faculty_name}</span> ({user.role})
+        </p>
       )}
     </div>
-  );
+
+    {/* Tabs */}
+    <div className="flex justify-center mb-10 gap-6">
+      <button
+        onClick={() => setActiveTab('create')}
+        className={`group flex items-center gap-2 px-6 py-3 rounded-full text-lg font-semibold transition shadow-lg ${
+          activeTab === 'create'
+            ? 'bg-gradient-to-r from-blue-600 to-blue-800 text-white'
+            : 'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-800'
+        }`}
+      >
+        <UserPlusIcon className="h-5 w-5 group-hover:scale-110 transition" />
+        Create User
+      </button>
+      <button
+        onClick={() => setActiveTab('list')}
+        className={`group flex items-center gap-2 px-6 py-3 rounded-full text-lg font-semibold transition shadow-lg ${
+          activeTab === 'list'
+            ? 'bg-gradient-to-r from-blue-600 to-blue-800 text-white'
+            : 'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-800'
+        }`}
+      >
+        <UsersIcon className="h-5 w-5 group-hover:scale-110 transition" />
+        View Users
+      </button>
+    </div>
+
+    {activeTab === 'create' && (
+      <>
+        {error && <p className="text-red-600 text-center mb-4 font-medium">{error}</p>}
+        {message && <p className="text-green-600 text-center mb-4 font-medium">{message}</p>}
+
+        <form onSubmit={handleSubmit} className="space-y-6 text-lg">
+          {/* Input fields */}
+          {[
+            ['faculty_id', 'Faculty ID', 'Enter faculty ID (e.g., 1001)'],
+            ['faculty_name', 'Faculty Name', 'Enter full name'],
+            ['designation', 'Designation', 'e.g., Assistant Professor'],
+            ['department', 'Department', 'e.g., IT'],
+            ['institution_name', 'Institution Name', 'e.g., K.S.R. Institutions'],
+            ['email', 'Email', 'e.g., user@shanmugha.edu.in']
+          ].map(([name, label, placeholder]) => (
+            <div key={name}>
+              <label className="block text-gray-800 font-semibold mb-1">{label}</label>
+              <input
+                type={name === 'email' ? 'email' : 'text'}
+                name={name}
+                value={form[name]}
+                onChange={handleChange}
+                placeholder={placeholder}
+                required
+                className="w-full px-4 py-3 rounded-xl bg-white border border-gray-300 shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 disabled:bg-gray-100"
+                disabled={name === 'department' && user?.role === 'hod'}
+              />
+            </div>
+          ))}
+
+          {/* Role dropdown */}
+          <div>
+            <label className="block text-gray-800 font-semibold mb-1">Role</label>
+            <select
+              name="role"
+              value={form.role}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-xl border border-gray-300 shadow-inner bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 disabled:bg-gray-100"
+              disabled={user?.role === 'hod'}
+            >
+              <option value="faculty">Faculty</option>
+              {user?.role !== 'hod' && (
+                <>
+                  <option value="hod">HOD</option>
+                  <option value="cso">CSO</option>
+                  <option value="principal">Principal</option>
+                </>
+              )}
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-gradient-to-r from-blue-700 to-blue-900 hover:from-blue-800 hover:to-blue-950 text-white text-lg font-semibold py-3 rounded-xl shadow-lg transition"
+          >
+            🚀 Create User
+          </button>
+        </form>
+      </>
+    )}
+
+    {/* User list */}
+    {activeTab === 'list' && (
+      <div className="overflow-x-auto mt-8">
+        <table className="min-w-full text-base text-left border rounded-xl shadow-md bg-white">
+          <thead className="bg-blue-100 text-blue-900 uppercase font-bold">
+            <tr>
+              {[
+                'Faculty ID',
+                'Name',
+                'Designation',
+                'Department',
+                'Institution',
+                'Email',
+                'Role',
+                'Actions'
+              ].map(header => (
+                <th key={header} className="px-4 py-3 border">
+                  {header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="text-gray-800">
+            {users.map((u, idx) => (
+              <tr key={u.faculty_id} className={`${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-blue-50`}>
+                <td className="px-4 py-3 border">{u.faculty_id}</td>
+                <td className="px-4 py-3 border">{u.faculty_name}</td>
+                <td className="px-4 py-3 border">{u.designation}</td>
+                <td className="px-4 py-3 border">{u.department}</td>
+                <td className="px-4 py-3 border">{u.institution_name}</td>
+                <td className="px-4 py-3 border">{u.email}</td>
+                <td className="px-4 py-3 border capitalize">{u.role}</td>
+                <td className="px-4 py-3 border">
+                  {u.faculty_id !== user?.faculty_id ? (
+                    <button
+                      onClick={() => handleDelete(u.faculty_id)}
+                      className="flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-full text-sm shadow-sm"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                      Delete
+                    </button>
+                  ) : (
+                    <span className="text-gray-400 text-sm">Self</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+);
+
 };
 
 export default CreateUserForm;

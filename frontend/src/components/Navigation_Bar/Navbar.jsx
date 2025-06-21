@@ -55,7 +55,7 @@ const Navbar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const activeStyle = 'bg-orange-400 text-white rounded-md px-3 py-1 shadow-lg'
+ 
 
   const isHigherAuthority = ['hod', 'principal', 'cso'].includes(
     role?.toLowerCase()
@@ -73,91 +73,89 @@ const Navbar = () => {
       path: isHigherAuthority ? '/higherauthority-inbox' : '/faculty-inbox'
     },
   ]
-
-  return (
-    <nav className='relative flex flex-col bg-[#2e2c2cc7] px-8 py-5 text-white shadow-lg sm:flex-row sm:items-center sm:justify-between'>
-      {/* Logo + Title */}
-      <div className='mb-4 flex items-center gap-4 sm:mb-0'>
-        <img src={ksrLogo} alt='KSR Logo' className='h-14 w-14 rounded-full' />
-        <div>
-          <h1 className='text-2xl leading-tight font-extrabold tracking-wide'>
-            K.S.R. Institutions
-          </h1>
-          <p className='text-lg text-gray-300'>Faculty & Admin Panel</p>
-        </div>
+return (
+  <nav className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white/10 backdrop-blur-md px-8 py-5 text-white shadow-2xl border-b border-white/20">
+    {/* Logo + Title */}
+    <div className="mb-4 flex items-center gap-4 sm:mb-0">
+      <img src={ksrLogo} alt="sri shanmugha educational institutions Logo" className="h-14 w-14 rounded-full shadow-md" />
+      <div>
+        <h1 className="text-2xl font-extrabold tracking-wide text-white drop-shadow-md">
+          Sri Shanmugha Educational Institutions
+        </h1>
+        <p className="text-sm text-blue-200 font-light">Faculty & Admin Panel</p>
       </div>
+    </div>
 
-      {/* Navigation Links */}
-      <ul className='flex flex-wrap justify-center gap-4 text-xl font-semibold sm:justify-start'>
-        {navLinks.map(({label, path}) => (
-          <li key={path}>
-            <button
-              onClick={() => handleNavigate(path)}
-              className={`rounded-md px-3 py-2 text-base transition duration-200 ${
-                activeTab === path
-                  ? activeStyle
-                  : 'hover:bg-orange-600 hover:text-white'
-              }`}
-            >
-              {label}
-            </button>
-          </li>
-        ))}
-      </ul>
-
-      {/* Profile Section */}
-      <div className='relative mt-5 flex items-center gap-6 sm:mt-0'>
-        <div className='text-right leading-tight'>
-          <p className='text-sm font-medium'>{email}</p>
-          <p className='text-xs text-gray-400 capitalize'>{role}</p>
-        </div>
-
-        <div
-          className='flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-orange-600 text-lg font-bold text-white uppercase shadow-md'
-          onClick={toggleProfile}
-        >
-          {email?.charAt(0)}
-        </div>
-
-        {showProfile && user && (
-          <div
-            ref={profileRef}
-            className='absolute top-16 right-2 z-50 w-100 max-w-full rounded-lg border border-gray-200 bg-white p-5 text-gray-900 shadow-2xl'
+    {/* Navigation Links */}
+    <ul className="flex flex-wrap justify-center gap-5 text-lg font-medium sm:justify-start">
+      {navLinks.map(({ label, path }) => (
+        <li key={path}>
+          <button
+            onClick={() => handleNavigate(path)}
+            className={`rounded-lg px-4 py-2 transition duration-300 ease-in-out ${
+              activeTab === path
+                ? 'bg-gradient-to-r from-orange-500 to-orange-700 text-white shadow-lg scale-105'
+                : 'text-white hover:text-orange-300 hover:scale-105 hover:shadow-md'
+            }`}
           >
-            <h2 className='mb-4 border-b border-gray-300 pb-2 text-xl font-semibold'>
-              Profile Info
-            </h2>
-            <div className='flex flex-col gap-3'>
-              {[
-                {label: 'Name', value: user.faculty_name},
-                {label: 'Designation', value: user.designation},
-                {label: 'Department', value: user.department},
-                {label: 'Institution', value: user.institution_name},
-                {label: 'Faculty ID', value: user.faculty_id}
-              ].map(({label, value}) => (
-                <div
-                  key={label}
-                  className='flex flex-wrap items-center gap-2 rounded-md bg-gray-50 p-2'
-                >
-                  <span className='w-28 flex-shrink-0 font-semibold text-orange-600 sm:w-32'>
-                    {label}:
-                  </span>
-                  <span className='break-words text-gray-800'>{value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+            {label}
+          </button>
+        </li>
+      ))}
+    </ul>
 
-        <button
-          onClick={handleLogout}
-          className='ml-3 rounded-md bg-red-600 px-4 py-2 text-sm shadow-sm transition duration-200 hover:bg-red-700'
-        >
-          Logout
-        </button>
+    {/* Profile + Logout */}
+    <div className="relative mt-5 flex items-center gap-4 sm:mt-0">
+      <div className="text-right leading-tight hidden sm:block">
+        <p className="text-sm font-semibold text-white">{email}</p>
+        <p className="text-xs text-orange-200 capitalize">{role}</p>
       </div>
-    </nav>
-  )
+
+      <div
+        className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-orange-700 text-lg font-bold text-white uppercase shadow-md hover:scale-110 transition"
+        onClick={toggleProfile}
+      >
+        {email?.charAt(0)}
+      </div>
+
+      {showProfile && user && (
+        <div
+          ref={profileRef}
+          className="absolute top-16 right-2 z-50 w-72 rounded-xl border border-white/20 bg-white/90 backdrop-blur-md p-5 text-gray-800 shadow-2xl"
+        >
+          <h2 className="mb-4 text-lg font-bold text-gray-900 border-b border-gray-300 pb-2">
+            👤 Profile Info
+          </h2>
+          <div className="flex flex-col gap-3 text-sm">
+            {[
+              { label: 'Name', value: user.faculty_name },
+              { label: 'Designation', value: user.designation },
+              { label: 'Department', value: user.department },
+              { label: 'Institution', value: user.institution_name },
+              { label: 'Faculty ID', value: user.faculty_id }
+            ].map(({ label, value }) => (
+              <div
+                key={label}
+                className="flex flex-wrap items-center gap-2 rounded-md bg-white/60 px-3 py-2 text-gray-900 shadow-sm"
+              >
+                <span className="w-28 font-semibold text-orange-700">{label}:</span>
+                <span className="break-words text-gray-800">{value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <button
+        onClick={handleLogout}
+        className="ml-2 rounded-md bg-gradient-to-br from-red-600 to-red-800 px-4 py-2 text-sm font-semibold text-white shadow-md hover:scale-105 transition"
+      >
+        Logout
+      </button>
+    </div>
+  </nav>
+);
+
 }
 
 export default Navbar

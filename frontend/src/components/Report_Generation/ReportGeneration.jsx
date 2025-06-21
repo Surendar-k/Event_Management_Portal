@@ -89,39 +89,39 @@ const handleImageUpload = (e) => {
 
 if (!selectedEvent) {
     return (
-      <div
-        className='mx-auto mt-10 p-6 shadow-x'
-       
-      >
-        <h1 className='mb-8 text-center text-5xl font-extrabold text-gray-700'>
-          Event Reports
-        </h1>
+      <div className="mx-auto mt-10 max-w-8xl text-lg rounded-2xl border p-6 shadow-xl bg-gradient-to-r from-black-100 via-white to-black-100 border-gray-300">
+
+       <h1 className='mb-10 text-center text-5xl font-extrabold tracking-tight text-gray-800'>
+  Event Reports
+</h1>
+
 
         {/* Filters */}
-        <div className='mb-6 flex flex-col rounded-lg p-4 shadow md:flex-row md:items-center md:gap-4 bg-gradient-to-r from-black via-gray-700 to-gray-400'>
-          <div className='mb-4 flex flex-1 items-center rounded border px-3 py-2 text-white md:mb-0'>
-            <FaSearch className='mr-2 text-white' />
+       <div className='mb-10 flex flex-col gap-4 rounded-xl bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 p-6 shadow-md md:flex-row md:items-center'>
+
+         <div className='flex flex-1 items-center rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-white shadow-inner'>
+            <FaSearch className='mr-3 text-gray-300' />
             <input
               type='text'
               placeholder='Search event title...'
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className='w-full bg-transparent outline-none placeholder-white'
+               className='w-full bg-transparent text-white placeholder-gray-400 outline-none'
             />
           </div>
 
           <select
-            className='mb-4 rounded border px-3 py-2 text-white bg-transparent md:mb-0'
+            className='rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-white shadow-md'
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
           >
-            <option value='all' className='text-black'>
+            <option value='all' className='text-white'>
               All Statuses
             </option>
-            <option value='upcoming' className='text-black'>
+            <option value='upcoming' className='text-white'>
               Upcoming
             </option>
-            <option value='completed' className='text-black'>
+            <option value='completed' className='text-white'>
               Completed
             </option>
           </select>
@@ -151,7 +151,7 @@ if (!selectedEvent) {
               id='startDateFilter'
               value={startDateFilter}
               onChange={e => setStartDateFilter(e.target.value)}
-              className='rounded border px-2 py-1 text-black'
+             className='rounded-md border border-gray-600 bg-white px-3 py-1 text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-300'
             />
           </div>
 
@@ -164,7 +164,7 @@ if (!selectedEvent) {
               id='endDateFilter'
               value={endDateFilter}
               onChange={e => setEndDateFilter(e.target.value)}
-              className='rounded border px-2 py-1 text-black'
+             className='rounded-md border border-gray-600 bg-white px-3 py-1 text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-300'
             />
           </div>
         </div>
@@ -221,7 +221,7 @@ transportation: event.eventData?.foodTransport?.travels || [],
 }
 
 
-                 className='relative cursor-pointer rounded-xl border-l-4 border-blue-500 bg-white p-6 shadow-md transition-all hover:shadow-lg'
+                className='group relative cursor-pointer rounded-2xl border-l-4 border-blue-600 bg-gradient-to-r from-gray-300 via-white-800 to-gray-600 border-gray-300 p-6 shadow-xl transition-all hover:shadow-2xl hover:scale-[1.02]'
                 >
                   <div className="relative  mb-5">
   <h2 className='text-2xl font-bold text-blue-700 flex items-center gap-2'>
@@ -230,7 +230,7 @@ transportation: event.eventData?.foodTransport?.travels || [],
   </h2>
 
   <p
-    className={`absolute right-0 top-0 rounded px-3 py-1 text-sm font-semibold ${
+    className={`absolute right-4 top-4 rounded-full px-4 py-1 text-xs font-bold uppercase tracking-wider ${
                 status === 'completed'
                   ? 'bg-green-100 text-green-800'
                   : 'bg-yellow-100 text-yellow-800'
@@ -242,30 +242,30 @@ transportation: event.eventData?.foodTransport?.travels || [],
 
                   
                   
-                  <p className='flex items-center'>
+                 <p className='flex items-center  text-gray-700'>
                     <FaBuilding className='mr-2 text-gray-600' />
                     <strong>Department:</strong>{event.eventData.eventInfo?.selectedDepartment}
                     
                   </p>
-                  <p className='flex items-center'>
+                <p className='flex items-center text-gray-700'>
                   <FaCalendarAlt className='mr-2 text-gray-600' />
                     <strong>Dates:</strong> {event.eventData.eventInfo?.startDate} → {event.eventData.eventInfo?.endDate}
                   </p>
-                  <p className='flex items-center'>
+                <p className='flex items-center  text-gray-700'>
                      <FaMapMarkerAlt className='mr-2 text-gray-600' />
                     <strong>Venue:</strong> {event.eventData.eventInfo?.venue}
                   </p>
                   
-                 <p className='flex items-center text-sm text-gray-500'>
+              <p className='flex items-center  text-gray-700'>
                   <FaUniversity className='mr-2' />
   <strong>College:</strong> {event.eventData.eventInfo?.selectedCollege}
 </p>
 {/* Approval Section */}
-          <div className='mt-4 border-t pt-4'>
-            <h4 className='mb-2 text-lg font-semibold text-gray-800 flex items-center gap-2'>
+          <div className='mt-5 border-t pt-4'>
+        <h4 className='mb-3 flex items-center gap-2 text-base font-semibold text-gray-800'>
               <FaCheckCircle className='text-green-500' /> Approvals
             </h4>
-            <div className='flex flex-wrap gap-3 text-sm'>
+            <div className='flex flex-wrap gap-2'>
               <span
                 className={`px-3 py-1 rounded-full font-semibold ${
                   approvals?.hod ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'

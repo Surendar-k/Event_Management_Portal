@@ -678,21 +678,14 @@ if (selectedEvent && !showApprovePopup && !showReviewPopup) {
 
   return (
     <div
-      className='mx-auto mt-10 max-w-7xl rounded-2xl border p-6 shadow-xl'
-      style={{
-        background:
-          'linear-gradient(135deg, #f0eaea 0%, #fff 50%, #f0eaea 100%)',
-        borderColor: '#ddd'
-      }}
+     className='mx-auto max-w-6xl px-6 py-12 font-sans'
+      
     >
-      <h1
-        className='mb-8 text-center text-4xl font-extrabold'
-        style={{color: '#575757', textShadow: '1px 1px 2px rgba(87,87,87,0.2)'}}
-      >
-        Higher Authority Inbox
-      </h1>
+    <h1 className='mb-10 text-center text-5xl font-extrabold tracking-tight text-white'>
+    📥 Higher Authority Event Inbox
+  </h1>
 
-      <div className='mb-6 flex flex-col justify-between gap-4 sm:flex-row'>
+      <div className='mb-8 flex flex-col gap-4 sm:flex-row sm:items-center'>
         <input
           type='text'
           placeholder='Search by title...'
@@ -735,7 +728,7 @@ if (selectedEvent && !showApprovePopup && !showReviewPopup) {
             return (
               <div
                 key={ev.id || `event-${index}`}
-                className='rounded-xl border border-gray-300 bg-white p-8 shadow-lg'
+                className='rounded-2xl border border-gray-200 bg-gradient-to-br from-white via-slate-50 to-gray-100 p-8 shadow-lg hover:shadow-xl transition duration-300'
                 style={{boxShadow: '0 6px 15px rgba(0,0,0,0.1)'}}
               >
                 <div className='mb-4 flex items-start justify-between'>
@@ -784,7 +777,7 @@ if (selectedEvent && !showApprovePopup && !showReviewPopup) {
                   {description || 'No description'}
                 </p>
 
-                <div className='mb-4 flex items-center gap-2'>
+                <div className='mb-4 flex text-[#950] items-center gap-2'>
                   <span className='font-semibold'>Approval Status:</span>
                   {approvalStatus === true ? (
                     <span className='flex items-center gap-2 font-semibold text-green-700'>

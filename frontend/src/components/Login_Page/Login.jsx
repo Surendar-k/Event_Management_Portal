@@ -1,7 +1,7 @@
 import {useState} from 'react'
 import {useNavigate} from 'react-router-dom'
 import {FaEye, FaEyeSlash} from 'react-icons/fa'
-import ksrLogo from '../../assets/ksr-logo.png'
+import logo from '../../assets/logo.jpg'
 
 const Login = () => {
   const [email, setEmail] = useState('')
@@ -42,90 +42,81 @@ const Login = () => {
   }
 
   return (
-    <div className='flex min-h-screen items-center justify-center bg-[#575757] px-4 py-8'>
-      <div className='w-full max-w-xl rounded-xl bg-[#ddd] p-10 shadow-xl'>
-        {/* Branding */}
-        <div className='mb-6 flex flex-col items-center'>
-          <img src={ksrLogo} alt='KSR Logo' className='mb-3 h-20 w-20' />
-          <h1 className='text-center text-3xl font-bold text-[#333]'>
-            K.S.R. Educational Institution
-          </h1>
-          <p className='text-center text-sm text-[#575757]'>
-            Faculty & Admin Login Portal
-          </p>
+  <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0f2027] via-[#203a43] to-[#2c5364] px-4 py-8">
+    <div className="w-full max-w-xl rounded-3xl bg-white/10 backdrop-blur-lg p-10 shadow-2xl border border-white/20 transition-all duration-300">
+      
+      {/* Branding */}
+      <div className="mb-8 flex flex-col items-center text-white">
+        <img src={logo} alt="Sri Shanmugha Educational Institution Logo" className="mb-4 h-20 w-20 rounded-full shadow-lg" />
+        <h1 className="text-3xl font-bold tracking-wide text-center">SRI SHANMUGHA EDUCATIONAL INSTITUTIONS</h1>
+        <p className="text-sm text-gray-300">Faculty & Admin Login Portal</p>
+      </div>
+
+      {/* Error Message */}
+      {error && (
+        <p className="mb-4 rounded-md bg-red-600/20 px-4 py-2 text-center font-medium text-red-200">
+          {error}
+        </p>
+      )}
+
+      {/* Login Form */}
+      <form onSubmit={handleLogin} className="space-y-6">
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-white mb-1">
+            Institutional Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white/20 transition"
+            placeholder="you@shanmugha.edu.in"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+          />
         </div>
 
-        {/* Error Message */}
-        {error && (
-          <p className='mb-4 rounded-md bg-red-100 px-4 py-2 text-center font-medium text-red-600'>
-            {error}
-          </p>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleLogin} className='space-y-5'>
-          <div>
-            <label
-              htmlFor='email'
-              className='mb-1 block text-sm font-medium text-[#575757]'
-            >
-              Institutional Email
-            </label>
-            <input
-              id='email'
-              type='email'
-              className='w-full rounded-lg border border-[#ccc] bg-white px-4 py-3 text-[#333] placeholder-[#aaa] focus:ring-2 focus:ring-[#aaa] focus:outline-none'
-              placeholder='you@shanmugha.edu.in'
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-              autoComplete='email'
-            />
-          </div>
-
-          <div className='relative'>
-            <label
-              htmlFor='password'
-              className='mb-1 block text-sm font-medium text-[#575757]'
-            >
-              Password
-            </label>
-            <input
-              id='password'
-              type={showPassword ? 'text' : 'password'}
-              className='w-full rounded-lg border border-[#ccc] bg-white px-4 py-3 text-[#333] placeholder-[#aaa] focus:ring-2 focus:ring-[#aaa] focus:outline-none'
-              placeholder='••••••••'
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              autoComplete='current-password'
-            />
-            <button
-              type='button'
-              onClick={() => setShowPassword(prev => !prev)}
-              className='absolute top-12 right-3 -translate-y-1/2 transform text-[#575757] hover:text-[#333]'
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-            >
-              {showPassword ? <FaEye size={20} /> : <FaEyeSlash size={20} />}
-            </button>
-          </div>
-
+        <div className="relative">
+          <label htmlFor="password" className="block text-sm font-medium text-white mb-1">
+            Password
+          </label>
+          <input
+            id="password"
+            type={showPassword ? 'text' : 'password'}
+            className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white/20 transition"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            autoComplete="current-password"
+          />
           <button
-            type='submit'
-            className='w-full rounded-lg bg-[#333] py-3 text-lg font-semibold text-white transition duration-200 hover:bg-[#222]'
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            className="absolute top-10 right-4 text-gray-300 hover:text-white transition"
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
           >
-            Sign In
+            {showPassword ? <FaEye size={20} /> : <FaEyeSlash size={20} />}
           </button>
-        </form>
+        </div>
 
-        {/* Footer */}
-        <p className='mt-6 text-center text-sm text-[#aaa]'>
-          &copy; {new Date().getFullYear()} K.S.R. Institutions. All rights
-          reserved.
-        </p>
-      </div>
+        <button
+          type="submit"
+          className="w-full rounded-lg bg-blue-600 py-3 text-lg font-semibold text-white shadow-md transition duration-300 hover:bg-blue-700 hover:shadow-xl"
+        >
+          🚀 Sign In
+        </button>
+      </form>
+
+      {/* Footer */}
+      <p className="mt-8 text-center text-sm text-gray-400">
+        &copy; {new Date().getFullYear()} Sri Shanmugha Educational Institutions. All rights reserved.
+      </p>
     </div>
-  )
+  </div>
+);
+
 }
 
 export default Login

@@ -114,14 +114,16 @@ const FacultyInbox = () => {
   );
 
   return (
-    <div className='mx-auto max-w-6xl px-4 py-12'>
-      <h1 className='mb-10 text-center text-4xl font-bold text-gray-800'>📥 Faculty Event Inbox</h1>
+    <div className='mx-auto max-w-6xl px-6 py-12 font-sans'>
+     <h1 className='mb-10 text-center text-5xl font-extrabold tracking-tight text-white'>
+    📥 Faculty Event Inbox
+  </h1>
 
       <div className='mx-auto mb-10 max-w-md'>
         <input
           type='text'
           placeholder='🔍 Search events...'
-          className='w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
+         className='w-full rounded-xl border border-gray-300 bg-gradient-to-r from-white to-gray-50 px-5 py-3 text-gray-800 shadow focus:outline-none focus:ring-2 focus:ring-indigo-500'
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
         />
@@ -134,16 +136,16 @@ const FacultyInbox = () => {
           {filteredEvents.map((ev, index) => (
             <div
               key={ev.id}
-              className={`rounded-2xl border border-gray-200 p-6 shadow-md hover:shadow-lg transition duration-300 ${eventColors[index % eventColors.length]}`}
+              className={`rounded-4xl border border-gray-200 bg-gradient-to-br from-white via-gray-100 to-gray-200 p-6 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.01] ${eventColors[index % eventColors.length]}`}
             >
-              <div className='flex items-start justify-between'>
-                <div className='flex items-start space-x-4'>
+             <div className='flex items-start justify-between'>
+                  <div className='flex items-start gap-4'>
                   <FaCalendarAlt className='mt-1 text-2xl text-indigo-500' />
                   <div>
                     <h2 className='text-2xl font-semibold text-gray-900'>
                       {ev.eventData.eventInfo.title}
                     </h2>
-                    <p className='text-sm text-gray-600'>
+                   <p className='text-sm text-gray-600'>
                       Created by <strong>{ev.creatorRole}</strong> | {ev.faculty_name}
                     </p>
                   </div>

@@ -248,20 +248,20 @@ const filteredEvents = useMemo(() => {
 
   return (
     <>
-      <div className='mx-auto mt-10  p-8 shadow-2xl font-sans'>
-  <h1 className='mb-10 text-center text-5xl font-extrabold text-gray-800'>
-    <span className='inline-flex items-center gap-2'>
+      <div className="mx-auto mt-10 max-w-8xl text-lg rounded-2xl border p-6 shadow-xl bg-gradient-to-r from-black-100 via-white  to-black-100 border-gray-300">
+ <h1 className='mb-10 text-center text-5xl font-extrabold tracking-tight text-gray-800'>
+    
       
       Logs of Created Events
-    </span>
+    
   </h1>
 
   {/* Filter Controls */}
-  <div className='mb-10 flex flex-col justify-between gap-4 md:flex-row'>
+ <div className='mb-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
     <select
       value={statusFilter}
       onChange={(e) => setStatusFilter(e.target.value)}
-      className='rounded-lg border border-gray-400 bg-black px-4 py-3 text-lg font-medium text-white focus:outline-none'
+     className='rounded-xl border border-gray-300 bg-gray-900 px-4 py-3 text-white text-lg shadow focus:ring-2 focus:ring-blue-500'
     >
       <option value='all'>All Statuses</option>
       <option value='draft'>Draft</option>
@@ -275,7 +275,7 @@ const filteredEvents = useMemo(() => {
       placeholder='🔍 Search by event name'
       value={searchTerm}
       onChange={(e) => setSearchTerm(e.target.value)}
-      className='w-full rounded-lg border border-gray-400 bg-black px-4 py-3 text-lg font-medium text-white placeholder-gray-300 md:w-96'
+       className='w-full rounded-xl border border-gray-300 bg-gray-900 px-4 py-3 text-white text-lg placeholder-gray-400 md:w-96 focus:ring-2 focus:ring-blue-500'
     />
   </div>
 
@@ -293,14 +293,14 @@ const filteredEvents = useMemo(() => {
         return (
           <article
             key={ev.id}
-            className='flex flex-col items-center justify-between gap-6 rounded-2xl border bg-[#f0f0f0] px-8 py-6 shadow-lg transition-all hover:shadow-2xl md:flex-row md:py-8'
+           className='flex flex-col items-center gap-6 rounded-2xl border bg-gradient-to-r from-gray-300 via-white-800 to-gray-600 border-gray-300 px-8 py-6 shadow-md transition-transform duration-300 hover:shadow-xl hover:scale-[1.01] md:flex-row md:items-start'
           >
             <div className='w-full flex-1'>
-              <h2 className='mb-3 flex items-center gap-3 text-3xl font-bold text-gray-800'>
+              <h2 className='mb-2 flex items-center gap-3 text-3xl font-semibold text-blue-700'>
                 <FaCalendarAlt className='text-blue-600' />
                 {title}
               </h2>
-              <dl className='space-y-2 text-lg text-gray-700'>
+             <dl className='space-y-1 text-gray-700'>
                 <div>
                   <dt className='inline font-semibold'>📅 Date:</dt>{' '}
                   <dd className='inline'>{date}</dd>
@@ -311,7 +311,7 @@ const filteredEvents = useMemo(() => {
                 </div>
               </dl>
               <p className='mt-4 inline-block cursor-default rounded-full px-4 py-2 text-base font-semibold tracking-wide select-none'>
-                <span className={`${statusColor} flex items-center gap-2`}>
+                <span className={`mt-4 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ${statusColor}`}>
                   {statusIcon} {status}
                 </span>
               </p>
@@ -345,7 +345,7 @@ const filteredEvents = useMemo(() => {
 
               <button
                 onClick={() => openModal(ev.id)}
-                className='flex items-center gap-2 rounded-xl bg-gray-600 px-6 py-2 text-lg font-semibold text-white transition hover:bg-gray-700'
+                className='flex items-center gap-2 rounded-xl bg-gray-900 px-6 py-2 text-lg font-semibold text-white transition hover:bg-gray-700'
               >
                 <FaTrashAlt /> Delete
               </button>
@@ -359,7 +359,7 @@ const filteredEvents = useMemo(() => {
 
       {showApprovalPopup && selectedEvent && (
         <div
-          className='bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center bg-black p-6 backdrop-blur-sm'
+         className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-md'
           onClick={closeApprovalPopup}
           aria-modal='true'
           role='dialog'
@@ -496,8 +496,8 @@ const filteredEvents = useMemo(() => {
             className='relative w-full max-w-lg rounded-3xl bg-white p-8 shadow-2xl sm:p-10'
             style={{ borderTop: '6px solid rgb(197, 34, 34)' }}
           >
-            <h2 className='mb-4 text-lg font-bold'>Confirm Deletion</h2>
-            <p className='mb-6'>Are you sure you want to delete this event?</p>
+            <h2 className='mb-4 text-lg text-black font-bold'>Confirm Deletion</h2>
+            <p className='mb-6 text-black'>Are you sure you want to delete this event?</p>
             <div className='flex justify-end gap-4'>
               <button
                 onClick={closeModal}

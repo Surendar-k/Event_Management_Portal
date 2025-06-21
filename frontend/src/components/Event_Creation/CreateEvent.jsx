@@ -200,10 +200,10 @@ useEffect(() => {
 }, []);
 
   return (
-    <div className="mx-auto mt-10 max-w-8xl text-lg rounded-2xl border p-6 shadow-xl bg-gradient-to-r from-gray-100 via-white to-gray-100 border-gray-300">
-      <h1 className="mb-8 text-center text-5xl font-extrabold text-gray-700">
-        {isEditMode ? 'Edit Event' : 'Create New Event'}
-      </h1>
+    <div className="mx-auto mt-10 max-w-8xl text-lg rounded-2xl border p-6 shadow-xl bg-gradient-to-r from-black-100 via-white to-black-100 border-gray-300">
+      <h1 className="mb-10 text-center text-5xl font-extrabold tracking-wide text-gray-800 drop-shadow-md">
+      {isEditMode ? '✏️ Edit Event' : '🎉 Create New Event'}
+    </h1>
 
       <nav className="mb-10 flex flex-wrap justify-center gap-6 border-b-4 pb-4 border-gray-300">
         {tabs.map(({ id, label, icon }) => {

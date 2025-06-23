@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 
-const FoodTravel = ({ data = { meals: [], refreshments: [], travels: [], travelBy: 'college' }, onChange }) => {
+const FoodTravel = ({ data = { meals: [], refreshments: [], travels: [], travelBy: 'college' }, onChange, eventStartDate,
+  eventEndDate }) => {
   const [activeTab, setActiveTab] = useState('meal');
 
-  const [meal, setMeal] = useState({ from: '', to: '', time: '', mealType: '', category: '', menu: '', personCount: '', servedAt: '', note: '' });
-  const [refreshment, setRefreshment] = useState({ from: '', to: '', time: '', session: '', category: '', items: '', personCount: '', servedAt: '', note: '' });
+  const [meal, setMeal] = useState({ from:eventStartDate || '', to: eventEndDate || '', time: '', mealType: '', category: '', menu: '', personCount: '', servedAt: '', note: '' });
+  const [refreshment, setRefreshment] = useState({ from: eventStartDate || '', to: eventEndDate || '', time: '', session: '', category: '', items: '', personCount: '', servedAt: '', note: '' });
   const [travel, setTravel] = useState({ category: '', mode: '', date: '', time: '', pickup: '', drop: '', remarks: '' });
   const [travelBy, setTravelBy] = useState(data.travelBy || 'college');
 
@@ -62,32 +63,32 @@ const FoodTravel = ({ data = { meals: [], refreshments: [], travels: [], travelB
       </div>
 
       {/* Meal Arrangement */}
-      {activeTab === 'meal' && (
-        <div className='space-y-4 rounded border bg-white p-6 shadow-md'>
-          <h3 className='mb-4 text-xl font-bold'>Meal Arrangements</h3>
-          <div className='grid gap-4 md:grid-cols-4'>
-            <input
-              type='date'
-              value={meal.from}
-              onChange={e => setMeal({...meal, from: e.target.value})}
-              className='rounded border p-2'
-            />
-            <input
-              type='date'
-              value={meal.to}
-              onChange={e => setMeal({...meal, to: e.target.value})}
-              className='rounded border p-2'
-            />
-            <input
-              type='time'
-              value={meal.time}
-              onChange={e => setMeal({...meal, time: e.target.value})}
-              className='rounded border p-2'
-            />
-            <select
-              value={meal.mealType}
-              onChange={e => setMeal({...meal, mealType: e.target.value})}
-              className='rounded border p-2'
+        {activeTab === 'meal' && (
+          <div className='space-y-4 rounded border bg-white p-6 shadow-md'>
+            <h3 className='mb-4 text-xl font-bold'>Meal Arrangements</h3>
+            <div className='grid gap-4 md:grid-cols-4'>
+              <input
+                type='date'
+                value={meal.from}
+                onChange={e => setMeal({...meal, from: e.target.value})}
+                className='rounded border p-2'
+              />
+              <input
+                type='date'
+                value={meal.to}
+                onChange={e => setMeal({...meal, to: e.target.value})}
+                className='rounded border p-2'
+              />
+              <input
+                type='time'
+                value={meal.time}
+                onChange={e => setMeal({...meal, time: e.target.value})}
+                className='rounded border p-2'
+              />
+              <select
+                value={meal.mealType}
+                onChange={e => setMeal({...meal, mealType: e.target.value})}
+                className='rounded border p-2'
             >
               <option value=''>Meal Type</option>
               <option>Breakfast</option>

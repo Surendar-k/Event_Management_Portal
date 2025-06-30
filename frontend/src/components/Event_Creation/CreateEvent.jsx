@@ -101,42 +101,51 @@ const [loginName, setLoginName] = useState('');
     }
   }, [eventId]);
 
-  const handleSaveAll = async () => {
-    const payload = {
-      eventinfo: eventInfo,
-      agenda,
-      financialplanning: financialPlanning,
-      foodandtransport: foodAndTransport,
-      checklist,
-      ...(isEditMode && { event_id: parseInt(eventId) }),
-    };
+const handleSaveAll = async () => {
+  // Safely resolve the funding source
+  const fundingSource =
+    eventInfo.fundingSource === 'Others'
+      ? eventInfo.otherFunding
+      : eventInfo.fundingSource;
 
-    const url = isEditMode
-      ? `http://localhost:5000/api/events/${eventId}`
-      : 'http://localhost:5000/api/submit-event';
-
-    const method = isEditMode ? 'PUT' : 'POST';
-
-    try {
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(payload),
-      });
-
-      const result = await res.json();
-
-      if (res.ok) {
-        alert(isEditMode ? 'Event updated successfully!' : 'Event created successfully!');
-      } else {
-        alert(`Save failed: ${result.error}`);
-      }
-    } catch (err) {
-      console.error('Save failed:', err);
-      alert('An error occurred while saving the event.');
-    }
+  const payload = {
+    eventinfo: {
+      ...eventInfo,
+      fundingSource // overwrite with actual value
+    },
+    agenda,
+    financialplanning: financialPlanning,
+    foodandtransport: foodAndTransport,
+    checklist,
+    ...(isEditMode && { event_id: parseInt(eventId) }),
   };
+
+  const url = isEditMode
+    ? `http://localhost:5000/api/events/${eventId}`
+    : 'http://localhost:5000/api/submit-event';
+
+  const method = isEditMode ? 'PUT' : 'POST';
+
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(payload),
+    });
+
+    const result = await res.json();
+
+    if (res.ok) {
+      alert(isEditMode ? 'Event updated successfully!' : 'Event created successfully!');
+    } else {
+      alert(`Save failed: ${result.error}`);
+    }
+  } catch (err) {
+    console.error('Save failed:', err);
+    alert('An error occurred while saving the event.');
+  }
+};
 
   const renderActiveTab = () => {
     switch (activeTab) {
@@ -175,6 +184,8 @@ const [loginName, setLoginName] = useState('');
           <FoodTravel
             data={foodAndTransport}
             onChange={setFoodAndTransport}
+             eventStartDate={startDate}
+            eventEndDate={endDate}
           />
         );
       case 'checklist':

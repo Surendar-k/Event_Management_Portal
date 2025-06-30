@@ -1,17 +1,16 @@
-import { useEffect } from 'react';
-
+import { useEffect,useState } from 'react';
+import axios from 'axios';
 const colleges = {
-  'College A': ['Dept A1', 'Dept A2'],
-  'College B': ['Dept B1', 'Dept B2']
+  'Institution': ['Dept A1', 'Dept A2'],
+  'Engineering': ['Dept B1', 'Dept B2'],
+  'Pharmacy': ['Dept B1', 'Dept B2'],
+  'Nursing': ['Dept B1', 'Dept B2'],
+  'HI': ['Dept B1', 'Dept B2'],
+  'AHS': ['Dept B1', 'Dept B2'],
+  'AAKAM360': ['Dept B1', 'Dept B2']
 };
 
-const coordinators = [
-  'Dr. S. Karthik',
-  'Prof. N. Priya',
-  'Dr. R. Balaji',
-  'Ms. K. Kavitha',
-  'Mr. Arun Raj'
-];
+
 
 const EventInfo = ({
   loginName,
@@ -19,7 +18,7 @@ const EventInfo = ({
   endDate,
   setStartDate,
   setEndDate,
-  data = {},
+  data={},
   onChange
 }) => {
   const setField = (key, value) => onChange({ ...data, [key]: value });
@@ -33,6 +32,26 @@ const EventInfo = ({
       }
     });
   };
+const [facultyState, setFacultyState] = useState({
+  input: '',
+  showSuggestions: false,
+  facultyList: [],
+  filteredSuggestions: [],
+  selectedCoordinators: []
+});
+
+useEffect(() => {
+  const fetchFacultyNames = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/api/names');
+      setFacultyState(prev => ({ ...prev, facultyList: res.data }));
+    } catch (err) {
+      console.error('Failed to fetch faculty names:', err);
+    }
+  };
+
+  fetchFacultyNames();
+}, []);
 
   useEffect(() => {
     setField('departments', colleges[data.selectedCollege] || []);
@@ -83,39 +102,41 @@ useEffect(() => {
       setField('speakers', updated);
     }
   };
+const handleChange = (e) => {
+  const input = e.target.value;
 
-  const handleChange = (e) => {
-    const value = e.target.value;
-    if (value.trim()) {
-      const filtered = coordinators.filter(
-        name => name.toLowerCase().includes(value.toLowerCase()) &&
-          !(data.selectedCoordinators || []).includes(name)
-      );
-      onChange({ ...data, filteredSuggestions: filtered, showSuggestions: true });
-    } else {
-      onChange({ ...data, showSuggestions: false });
-    }
-  };
+  const filtered = facultyState.facultyList.filter((f) =>
+    f.faculty_name.toLowerCase().includes(input.toLowerCase())
+  );
 
-  const handleSelect = (name) => {
-  const updated = [...(data.selectedCoordinators || []), name];
-
-  onChange({
-    ...data,
-    selectedCoordinators: updated,
-    filteredSuggestions: [],
-    showSuggestions: false
-  });
+  setFacultyState(prev => ({
+    ...prev,
+    input,
+    showSuggestions: true,
+    filteredSuggestions: filtered,
+  }));
 };
 
+const handleSelect = (name) => {
+  if (!facultyState.selectedCoordinators.includes(name)) {
+    const updated = [...facultyState.selectedCoordinators, name];
+    setFacultyState(prev => ({
+      ...prev,
+      selectedCoordinators: updated,
+      input: '',
+      showSuggestions: false
+    }));
+    setField('facultyCoordinators', updated); // Also update main event data if needed
+  }
+};
 
- const handleRemove = (nameToRemove) => {
-  const updated = (data.selectedCoordinators || []).filter(name => name !== nameToRemove);
-
-  onChange({
-    ...data,
+const handleRemove = (name) => {
+  const updated = facultyState.selectedCoordinators.filter(n => n !== name);
+  setFacultyState(prev => ({
+    ...prev,
     selectedCoordinators: updated
-  });
+  }));
+  setField('facultyCoordinators', updated);
 };
 
  
@@ -128,14 +149,7 @@ useEffect(() => {
   </h2>
 
   <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
-    {/* 1. Title */}
-    <input
-       type='text'
-  placeholder='Title of the Event'
-  value={data.title || ''}
-      onChange={e => setField('title', e.target.value)}
-      className='col-span-1 rounded border border-gray-400 p-2 text-gray-700 shadow-sm md:col-span-3'
-    />
+  
 
     {/* 2. Organizing Institution */}
     <div>
@@ -183,7 +197,14 @@ useEffect(() => {
         <option>International</option>
       </select>
     </div>
-
+  {/* 1. Title */}
+    <input
+       type='text'
+  placeholder='Title of the Event'
+  value={data.title || ''}
+      onChange={e => setField('title', e.target.value)}
+      className='col-span-1 rounded border border-gray-400 p-2 text-gray-700 shadow-sm md:col-span-3'
+    />
     {/* 3. Venue Mode, Venue Type, Venue */}
     <div>
       <label className='block mb-1 font-medium text-gray-700'>Venue Mode</label>
@@ -295,29 +316,37 @@ useEffect(() => {
 </div>
 
 
-    {/* 6. Funding Source */}
-    <div>
-      <label className='block mb-1 font-medium text-gray-700'>Funding Source</label>
-      <select
-        value={data.fundingSource}
-        onChange={e => setField('fundingSource', e.target.value)}
-        className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-      >
-        <option value=''>Select</option>
-        <option>Management</option>
-        <option>Funding Agency</option>
-        <option>Others</option>
-      </select>
-      {data.fundingSource === 'Others' && (
-        <input
-          type='text'
-          value={data.otherFunding}
-          onChange={e => setField('otherFunding', e.target.value)}
-          placeholder='Specify Funding'
-          className='mt-2 w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-        />
-      )}
-    </div>
+   {/* 6. Funding Source */}
+<div className="w-full max-w-md">
+  <label className="block mb-1 font-medium text-gray-700">Funding Source</label>
+  <select
+    value={data.fundingSource}
+    onChange={e => {
+      const selected = e.target.value;
+      setField('fundingSource', selected);
+      if (selected !== 'Others') {
+        setField('otherFunding', ''); // Clear otherFunding if not "Others"
+      }
+    }}
+    className="w-full rounded border border-gray-400 p-2 text-gray-800 shadow-sm focus:ring-2 focus:ring-blue-500"
+  >
+    <option value="">Select</option>
+    <option value="Management">Management</option>
+    <option value="Funding Agency">Funding Agency</option>
+    <option value="Others">Others</option>
+  </select>
+
+  {data.fundingSource === 'Others' && (
+    <input
+      type="text"
+      value={data.otherFunding}
+      onChange={e => setField('otherFunding', e.target.value)}
+      placeholder="Specify Other Funding Source"
+      className="mt-2 w-full rounded border border-gray-400 p-2 text-gray-800 shadow-sm focus:ring-2 focus:ring-blue-500"
+    />
+  )}
+</div>
+
 
     {/* 7. Lead Coordinator */}
     <div>
@@ -330,51 +359,56 @@ useEffect(() => {
       />
     </div>
 
- {/* Faculty Coordinators */}
-      <div className='relative'>
-        <label className='block mb-1 font-medium text-gray-700'>Faculty Coordinators</label>
-        <input
-          type='text'
-          onChange={handleChange}
-          className='w-full rounded border border-gray-400 p-2 text-gray-800'
-          placeholder='Type a name...'
-        />
-        {data.showSuggestions && (
-          <ul className='absolute z-10 mt-1 max-h-40 w-full overflow-y-auto rounded border border-gray-300 bg-white shadow'>
-            {data.filteredSuggestions && data.filteredSuggestions.length > 0 ? (
-              data.filteredSuggestions.map((name, idx) => (
-                <li
-                  key={idx}
-                  onClick={() => handleSelect(name)}
-                  className='cursor-pointer p-2 hover:bg-gray-100'
-                >
-                  {name}
-                </li>
-              ))
-            ) : (
-              <li className='p-2 text-gray-500'>No matches found</li>
-            )}
-          </ul>
-        )}
-       <div className='mt-2 flex flex-wrap gap-2'>
-  {(data.selectedCoordinators || []).map((name, idx) => (
-    <span
-      key={idx}
-      className='flex items-center gap-2 rounded-full bg-blue-100 px-3 py-1 text-blue-800'
-    >
-      {name}
-      <button
-        type='button'
-        onClick={() => handleRemove(name)}
-        className='font-bold text-red-500 hover:text-red-700'
+{/* Faculty Coordinators */}
+<div className='relative'>
+  <label className='block mb-1 font-medium text-gray-700'>Faculty Coordinators</label>
+<input
+  type='text'
+  onChange={handleChange}
+  className='w-full rounded border border-gray-400 p-2 text-black bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500'
+  placeholder='Type a name...'
+  value={facultyState.input || ''}
+/>
+
+
+  {facultyState.showSuggestions && (
+    <ul className='absolute z-10 mt-1 max-h-40 w-full overflow-y-auto rounded border border-gray-300 bg-white shadow'>
+      {facultyState.filteredSuggestions && facultyState.filteredSuggestions.length > 0 ? (
+        facultyState.filteredSuggestions.map((fac, idx) => (
+          <li
+            key={idx}
+            onClick={() => handleSelect(fac.faculty_name)}
+            className='cursor-pointer p-2 hover:bg-gray-100'
+          >
+            {fac.faculty_name}
+          </li>
+        ))
+      ) : (
+        <li className='p-2 text-gray-500'>No matches found</li>
+      )}
+    </ul>
+  )}
+
+  <div className='mt-2 flex flex-wrap gap-2'>
+    {(facultyState.selectedCoordinators || []).map((name, idx) => (
+      <span
+        key={idx}
+        className='flex items-center gap-2 rounded-full bg-blue-100 px-3 py-1 text-blue-800'
       >
-        ×
-      </button>
-    </span>
-  ))}
+        {name}
+        <button
+          type='button'
+          onClick={() => handleRemove(name)}
+          className='font-bold text-red-500 hover:text-red-700'
+        >
+          ×
+        </button>
+      </span>
+    ))}
+  </div>
 </div>
 
-      </div>
+
 
   </div>
 </section>
@@ -432,72 +466,75 @@ useEffect(() => {
           + Add Speaker
         </button>
       </section>
-
 {/* Estimated Participation Section */}
-      <section className='rounded-lg border border-gray-400 bg-white p-6 shadow-md'>
-        <h2 className='mb-4 border-b border-gray-400 pb-2 text-2xl font-bold text-gray-800'>
-          Estimated Participation
-        </h2>
+<section className='rounded-lg border border-gray-400 bg-white p-6 shadow-md'>
+  <h2 className='mb-4 border-b border-gray-400 pb-2 text-2xl font-bold text-gray-800'>
+    Estimated Participation
+  </h2>
 
-        {/* Audience Dropdown */}
-        <div className='mb-6'>
-          <label className='mb-1 block font-medium text-gray-700'>Intended Audience</label>
-          <select
-            value={data.audience}
-            onChange={e => setField('audience', e.target.value)}
-            className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-          >
-            <option value=''>Select</option>
-            <option value='Students'>Students</option>
-            <option value='Faculty'>Faculty</option>
-            <option value='Both'>Both</option>
-          </select>
-        </div>
+  {/* Row Layout for Dropdown and Inputs */}
+  <div className='flex flex-wrap items-end gap-4'>
 
-        {/* Input Fields */}
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-          {(data.audience === 'Students' || data.audience === 'Both') && (
-            <input
-              type='number'
-              placeholder='Student Count'
-              value={data.participants?.students || ''}
-              onChange={e => updateNested('participants', 'students', Number(e.target.value))}
-              className='rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-            />
-          )}
+    {/* Audience Dropdown with label */}
+    <div className='flex flex-col w-75'>
+      <label className='mb-1 font-medium text-gray-700'>Intended Audience</label>
+      <select
+        value={data.audience}
+        onChange={e => setField('audience', e.target.value)}
+        className=' rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+      >
+        <option value=''>Select</option>
+        <option value='Students'>Students</option>
+        <option value='Faculty'>Faculty</option>
+        <option value='Both'>Both</option>
+      </select>
+    </div>
 
-          {(data.audience === 'Faculty' || data.audience === 'Both') && (
-            <input
-              type='number'
-              placeholder='Faculty Count'
-              value={data.participants?.faculty || ''}
-              onChange={e => updateNested('participants', 'faculty', Number(e.target.value))}
-              className='rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-            />
-          )}
+    {/* Input Fields */}
+    {(data.audience === 'Students' || data.audience === 'Both') && (
+      <input
+        type='number'
+        placeholder='Student Count'
+        value={data.participants?.students || ''}
+        onChange={e => updateNested('participants', 'students', Number(e.target.value))}
+        className='w-75 rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+      />
+    )}
 
-          <input
-            type='number'
-            placeholder='Coordinator Count'
-            value={data.participants?.coordinators || ''}
-            onChange={e => updateNested('participants', 'coordinators', Number(e.target.value))}
-            className='rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-          />
+    {(data.audience === 'Faculty' || data.audience === 'Both') && (
+      <input
+        type='number'
+        placeholder='Faculty Count'
+        value={data.participants?.faculty || ''}
+        onChange={e => updateNested('participants', 'faculty', Number(e.target.value))}
+        className='w-75 rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+      />
+    )}
 
-          {/* Total Count - Read-only */}
-          <input
-            type='number'
-            placeholder='Total Count'
-            value={
-              (parseInt(data.participants?.students) || 0) +
-              (parseInt(data.participants?.faculty) || 0) +
-              (parseInt(data.participants?.coordinators) || 0)
-            }
-            readOnly
-            className='rounded border border-gray-400 p-2 text-gray-700 shadow-sm bg-gray-100 cursor-not-allowed'
-          />
-        </div>
-      </section>
+    <input
+      type='number'
+      placeholder='Coordinator Count'
+      value={data.participants?.coordinators || ''}
+      onChange={e => updateNested('participants', 'coordinators', Number(e.target.value))}
+      className='w-75 rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+    />
+
+    {/* Total Count - Read-only */}
+    <input
+      type='number'
+      placeholder='Total Count'
+      value={
+        (parseInt(data.participants?.students) || 0) +
+        (parseInt(data.participants?.faculty) || 0) +
+        (parseInt(data.participants?.coordinators) || 0)
+      }
+      readOnly
+      className='w-75 rounded border border-gray-400 p-2 text-gray-700 shadow-sm bg-gray-100 cursor-not-allowed'
+    />
+  </div>
+</section>
+
+
 
      {data.venueType !== 'Online' && (
         <section className='rounded-lg border border-gray-400 bg-white p-6 shadow-md mt-6'>
@@ -612,7 +649,7 @@ useEffect(() => {
 
           <div className='lg:col-span-3 w-full'>
             <label className='mb-1 block font-medium text-gray-700'>Presentation Materials</label>
-            <div className='flex flex-wrap gap-4'>
+            <div className='flex flex-wrap text-xl gap-6'>
               {[
                 'Projector & Screen',
                 'Whiteboard & Markers',

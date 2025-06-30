@@ -124,6 +124,9 @@ exports.saveEventInfo = async (req, res) => {
     res.status(500).json({error: 'Internal server error'})
   }
 }
+
+
+
 exports.getEventsByUser = async (req, res) => {
   const user = req.session.user;
   if (!user) return res.status(401).json({ error: 'Unauthorized' });
@@ -152,6 +155,7 @@ const events = rows.map(r => {
     startDate: eventInfo.startDate || 'Unknown',  // ✅ from eventInfo
     endDate: eventInfo.endDate || 'Unknown',      // ✅ from eventInfo
     VenueType: eventInfo.venue || eventInfo.location || 'Unknown',  // fallback if `location` missing
+    report: tryParse(r.report, {}),
     eventData: {
       eventInfo: eventInfo,
       agenda: tryParse(r.agenda, {}),
@@ -265,6 +269,7 @@ exports.getEventsWithApprovals = async (req, res) => {
           faculty_name: row.faculty_name || 'Unknown',
           approvals,
           reviews: tryParse(row.reviews, {}),
+          report: tryParse(row.report, {}),
           eventData: {
             eventInfo: tryParse(row.eventinfo, {}),
             agenda: tryParse(row.agenda, {}),
@@ -373,3 +378,45 @@ exports.deleteEvent = async (req, res) => {
     res.status(500).json({error: 'Failed to delete event'})
   }
 }
+
+
+exports.updateEventReport = async (req, res) => {
+  const user = req.session.user;
+  if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+  const { eventId } = req.params;
+  const { report } = req.body;
+
+  try {
+    // Convert report to JSON string
+    const reportString = JSON.stringify(report);
+
+    const [result] = await db.execute(
+      `UPDATE event_info SET report = ? WHERE event_id = ? AND faculty_id = ?`,
+      [reportString, eventId, user.faculty_id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Event not found or not owned by user' });
+    }
+
+    res.json({ message: 'Report updated successfully' });
+  } catch (err) {
+    console.error('❌ Error updating report:', err);
+    res.status(500).json({ error: 'Failed to update report' });
+  }
+};
+
+
+exports.getFacultyNames = async (req, res) => {
+  try {
+    const [rows] = await db.execute(
+      "SELECT faculty_id, faculty_name FROM login_users WHERE role = 'faculty'"
+    );
+    res.json(rows); // Example: [ { faculty_id: 101, faculty_name: "Dr. Raj" }, ... ]
+  } catch (error) {
+    console.error("Error fetching faculty names:", error);
+    res.status(500).json({ error: "Failed to fetch faculty names" });
+  }
+};
+

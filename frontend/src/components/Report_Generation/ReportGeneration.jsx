@@ -1,723 +1,531 @@
-import React, { useState, useMemo, useEffect } from 'react'
-import {FaCheckCircle,FaUniversity,FaMapMarkerAlt,FaBuilding, FaArrowLeft,FaBusAlt,FaSearch, FaBullseye, FaFlagCheckered, FaCalendarAlt, FaChalkboardTeacher, FaClipboardList, FaFilePdf, FaFileExcel, FaMoneyBill, FaUtensils, FaImages } from 'react-icons/fa';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import {
+  FaChevronRight,
+  FaFilePdf,
+  FaSave,
+  FaTimes,
+  FaCalendarAlt
+} from 'react-icons/fa';
 
-import ExportButtons from './ExportButtons';
-
-import axios from 'axios'
 
 const ReportGeneration = () => {
-  const [events, setEvents] = useState([])
+  const [events, setEvents] = useState([]);
+  const [error, setError] = useState('');
+  const [formLinks, setFormLinks] = useState({});
+  const [feedbackLinks, setFeedbackLinks] = useState({});
+  const [circularTexts, setCircularTexts] = useState({});
+  const [expenses, setExpenses] = useState({});
+  const [images, setImages] = useState({});
+  const [uploadedHeaderLogos, setUploadedHeaderLogos] = useState({});
+  const [eventReportLogos, setEventReportLogos] = useState({});
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [activeTab, setActiveTab] = useState('circular');
+useEffect(() => {
+  const fetchHeaders = async () => {
+    const res = await axios.get('http://localhost:5000/api/admin/uploaded-headers', {
+      withCredentials: true
+    });
+    const headerMap = {};
+    res.data.forEach(header => {
+      const college = (header.college_name || '').trim().toLowerCase();
+      const dept = (header.department || '').trim().toLowerCase();
+      const key = `${college}_${dept}`;
+      headerMap[key] = header.logoUrl;
+    });
+    setUploadedHeaderLogos(headerMap);
+  };
 
-
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [collegeFilter, setCollegeFilter] = useState('')
-  const [startDateFilter, setStartDateFilter] = useState('')
-  const [endDateFilter, setEndDateFilter] = useState('')
-  const [selectedEvent, setSelectedEvent] = useState(null)
-
-
-
-const getStatus = (event) => {
-  const today = new Date();
-  return new Date(event.endDate) < today ? 'completed' : 'upcoming';
-};
+  fetchHeaders();
+}, []);
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/events/by-user', {
-          withCredentials: true // required for session cookies
+        const res = await axios.get(
+          'http://localhost:5000/api/events/by-user',
+          { withCredentials: true }
+        );
+        
+
+        const formData = {},
+          feedbackData = {},
+          circularData = {},
+          expenseData = {},
+          imageData = {},
+          logoData = {};
+
+        res.data.forEach((e) => {
+          const id = e.eventId || e.event_id;
+          formData[id] = e.report?.googleForm || '';
+          feedbackData[id] = e.report?.feedbackForm || '';
+          circularData[id] = e.report?.circularText || '';
+          logoData[id] = e.report?.headerLogo || '';
+
+          const budget = e.financialplanning?.budget || [];
+          const estimatedSum = budget.reduce(
+            (sum, item) => sum + (parseFloat(item.amount) || 0),
+            0
+          );
+
+          const actual = e.report?.expenses?.actual || '';
+
+          expenseData[id] = {
+            estimated:
+              e.report?.expenses?.estimated || estimatedSum.toString(),
+            actual
+          };
+
+          imageData[id] = e.report?.images || [];
         });
+
+        setFormLinks(formData);
+        setFeedbackLinks(feedbackData);
+        setCircularTexts(circularData);
+        setExpenses(expenseData);
+        setImages(imageData);
+        setEventReportLogos(logoData);
         setEvents(res.data);
       } catch (err) {
-        console.error('Error fetching events:', err);
-        // eslint-disable-next-line no-undef
-        setError(err.response?.data?.error || 'Failed to load events');
+        setError(err.message || 'Failed to load events');
       }
     };
 
     fetchEvents();
   }, []);
-  const colleges = Array.from(new Set(events.map(e => e.college)))
-const filteredEvents = useMemo(() => {
-  return events.filter(event => {
-    const title = (event?.eventData?.eventInfo?.title || '').toLowerCase();
-    const search = (searchTerm || '').toLowerCase();
 
-    if (search && !title.includes(search)) return false;
-
-    const status = getStatus(event);
-    if (statusFilter !== 'all' && statusFilter !== status) return false;
-
-    const college = event?.eventData?.eventInfo?.college || '';
-    if (collegeFilter && college !== collegeFilter) return false;
-
-    const eventStartDateStr = event?.eventData?.eventInfo?.startDate;
-    const eventStartDate = eventStartDateStr ? new Date(eventStartDateStr) : null;
-
-    if (startDateFilter && eventStartDate && eventStartDate < new Date(startDateFilter)) {
-      return false;
+const getBase64ImageFromUrl = async (imageUrl) => {
+  try {
+    const res = await fetch(imageUrl, { mode: 'cors' });
+    if (!res.ok) {
+      console.warn(`❌ Could not fetch image: ${res.status} ${res.statusText}`);
+      return '';
     }
-
-    if (endDateFilter && eventStartDate && eventStartDate > new Date(endDateFilter)) {
-      return false;
-    }
-
-    return true;
-  });
-}, [
-  searchTerm,
-  statusFilter,
-  collegeFilter,
-  startDateFilter,
-  endDateFilter,
-  events
-]);
-
-
-
- 
-const handleImageUpload = (e) => {
-  const files = Array.from(e.target.files);
-  setSelectedEvent(prev => ({
-    ...prev,
-    uploadedImages: [...prev.uploadedImages, ...files],
-  }));
+    const blob = await res.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (err) {
+    console.error('⚠️ Failed to fetch image URL:', imageUrl, err);
+    return '';
+  }
 };
 
 
-if (!selectedEvent) {
-    return (
-      <div className="mx-auto mt-10 max-w-8xl text-lg rounded-2xl border p-6 shadow-xl bg-gradient-to-r from-black-100 via-white to-black-100 border-gray-300">
+  const openModal = (event) => {
+    setSelectedEvent(event);
+    setActiveTab('circular');
+    setModalOpen(true);
+  };
 
-       <h1 className='mb-10 text-center text-5xl font-extrabold tracking-tight text-gray-800'>
-  Event Reports
-</h1>
+  const closeModal = () => {
+    setModalOpen(false);
+    setSelectedEvent(null);
+  };
 
+  const getImageFormat = (base64) => {
+    if (base64.includes('image/png')) return 'PNG';
+    if (base64.includes('image/webp')) return 'WEBP';
+    return 'JPEG'; // default fallback
+  };
 
-        {/* Filters */}
-       <div className='mb-10 flex flex-col gap-4 rounded-xl bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 p-6 shadow-md md:flex-row md:items-center'>
-
-         <div className='flex flex-1 items-center rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-white shadow-inner'>
-            <FaSearch className='mr-3 text-gray-300' />
-            <input
-              type='text'
-              placeholder='Search event title...'
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-               className='w-full bg-transparent text-white placeholder-gray-400 outline-none'
-            />
-          </div>
-
-          <select
-            className='rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-white shadow-md'
-            value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}
-          >
-            <option value='all' className='text-white'>
-              All Statuses
-            </option>
-            <option value='upcoming' className='text-white'>
-              Upcoming
-            </option>
-            <option value='completed' className='text-white'>
-              Completed
-            </option>
-          </select>
-
-          <select
-            className='mb-4 rounded border px-3 py-2 text-white bg-transparent md:mb-0'
-            value={collegeFilter}
-            onChange={e => setCollegeFilter(e.target.value)}
-          >
-            <option value='' className='text-black'>
-              All Colleges
-            </option>
-            {colleges.map((col, idx) => (
-  <option key={`${col}-${idx}`} value={col} className='text-black'>
-    {col}
-  </option>
-))}
-
-          </select>
-
-          <div className='flex items-center gap-2 text-white'>
-            <label className='text-sm font-medium' htmlFor='startDateFilter'>
-              From:
-            </label>
-            <input
-              type='date'
-              id='startDateFilter'
-              value={startDateFilter}
-              onChange={e => setStartDateFilter(e.target.value)}
-             className='rounded-md border border-gray-600 bg-white px-3 py-1 text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-300'
-            />
-          </div>
-
-          <div className='flex items-center gap-2 text-white'>
-            <label className='text-sm font-medium' htmlFor='endDateFilter'>
-              To:
-            </label>
-            <input
-              type='date'
-              id='endDateFilter'
-              value={endDateFilter}
-              onChange={e => setEndDateFilter(e.target.value)}
-             className='rounded-md border border-gray-600 bg-white px-3 py-1 text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-300'
-            />
-          </div>
-        </div>
-
-        {/* Event List */}
-        <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-          {filteredEvents.length > 0 ? (
-           filteredEvents.map((event, index) => {
-  const status = getStatus(event);
- const { approvals, } = event;
-              return (
-                <div
-                 key={event.id || index}
-      onClick={() =>
-  setSelectedEvent({
-    ...event,
-    ...event.eventData?.eventInfo,
-    ...event.eventData?.additionalInfo, // if needed
-
-    checklist: event.eventData?.checklist || [],
-    uploadedImages: event.eventData?.uploadedImages || [],
-
-    // Basic Info
-    technicalSetup: event.eventData?.eventInfo?.technicalSetup || {},
-    speakers: event.eventData?.eventInfo?.speakers || [],
-    fundingSource: event.eventData?.eventInfo?.fundingSource || '',
-    college: event.eventData?.eventInfo?.selectedCollege || '',
-    department: event.eventData?.eventInfo?.selectedDepartment || '',
-    facultyCoordinators: event.eventData?.eventInfo?.selectedCoordinators?.join(', ') || '',
-    scope: event.eventData?.eventInfo?.scope || '',
-    venue: event.eventData?.eventInfo?.venue || '',
-    venueType: event.eventData?.eventInfo?.venueType || '',
-    venueCategory: event.eventData?.eventInfo?.venueCategory || '',
-    audience: event.eventData?.eventInfo?.audience || '',
-    startDate: event.eventData?.eventInfo?.startDate || '',
-    endDate: event.eventData?.eventInfo?.endDate || '',
-    startTime: event.eventData?.eventInfo?.startTime || '',
-    endTime: event.eventData?.eventInfo?.endTime || '',
-    numDays: event.eventData?.eventInfo?.numDays || '',
-    numHours: event.eventData?.eventInfo?.numHours || '',
-
-    // Corrected paths:
-    objectives: event.eventData?.agenda?.objectives || 'N/A',
-    outcomes: event.eventData?.agenda?.outcomes || 'N/A',
-    sessions: event.eventData?.agenda?.sessions || [],
- financialPlanning: [
-  ...(event.eventData?.financialPlanning?.funding?.map(f => ({ ...f, type: 'Funding' })) || []),
-  ...(event.eventData?.financialPlanning?.budget?.map(b => ({ ...b, type: 'Budget' })) || [])
-],
-foodTravel: event.eventData?.foodTransport?.meals || [],
-transportation: event.eventData?.foodTransport?.travels || [],
-
-  })
-}
-
-
-                className='group relative cursor-pointer rounded-2xl border-l-4 border-blue-600 bg-gradient-to-r from-gray-300 via-white-800 to-gray-600 border-gray-300 p-6 shadow-xl transition-all hover:shadow-2xl hover:scale-[1.02]'
-                >
-                  <div className="relative  mb-5">
-  <h2 className='text-2xl font-bold text-blue-700 flex items-center gap-2'>
-    <FaCalendarAlt className='text-blue-500' />
-    {event.eventData.eventInfo?.title || 'Untitled Event'}
-  </h2>
-
-  <p
-    className={`absolute right-4 top-4 rounded-full px-4 py-1 text-xs font-bold uppercase tracking-wider ${
-                status === 'completed'
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-yellow-100 text-yellow-800'
-              }`}
-  >
-    {status.charAt(0).toUpperCase() + status.slice(1)}
-  </p>
-</div>
-
-                  
-                  
-                 <p className='flex items-center  text-gray-700'>
-                    <FaBuilding className='mr-2 text-gray-600' />
-                    <strong>Department:</strong>{event.eventData.eventInfo?.selectedDepartment}
-                    
-                  </p>
-                <p className='flex items-center text-gray-700'>
-                  <FaCalendarAlt className='mr-2 text-gray-600' />
-                    <strong>Dates:</strong> {event.eventData.eventInfo?.startDate} → {event.eventData.eventInfo?.endDate}
-                  </p>
-                <p className='flex items-center  text-gray-700'>
-                     <FaMapMarkerAlt className='mr-2 text-gray-600' />
-                    <strong>Venue:</strong> {event.eventData.eventInfo?.venue}
-                  </p>
-                  
-              <p className='flex items-center  text-gray-700'>
-                  <FaUniversity className='mr-2' />
-  <strong>College:</strong> {event.eventData.eventInfo?.selectedCollege}
-</p>
-{/* Approval Section */}
-          <div className='mt-5 border-t pt-4'>
-        <h4 className='mb-3 flex items-center gap-2 text-base font-semibold text-gray-800'>
-              <FaCheckCircle className='text-green-500' /> Approvals
-            </h4>
-            <div className='flex flex-wrap gap-2'>
-              <span
-                className={`px-3 py-1 rounded-full font-semibold ${
-                  approvals?.hod ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                }`}
-              >
-                HOD: {approvals?.hod ? 'Approved' : 'Pending'}
-              </span>
-              <span
-                className={`px-3 py-1 rounded-full font-semibold ${
-                  approvals?.principal ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                }`}
-              >
-                Principal: {approvals?.principal ? 'Approved' : 'Pending'}
-              </span>
-              <span
-                className={`px-3 py-1 rounded-full font-semibold ${
-                  approvals?.cso ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                }`}
-              >
-                CSO: {approvals?.cso ? 'Approved' : 'Pending'}
-              </span>
-            </div>
-          </div>
-                </div>
-              )
-            })
-          ) : (
-            <p className='col-span-full text-center text-gray-500'>
-              No events match the filter criteria.
-            </p>
-          )}
-        </div>
-      </div>
-    )
+const renderLogo = async (doc, logoUrl) => {
+  if (!logoUrl) {
+    console.warn('🚫 No logo URL found for header');
+    return;
   }
 
-// Selected Event View
+  try {
+    const base64Logo = logoUrl.startsWith('data:')
+      ? logoUrl
+      : await getBase64ImageFromUrl(logoUrl);
+
+    if (!base64Logo || base64Logo.length < 100) {
+      console.warn('❌ Failed to convert or load logo:', logoUrl);
+      return;
+    }
+
+    const format = getImageFormat(base64Logo);
+    doc.addImage(base64Logo, format, 15, 10, 180, 30);
+    console.log('✅ Header logo rendered');
+    
+  } catch (err) {
+    console.error('❌ Error rendering header logo:', err);
+  }
+};
+
+
+ const generateCircularReport = async (event) => {
+  const doc = new jsPDF();
+  const id = event.eventId;
+  const info = event?.eventData?.eventInfo || {};
+
+  const key = `${(info.selectedCollege || '').trim().toLowerCase()}_${(info.selectedDepartment || '').trim().toLowerCase()}`;
+  const logoUrl = eventReportLogos[id] || uploadedHeaderLogos[key];
+
+  console.log("📄 eventInfo:", info);
+  console.log("📌 Key Used:", key);
+  console.log("🖼️ Header Logo URL:", logoUrl);
+  console.log("📌 EventReportLogos[id]:", eventReportLogos[id]);
+  console.log("📌 uploadedHeaderLogos[key]:", uploadedHeaderLogos[key]);
+  console.log("🧩 Full event object:", event);
+  console.log("🧩 eventData:", event.eventData);
+console.log("🔍 UploadedHeaderLogos keys:", Object.keys(uploadedHeaderLogos));
+console.log("📌 Looking for key:", key);
+
+  await renderLogo(doc, logoUrl);
+
+  doc.setFontSize(14);
+  doc.text(info.selectedCollege || 'College Name', 105, 45, { align: 'center' });
+
+  doc.setFontSize(16);
+  doc.text('Event Circular Report', 14, 60);
+
+  autoTable(doc, {
+    startY: 70,
+    head: [['Field', 'Value']],
+    body: [
+      ['Event Title', info.title || 'N/A'],
+      ['Mode', info.mode || 'N/A'],
+      ['Type', info.type || 'N/A'],
+      ['Venue', info.venue || 'N/A'],
+      ['Start Date', event.startDate || 'N/A'],
+      ['End Date', event.endDate || 'N/A'],
+      ['Department', info.selectedDepartment || 'N/A']
+    ]
+  });
+
+  let y = doc.lastAutoTable.finalY + 10;
+  doc.setFontSize(12);
+  const circularContent = doc.splitTextToSize(
+    circularTexts[id] || 'No content provided.',
+    180
+  );
+  doc.text('Circular Content:', 14, y);
+  doc.text(circularContent, 14, y + 8);
+  y += 8 + circularContent.length * 5;
+
+  doc.text('Google Form: ' + (formLinks[id] || 'N/A'), 14, y + 8);
+  doc.text('Feedback Form: ' + (feedbackLinks[id] || 'N/A'), 14, y + 16);
+
+  doc.save(`circular_${id}.pdf`);
+};
+
+
+const generateReportCompletion = async (event) => {
+  const doc = new jsPDF();
+  const id = event.eventId;
+  const info = event.eventData?.eventInfo || {};
+
+  // 🔁 Normalize key like in circular report
+  const key = `${(info.selectedCollege || '').trim().toLowerCase()}_${(info.selectedDepartment || '').trim().toLowerCase()}`;
+  const logoUrl = eventReportLogos[id] || uploadedHeaderLogos[key];
+
+  // 🔍 Helpful debug logs
+  console.log("📄 [ReportCompletion] eventInfo:", info);
+  console.log("📌 [ReportCompletion] Key Used:", key);
+  console.log("🖼️ [ReportCompletion] Header Logo URL:", logoUrl);
+  console.log("🔍 UploadedHeaderLogos keys:", Object.keys(uploadedHeaderLogos));
+
+  await renderLogo(doc, logoUrl);
+
+  doc.setFontSize(14);
+  doc.text(info.selectedCollege || 'College Name', 105, 45, { align: 'center' });
+
+  doc.setFontSize(16);
+  doc.text('Event Report Completion', 14, 60);
+
+  autoTable(doc, {
+    startY: 70,
+    head: [['Field', 'Value']],
+    body: [
+      ['Title', info.title || 'N/A'],
+      ['Type', info.type || 'N/A'],
+      ['Venue', info.venue || 'N/A'],
+      ['Start Date', event.startDate || 'N/A'],
+      ['End Date', event.endDate || 'N/A']
+    ]
+  });
+
+  let y = doc.lastAutoTable.finalY + 10;
+  const exp = expenses[id] || {};
+  doc.setFontSize(12);
+  doc.text(`Estimated Expense: ₹${exp.estimated || 'N/A'}`, 14, y);
+  doc.text(`Actual Expense: ₹${exp.actual || 'N/A'}`, 14, y + 8);
+
+  const imgData = images[id] || [];
+  if (imgData.length > 0) {
+    let imgY = y + 20;
+    doc.text('Photographs:', 14, imgY);
+    imgY += 8;
+
+    imgData.forEach((img, i) => {
+      const x = 14 + ((i % 3) * 60);
+      const rowY = imgY + Math.floor(i / 3) * 50;
+      doc.addImage(img, 'JPEG', x, rowY, 50, 40);
+    });
+  } else {
+    doc.text('No images uploaded.', 14, y + 30);
+  }
+
+  doc.save(`report_completion_${id}.pdf`);
+};
+
+  const saveReportData = async () => {
+    const id = selectedEvent.eventId;
+    try {
+      await axios.put(
+        `http://localhost:5000/api/events/${id}/report`,
+        {
+          report: {
+            googleForm: formLinks[id],
+            feedbackForm: feedbackLinks[id],
+            circularText: circularTexts[id],
+            expenses: expenses[id],
+            images: images[id] || [],
+            headerLogo: eventReportLogos[id] || ''
+          }
+        },
+        { withCredentials: true }
+      );
+      alert('✅ Report saved');
+    } catch {
+      alert('❌ Failed to save');
+    }
+  };
 return (
-  <div className='mx-auto max-w-6xl rounded-xl bg-gradient-to-br from-white via-blue-50 to-white p-6 shadow-xl'>
-    <button
-      onClick={() => setSelectedEvent(null)}
-      className='mb-6 flex items-center gap-2 rounded bg-gray-100 px-4 py-2 text-gray-800 hover:bg-gray-200'
-    >
-      
-      <FaArrowLeft /> Back
-    </button>
-
-    <div className='mb-6 flex justify-end gap-4'>
-    <ExportButtons selectedEvent={selectedEvent} />
-    </div>
-
-    <h1 className='mb-8 text-center text-3xl font-bold text-blue-900'>
-      {selectedEvent.title || 'Untitled Event'} Report
-    </h1>
-
-   <Section title='Event Details' icon={<FaCalendarAlt />}>
-  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 rounded-xl bg-white p-6 shadow-md border border-gray-200 text-sm">
-    
-    {/* Group 1 */}
-    <Item label='College' value={selectedEvent.college || 'N/A'} />
-    <Item label='Department' value={selectedEvent.department || 'N/A'} />
-    <Item label='Scope' value={selectedEvent.scope || 'N/A'} />
-    
-    {/* Group 2 */}
-    <Item label='Venue Mode' value={selectedEvent.venueType || 'N/A'} />
-    <Item label='Mode of Conduct' value={selectedEvent.venueCategory || 'N/A'} />
-    <Item label='Venue' value={selectedEvent.venue || 'N/A'} />
-    
-    {/* Group 3 */}
-    <Item label='Start Date' value={selectedEvent.startDate || 'N/A'} />
-    <Item label='End Date' value={selectedEvent.endDate || 'N/A'} />
-    <Item label='No. of Days' value={selectedEvent.numDays || 'N/A'} />
-    
-    {/* Group 4 */}
-    <Item label='Start Time' value={selectedEvent.startTime || 'N/A'} />
-    <Item label='End Time' value={selectedEvent.endTime || 'N/A'} />
-    <Item label='No. of Hours' value={selectedEvent.numHours || 'N/A'} />
-    
-    {/* Group 5 */}
-    <Item label='Funding Source' value={selectedEvent.fundingSource || 'N/A'} />
-    <Item label='Lead Coordinator' value={selectedEvent.leadCoordinator || 'N/A'} />
-    <Item label='Faculty Coordinators' value={selectedEvent.facultyCoordinators || 'N/A'} />
-
-    {/* Status */}
-    <Item
-      label='Status'
-      value={
-        getStatus(selectedEvent) === 'completed'
-          ? 'Completed'
-          : 'Upcoming'
-      }
-    />
-
-  </div>
-</Section>
-
-
-
-
-
-{/* Speakers */}
-{Array.isArray(selectedEvent.speakers) && selectedEvent.speakers.length > 0 && (
-  <Section title='Speakers' icon={<FaChalkboardTeacher />}>
-    <table className='w-full table-auto border border-gray-300'>
-      <thead className='bg-gray-100'>
-        <tr>
-          <th className='border px-4 py-2'>#</th>
-          <th className='border px-4 py-2'>Name</th>
-          <th className='border px-4 py-2'>Designation</th>
-          <th className='border px-4 py-2'>Affiliation</th>
-          <th className='border px-4 py-2'>Contact</th>
-          <th className='border px-4 py-2'>Email</th>
-        </tr>
-      </thead>
-      <tbody>
-        {selectedEvent.speakers.map((s, i) => (
-          <tr key={i} className='hover:bg-gray-50'>
-            <td className='border px-4 py-2 text-center'>{i + 1}</td>
-            <td className='border px-4 py-2'>{s.name}</td>
-            <td className='border px-4 py-2'>{s.designation}</td>
-            <td className='border px-4 py-2'>{s.affiliation}</td>
-            <td className='border px-4 py-2'>{s.contact}</td>
-            <td className='border px-4 py-2'>{s.email}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </Section>
-)}
-
-
-{/* Guest Services */}
-<Section title='Guest Services' icon={<FaClipboardList />}>
-  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-    {[
-      { label: 'Accommodation', value: selectedEvent.guestServices?.accommodation },
-      { label: 'Transportation', value: selectedEvent.guestServices?.transportation },
-      { label: 'Dining', value: selectedEvent.guestServices?.dining }
-    ].map((item, idx) => (
-      <div
-        key={idx}
-        className="rounded-xl border bg-white p-4 shadow-sm transition hover:shadow-md"
-      >
-        <h4 className="text-sm font-medium text-gray-500">{item.label}</h4>
-        <p
-          className={`mt-1 text-lg font-semibold ${
-            item.value === 'Yes' ? 'text-green-600' : item.value === 'No' ? 'text-red-500' : 'text-gray-700'
-          }`}
-        >
-          {item.value || 'N/A'}
-        </p>
-      </div>
-    ))}
-  </div>
-</Section>
-
-
-    {/* Technical Setup */}
-    <Section title='Technical Setup'>
-      <table className='w-full table-auto border border-gray-300'>
-        <thead>
-          <tr className='bg-gray-100'>
-            <th className='border px-4 py-2 text-left'>Field</th>
-            <th className='border px-4 py-2 text-left'>Value</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Object.entries(selectedEvent.technicalSetup || {}).map(([key, val]) => (
-            <tr key={key}>
-              <td className='border px-4 py-2 font-medium'>
-                {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-              </td>
-              <td className='border px-4 py-2'>
-                {Array.isArray(val) ? val.join(', ') : String(val)}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </Section>
-
-{/* Objectives & Outcomes */}
-<Section title='Objectives & Outcomes'>
-  <div className="rounded-xl bg-gradient-to-br from-gray-50 to-white p-6 shadow-md space-y-6 border border-gray-200">
-    
-    {/* Objectives Block */}
-    <div className="flex items-start gap-4">
-      <FaBullseye className="mt-1 h-5 w-5 text-blue-600" />
-      <div>
-        <h4 className="text-sm font-semibold text-gray-700 mb-1">Objectives</h4>
-        <p className="text-gray-800 text-base leading-relaxed">
-          {selectedEvent.objectives || 'Not Provided'}
-        </p>
-      </div>
-    </div>
-
-    {/* Outcomes Block */}
-    <div className="flex items-start gap-4">
-      <FaFlagCheckered className="mt-1 h-5 w-5 text-green-600" />
-      <div>
-        <h4 className="text-sm font-semibold text-gray-700 mb-1">Outcomes</h4>
-        <p className="text-gray-800 text-base leading-relaxed">
-          {selectedEvent.outcomes || 'Not Provided'}
-        </p>
-      </div>
-    </div>
-    
-  </div>
-</Section>
-
-
-   {/* Sessions */}
-{Array.isArray(selectedEvent.sessions) && selectedEvent.sessions.length > 0 && (
-  <Section title='Sessions'>
-    <table className='w-full table-auto border border-gray-300'>
-      <thead className='bg-gray-100'>
-        <tr>
-          <th className='border px-4 py-2 text-left'>Topic</th>
-          <th className='border px-4 py-2 text-left'>Speaker</th>
-          <th className='border px-4 py-2 text-left'>Date</th>
-          <th className='border px-4 py-2 text-left'>Time</th>
-        </tr>
-      </thead>
-      <tbody>
-        {selectedEvent.sessions.map((session, i) => (
-          <tr key={i}>
-            <td className='border px-4 py-2'>{session.topic}</td>
-            <td className='border px-4 py-2'>{session.speakerName}</td>
-            <td className='border px-4 py-2'>{session.sessionDate}</td>
-            <td className='border px-4 py-2'>{`${session.fromTime} - ${session.toTime}`}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </Section>
-)}
-
-
-    {/* Checklist */}
-    <Section title='Checklist'>
-      <table className='w-full table-auto border border-gray-300'>
-        <thead>
-          <tr className='bg-gray-100'>
-            <th className='border px-4 py-2'>Activity</th>
-            <th className='border px-4 py-2'>Date</th>
-            <th className='border px-4 py-2'>In-Charge</th>
-            <th className='border px-4 py-2'>Remarks</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Array.isArray(selectedEvent.checklist) &&
-            selectedEvent.checklist.map((task, i) => (
-              <tr key={i}>
-                <td className='border px-4 py-2'>{task.activity}</td>
-                <td className='border px-4 py-2'>{task.date}</td>
-                <td className='border px-4 py-2'>{task.inCharge}</td>
-                <td className='border px-4 py-2'>{task.remarks}</td>
-              </tr>
-            ))}
-        </tbody>
-      </table>
-    </Section>
-{/* Financial Planning */}
-{Array.isArray(selectedEvent.financialPlanning) && selectedEvent.financialPlanning.length > 0 && (
-  <Section title='Financial Planning' icon={<FaMoneyBill />}>
-    {/* Funding Section */}
-    {selectedEvent.financialPlanning.some(fp => fp.type === 'Funding') && (
-      <>
-        <h3 className='mb-3 mt-6 text-xl font-semibold text-green-700'>Funding</h3>
-        <div className="overflow-x-auto">
-          <table className='min-w-full border border-gray-300 rounded-xl shadow-sm'>
-            <thead className='bg-green-50 text-green-900'>
-              <tr>
-                <th className='w-1/3 border px-4 py-2 text-left'>Source</th>
-                <th className='w-1/3 border px-4 py-2 text-left'>Amount</th>
-                <th className='w-1/3 border px-4 py-2 text-left'>Remarks</th>
-              </tr>
-            </thead>
-            <tbody className='bg-white'>
-              {selectedEvent.financialPlanning
-                .filter(fp => fp.type === 'Funding')
-                .map((f, i) => (
-                  <tr key={`funding-${i}`} className="hover:bg-gray-50">
-                    <td className='w-1/3 border px-4 py-2'>{f.source}</td>
-                    <td className='w-1/3 border px-4 py-2 text-green-700 font-medium'>₹{f.amount}</td>
-                    <td className='w-1/3 border px-4 py-2'>{f.remarks || 'N/A'}</td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-      </>
-    )}
-
-    {/* Estimated Budget Section */}
-    {selectedEvent.financialPlanning.some(fp => fp.type === 'Budget') && (
-      <>
-        <h3 className='mb-3 mt-6 text-xl font-semibold text-indigo-700'>Estimated Budget</h3>
-        <div className="overflow-x-auto">
-          <table className='min-w-full border border-gray-300 rounded-xl shadow-sm'>
-            <thead className='bg-indigo-50 text-indigo-900'>
-              <tr>
-                <th className='w-1/3 border px-4 py-2 text-left'>Particular</th>
-                <th className='w-1/3 border px-4 py-2 text-left'>Amount</th>
-                <th className='w-1/3 border px-4 py-2 text-left'>Remark</th>
-              </tr>
-            </thead>
-            <tbody className='bg-white'>
-              {selectedEvent.financialPlanning
-                .filter(fp => fp.type === 'Budget')
-                .map((b, i) => (
-                  <tr key={`budget-${i}`} className="hover:bg-gray-50">
-                    <td className='w-1/3 border px-4 py-2'>{b.particular}</td>
-                    <td className='w-1/3 border px-4 py-2 text-indigo-700 font-medium'>₹{b.amount}</td>
-                    <td className='w-1/3 border px-4 py-2'>{b.remark || 'N/A'}</td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-      </>
-    )}
-  </Section>
-)}
-
-{/* Food & Travel */}
-{Array.isArray(selectedEvent.foodTravel) && selectedEvent.foodTravel.length > 0 && (
-  <Section title="Food & Travel" icon={<FaUtensils />}>
-    <div className="overflow-x-auto rounded-xl border border-gray-300 shadow-md">
-      <table className="min-w-full divide-y divide-gray-300 text-sm text-gray-700">
-        <thead className="bg-gradient-to-r from-gray-100 to-gray-200 text-xs font-semibold uppercase tracking-wider text-gray-600">
-          <tr>
-            <th className="px-5 py-3 text-left">Date</th>
-            <th className="px-5 py-3 text-left">Meal</th>
-            <th className="px-5 py-3 text-left">Menu</th>
-            <th className="px-5 py-3 text-left">Served At</th>
-            <th className="px-5 py-3 text-left">Note</th>
-            <th className="px-5 py-3 text-left">Category</th>
-            <th className="px-5 py-3 text-left">Time</th>
-            <th className="px-5 py-3 text-left">Person Count</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-200 bg-white">
-          {selectedEvent.foodTravel.map((f, i) => (
-            <tr key={i} className="hover:bg-gray-50 transition-colors">
-              <td className="px-5 py-3">{f.from} → {f.to}</td>
-              <td className="px-5 py-3">{f.mealType}</td>
-              <td className="px-5 py-3">{f.menu}</td>
-              <td className="px-5 py-3">{f.servedAt}</td>
-              <td className="px-5 py-3">{f.note}</td>
-              <td className="px-5 py-3">{f.category}</td>
-              <td className="px-5 py-3">{f.time}</td>
-              <td className="px-5 py-3">{f.personCount}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </Section>
-)}
-
-
-
-{/* Transportation Details */}
-{Array.isArray(selectedEvent.transportation) && selectedEvent.transportation.length > 0 && (
-  <Section title="Transportation Details" icon={<FaBusAlt />}>
-    <div className="overflow-x-auto rounded-xl border border-gray-300 shadow-md">
-      <table className="min-w-full divide-y divide-gray-300 text-sm text-gray-700">
-        <thead className="bg-gradient-to-r from-gray-100 to-gray-200 text-xs font-semibold uppercase tracking-wider text-gray-600">
-          <tr>
-            <th className="px-5 py-3 text-left">Date</th>
-            <th className="px-5 py-3 text-left">Mode</th>
-            <th className="px-5 py-3 text-left">Pickup</th>
-            <th className="px-5 py-3 text-left">Drop</th>
-            <th className="px-5 py-3 text-left">Time</th>
-            <th className="px-5 py-3 text-left">Remarks</th>
-            <th className="px-5 py-3 text-left">Category</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-200 bg-white">
-          {selectedEvent.transportation.map((t, i) => (
-            <tr key={i} className="hover:bg-gray-50 transition-colors">
-              <td className="px-5 py-3">{t.date}</td>
-              <td className="px-5 py-3">{t.mode}</td>
-              <td className="px-5 py-3">{t.pickup}</td>
-              <td className="px-5 py-3">{t.drop}</td>
-              <td className="px-5 py-3">{t.time}</td>
-              <td className="px-5 py-3">{t.remarks}</td>
-              <td className="px-5 py-3">{t.category}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </Section>
-)}
-
-    {/* Uploaded Images */}
-    <Section title='Images' icon={<FaImages />}>
-      <input
-        type='file'
-        multiple
-        accept='image/*'
-        onChange={handleImageUpload}
-        className='mb-4'
-      />
-      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3'>
-        {selectedEvent?.uploadedImages?.length > 0 ? (
-  selectedEvent.uploadedImages.map((file, i) => (
-    <img
-      key={i}
-      src={URL.createObjectURL(file)}
-      alt={`Uploaded ${i + 1}`}
-      className='h-44 w-full rounded-md object-cover shadow-md transition-transform duration-300 hover:scale-105'
-    />
-  ))
-) : (
-  <p className='text-gray-500'>No images uploaded yet.</p>
-)}
-
-      </div>
-    </Section>
-  </div>
-)
-
-}
-
-// Reusable Components
-const Section = ({ title, children, icon }) => (
-  <div className='mb-10 border-b pb-4'>
-    <h2 className='mb-4 flex items-center gap-2 border-l-4 border-blue-500 pl-3 text-2xl font-semibold text-blue-900'>
-      {icon} {title}
+  <div className="p-8 bg-gradient-to-br from-gray-100 to-white min-h-screen font-sans">
+    <h2 className="text-4xl font-bold text-center text-gray-800 mb-10 tracking-wide">
+      📁 Manage Event Reports
     </h2>
-    {children}
+
+    {error && <p className="text-center text-red-600 font-medium">{error}</p>}
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {events.map((ev) => {
+        const id = ev.eventId || ev.event_id;
+        const title = ev.eventData?.eventInfo?.title || `Event #${id}`;
+        const startDate = ev.startDate || 'N/A';
+        const endDate = ev.endDate || 'N/A';
+
+        return (
+          <div
+            key={id}
+            className="transition-all duration-300 bg-white p-6 rounded-xl shadow-md hover:shadow-xl border hover:border-blue-500 cursor-pointer group"
+            onClick={() => openModal(ev)}
+          >
+            <div className="flex justify-between items-center mb-2">
+              <span className="font-semibold text-lg text-gray-800 group-hover:text-blue-600">
+                📌 {title}
+              </span>
+              <FaChevronRight className="text-gray-500 group-hover:text-blue-600" />
+            </div>
+            <p className="text-sm text-gray-600">
+              <FaCalendarAlt className="inline mr-1 text-blue-500" />
+              {startDate} → {endDate}
+            </p>
+          </div>
+        );
+      })}
+    </div>
+
+    {/* Modal */}
+    {modalOpen && selectedEvent && (
+      <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-start py-12 z-50 animate-fadeIn">
+        <div className="bg-white w-full max-w-4xl p-10 rounded-3xl relative shadow-2xl overflow-y-auto max-h-[92vh] border border-blue-100">
+          {/* Close Button */}
+          <button
+            className="absolute top-6 right-6 text-gray-500 hover:text-red-500 text-xl"
+            onClick={closeModal}
+          >
+            <FaTimes />
+          </button>
+
+          {/* Modal Header */}
+          <h3 className="text-3xl font-bold mb-8 text-gray-800 border-b pb-4">
+            📝 Edit Report –{' '}
+            <span className="text-blue-600">
+              {selectedEvent.eventData?.eventInfo?.title}
+            </span>
+          </h3>
+
+          {/* Tabs */}
+          <div className="flex border-b border-gray-200 mb-8 space-x-4">
+            <button
+              onClick={() => setActiveTab('circular')}
+              className={`relative px-4 py-2 text-lg font-semibold transition ${
+                activeTab === 'circular'
+                  ? 'text-blue-600 after:absolute after:bottom-0 after:left-0 after:w-full after:h-[3px] after:bg-blue-600'
+                  : 'text-gray-500 hover:text-blue-600'
+              }`}
+            >
+              📝 Circular
+            </button>
+            <button
+              onClick={() => setActiveTab('report')}
+              className={`relative px-4 py-2 text-lg font-semibold transition ${
+                activeTab === 'report'
+                  ? 'text-green-600 after:absolute after:bottom-0 after:left-0 after:w-full after:h-[3px] after:bg-green-600'
+                  : 'text-gray-500 hover:text-green-600'
+              }`}
+            >
+              📋 Report Completion
+            </button>
+          </div>
+
+          {/* --- Circular Tab --- */}
+          {activeTab === 'circular' && (
+            <div className="space-y-5">
+              <textarea
+                placeholder="Write circular content..."
+                rows={5}
+                className="w-full border border-gray-300 px-4 py-3 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                value={circularTexts[selectedEvent.eventId] || ''}
+                onChange={(e) =>
+                  setCircularTexts({
+                    ...circularTexts,
+                    [selectedEvent.eventId]: e.target.value,
+                  })
+                }
+              />
+              <input
+                placeholder="Google Form Link"
+                className="w-full border border-gray-300 px-4 py-2 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                value={formLinks[selectedEvent.eventId] || ''}
+                onChange={(e) =>
+                  setFormLinks({
+                    ...formLinks,
+                    [selectedEvent.eventId]: e.target.value,
+                  })
+                }
+              />
+              <input
+                placeholder="Feedback Form Link"
+                className="w-full border border-gray-300 px-4 py-2 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                value={feedbackLinks[selectedEvent.eventId] || ''}
+                onChange={(e) =>
+                  setFeedbackLinks({
+                    ...feedbackLinks,
+                    [selectedEvent.eventId]: e.target.value,
+                  })
+                }
+              />
+              {/* Header Preview */}
+              {(() => {
+                const info = selectedEvent.eventData?.eventInfo || {};
+                const key = `${info.college_name}_${info.department}`;
+                const logo =
+                  eventReportLogos[selectedEvent.eventId] ||
+                  uploadedHeaderLogos[key];
+                return logo ? (
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500">Header Preview:</p>
+                    <img
+                      src={logo}
+                      alt="Header Logo Preview"
+                      className="w-40 h-auto rounded border"
+                    />
+                  </div>
+                ) : null;
+              })()}
+
+              <button
+                onClick={() => generateCircularReport(selectedEvent)}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2 rounded-xl shadow-md transition-all"
+              >
+                <FaFilePdf className="inline mr-2" />
+                Download Circular PDF
+              </button>
+            </div>
+          )}
+
+          {/* --- Report Completion Tab --- */}
+          {activeTab === 'report' && (
+            <div className="space-y-5">
+              <input
+                type="number"
+                placeholder="Estimated Expense"
+                className="w-full border border-gray-300 px-4 py-2 rounded-xl shadow-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
+                value={expenses[selectedEvent.eventId]?.estimated || ''}
+                onChange={(e) =>
+                  setExpenses({
+                    ...expenses,
+                    [selectedEvent.eventId]: {
+                      ...expenses[selectedEvent.eventId],
+                      estimated: e.target.value,
+                    },
+                  })
+                }
+              />
+              <input
+                type="number"
+                placeholder="Actual Expense"
+                className="w-full border border-gray-300 px-4 py-2 rounded-xl shadow-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
+                value={expenses[selectedEvent.eventId]?.actual || ''}
+                onChange={(e) =>
+                  setExpenses({
+                    ...expenses,
+                    [selectedEvent.eventId]: {
+                      ...expenses[selectedEvent.eventId],
+                      actual: e.target.value,
+                    },
+                  })
+                }
+              />
+
+              
+              {/* Uploaded Images */}
+              {(images[selectedEvent.eventId] || []).length > 0 && (
+                <div>
+                  <h4 className="text-lg font-semibold mb-2 text-gray-700">
+                    Uploaded Images
+                  </h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    {images[selectedEvent.eventId].map((img, i) => (
+                      <div
+                        key={i}
+                        className="border rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all"
+                      >
+                        <img
+                          src={img}
+                          alt={`Upload ${i + 1}`}
+                          className="w-full h-32 object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={() => generateReportCompletion(selectedEvent)}
+                className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-6 py-2 rounded-xl shadow-md transition-all"
+              >
+                <FaFilePdf className="inline mr-2" />
+                Download Report PDF
+              </button>
+            </div>
+          )}
+
+          {/* Save Button */}
+          <button
+            onClick={saveReportData}
+            className="mt-10 w-full bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-lg"
+          >
+            <FaSave className="inline mr-2" />
+            Save Report
+          </button>
+        </div>
+      </div>
+    )}
   </div>
-)
+);
+};
 
-const GridTwo = ({ children }) => (
-  <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>{children}</div>
-)
-
-const Card = ({ children }) => (
-  <div className='mb-4 rounded-lg border border-gray-200 bg-white p-5 shadow-sm'>
-    <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>{children}</div>
-  </div>
-)
-
-const Item = ({ label, value }) => (
-  <div className='flex flex-col space-y-1 text-sm'>
-    <span className='font-medium text-gray-500'>{label}</span>
-    <span className='text-gray-900'>{value}</span>
-  </div>
-)
-
-export default ReportGeneration
+export default ReportGeneration;

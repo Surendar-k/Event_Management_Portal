@@ -10,7 +10,6 @@ import {
   FaCalendarAlt
 } from 'react-icons/fa';
 
-
 const ReportGeneration = () => {
   const [events, setEvents] = useState([]);
   const [error, setError] = useState('');
@@ -24,99 +23,121 @@ const ReportGeneration = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [activeTab, setActiveTab] = useState('circular');
-useEffect(() => {
-  const fetchHeaders = async () => {
-    const res = await axios.get('http://localhost:5000/api/admin/uploaded-headers', {
-      withCredentials: true
-    });
-    const headerMap = {};
-    res.data.forEach(header => {
-      const college = (header.college_name || '').trim().toLowerCase();
-      const dept = (header.department || '').trim().toLowerCase();
-      const key = `${college}_${dept}`;
-      headerMap[key] = header.logoUrl;
-    });
-    setUploadedHeaderLogos(headerMap);
-  };
-
-  fetchHeaders();
-}, []);
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const res = await axios.get(
-          'http://localhost:5000/api/events/by-user',
-          { withCredentials: true }
-        );
-        
-
-        const formData = {},
-          feedbackData = {},
-          circularData = {},
-          expenseData = {},
-          imageData = {},
-          logoData = {};
-
-        res.data.forEach((e) => {
-          const id = e.eventId || e.event_id;
-          formData[id] = e.report?.googleForm || '';
-          feedbackData[id] = e.report?.feedbackForm || '';
-          circularData[id] = e.report?.circularText || '';
-          logoData[id] = e.report?.headerLogo || '';
-
-          const budget = e.financialplanning?.budget || [];
-          const estimatedSum = budget.reduce(
-            (sum, item) => sum + (parseFloat(item.amount) || 0),
-            0
-          );
-
-          const actual = e.report?.expenses?.actual || '';
-
-          expenseData[id] = {
-            estimated:
-              e.report?.expenses?.estimated || estimatedSum.toString(),
-            actual
-          };
-
-          imageData[id] = e.report?.images || [];
-        });
-
-        setFormLinks(formData);
-        setFeedbackLinks(feedbackData);
-        setCircularTexts(circularData);
-        setExpenses(expenseData);
-        setImages(imageData);
-        setEventReportLogos(logoData);
-        setEvents(res.data);
-      } catch (err) {
-        setError(err.message || 'Failed to load events');
-      }
+    const fetchHeaders = async () => {
+      const res = await axios.get('http://localhost:5000/api/admin/uploaded-headers', {
+        withCredentials: true
+      });
+      const headerMap = {};
+      res.data.forEach(header => {
+        const college = (header.college_name || '').trim().toLowerCase();
+        const dept = (header.department || '').trim().toLowerCase();
+        const key = `${college}_${dept}`;
+        headerMap[key] = header.logoUrl;
+      });
+      setUploadedHeaderLogos(headerMap);
     };
 
-    fetchEvents();
+    fetchHeaders();
   }, []);
+useEffect(() => {
+  const fetchEvents = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/api/events/by-user', {
+        withCredentials: true
+      });
 
-const getBase64ImageFromUrl = async (imageUrl) => {
-  try {
-    const res = await fetch(imageUrl, { mode: 'cors' });
-    if (!res.ok) {
-      console.warn(`❌ Could not fetch image: ${res.status} ${res.statusText}`);
+      const formData = {},
+        feedbackData = {},
+        circularData = {},
+        expenseData = {},
+        imageData = {},
+        logoData = {};
+
+      res.data.forEach((e) => {
+        const id = e.eventId || e.event_id;
+
+        formData[id] = e.report?.googleForm || '';
+        feedbackData[id] = e.report?.feedbackForm || '';
+        circularData[id] = e.report?.circularText || '';
+        logoData[id] = e.report?.headerLogo || '';
+
+        const budget = e.financialPlanning?.budget || [];
+        const estimatedSum = budget.reduce(
+          (sum, item) => sum + (parseFloat(item.amount) || 0),
+          0
+        );
+
+        const actualItemsRaw = e.report?.expenses?.actualItems || {};
+        const actualItems = {};
+        let actualSum = 0;
+
+        Object.entries(actualItemsRaw).forEach(([particular, item]) => {
+          const amount = parseFloat(item.actualAmount) || 0;
+          actualSum += amount;
+
+          actualItems[particular] = {
+            actualAmount: amount,
+            remark: item.remark || ''
+          };
+        });
+
+        expenseData[id] = {
+          estimated: isNaN(parseFloat(e.report?.expenses?.estimated))
+            ? estimatedSum.toFixed(2)
+            : parseFloat(e.report.expenses.estimated).toFixed(2),
+          actual: actualSum.toFixed(2),
+          actualItems
+        };
+
+        imageData[id] = e.report?.images || [];
+         e.eventData = {
+    ...e.eventData,
+    tasks: e.eventData?.tasks || [],  // or fetch tasks separately if needed
+    eventInfo: {
+      ...e.eventData?.eventInfo,
+      selectedCoordinators: e.eventData?.eventInfo?.selectedCoordinators || []
+    }
+  };
+      });
+
+      setFormLinks(formData);
+      setFeedbackLinks(feedbackData);
+      setCircularTexts(circularData);
+      setExpenses(expenseData);
+      setImages(imageData);
+      setEventReportLogos(logoData);
+      setEvents(res.data);
+    } catch (err) {
+      setError(err.message || 'Failed to load events');
+    }
+  };
+
+  fetchEvents();
+}, []);
+
+
+
+  const getBase64ImageFromUrl = async (imageUrl) => {
+    try {
+      const res = await fetch(imageUrl, { mode: 'cors' });
+      if (!res.ok) {
+        console.warn(`❌ Could not fetch image: ${res.status} ${res.statusText}`);
+        return '';
+      }
+      const blob = await res.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (err) {
+      console.error('⚠️ Failed to fetch image URL:', imageUrl, err);
       return '';
     }
-    const blob = await res.blob();
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  } catch (err) {
-    console.error('⚠️ Failed to fetch image URL:', imageUrl, err);
-    return '';
-  }
-};
-
+  };
 
   const openModal = (event) => {
     setSelectedEvent(event);
@@ -132,87 +153,171 @@ const getBase64ImageFromUrl = async (imageUrl) => {
   const getImageFormat = (base64) => {
     if (base64.includes('image/png')) return 'PNG';
     if (base64.includes('image/webp')) return 'WEBP';
-    return 'JPEG'; // default fallback
+    return 'JPEG';
   };
 
-const renderLogo = async (doc, logoUrl) => {
-  if (!logoUrl) {
-    console.warn('🚫 No logo URL found for header');
-    return;
-  }
-
-  try {
-    const base64Logo = logoUrl.startsWith('data:')
-      ? logoUrl
-      : await getBase64ImageFromUrl(logoUrl);
-
-    if (!base64Logo || base64Logo.length < 100) {
-      console.warn('❌ Failed to convert or load logo:', logoUrl);
+  const renderLogo = async (doc, logoUrl) => {
+    if (!logoUrl) {
+      console.warn('🚫 No logo URL found for header');
       return;
     }
 
-    const format = getImageFormat(base64Logo);
-    doc.addImage(base64Logo, format, 15, 10, 180, 30);
-    console.log('✅ Header logo rendered');
-    
-  } catch (err) {
-    console.error('❌ Error rendering header logo:', err);
-  }
-};
+    try {
+      const base64Logo = logoUrl.startsWith('data:') ? logoUrl : await getBase64ImageFromUrl(logoUrl);
 
+      if (!base64Logo || base64Logo.length < 100) {
+        console.warn('❌ Failed to convert or load logo:', logoUrl);
+        return;
+      }
 
- const generateCircularReport = async (event) => {
+      const format = getImageFormat(base64Logo);
+      doc.addImage(base64Logo, format, 15, 10, 180, 30);
+      console.log('✅ Header logo rendered');
+    } catch (err) {
+      console.error('❌ Error rendering header logo:', err);
+    }
+  };
+  useEffect(() => {
+  if (!selectedEvent) return;
+
+  const id = selectedEvent.eventId;
+  const actualItems = expenses[id]?.actualItems || {};
+
+  const autoTotal = Object.values(actualItems).reduce(
+    (sum, item) => sum + (parseFloat(item.actualAmount) || 0),
+    0
+  );
+
+  setExpenses(prev => ({
+    ...prev,
+    [id]: {
+      ...prev[id],
+      actual: autoTotal.toFixed(2)
+    }
+  }));
+}, [expenses[selectedEvent?.eventId]?.actualItems]);
+
+const generateCircularReport = async (event) => {
   const doc = new jsPDF();
   const id = event.eventId;
   const info = event?.eventData?.eventInfo || {};
+console.log('event:', event);
+console.log('eventData:', event.eventData);
+console.log('eventInfo:', event.eventData?.eventInfo);
+console.log('selectedCoordinators:', event.eventData?.eventInfo?.selectedCoordinators);
+console.log('tasks:', event.eventData?.tasks);
 
   const key = `${(info.selectedCollege || '').trim().toLowerCase()}_${(info.selectedDepartment || '').trim().toLowerCase()}`;
   const logoUrl = eventReportLogos[id] || uploadedHeaderLogos[key];
 
-  console.log("📄 eventInfo:", info);
-  console.log("📌 Key Used:", key);
-  console.log("🖼️ Header Logo URL:", logoUrl);
-  console.log("📌 EventReportLogos[id]:", eventReportLogos[id]);
-  console.log("📌 uploadedHeaderLogos[key]:", uploadedHeaderLogos[key]);
-  console.log("🧩 Full event object:", event);
-  console.log("🧩 eventData:", event.eventData);
-console.log("🔍 UploadedHeaderLogos keys:", Object.keys(uploadedHeaderLogos));
-console.log("📌 Looking for key:", key);
+  const marginX = 20;
+  let y = 20;
 
   await renderLogo(doc, logoUrl);
+  y = 45;
 
-  doc.setFontSize(14);
-  doc.text(info.selectedCollege || 'College Name', 105, 45, { align: 'center' });
+  doc.setFont('times', 'normal');
+  doc.setFontSize(12);
+  doc.text(info.selectedCollege || 'College Name', 105, y, { align: 'center' });
 
-  doc.setFontSize(16);
-  doc.text('Event Circular Report', 14, 60);
+  y += 15;
+doc.setFont('times', 'bold');
+doc.text('Event Circular Report', 105, y, { align: 'center' });
+
+  y += 10;
+  doc.setFont('times', 'normal');
 
   autoTable(doc, {
-    startY: 70,
-    head: [['Field', 'Value']],
+    startY: y,
+    margin: { left: marginX, right: marginX },
+    styles: {
+      fontSize: 12,
+      font: 'times',
+      lineColor: [0, 0, 0],
+      lineWidth: 0.1,
+      fillColor: false
+    },
+    headStyles: {
+      fontStyle: 'bold',
+      fillColor: false,
+      textColor: 0,
+      halign: 'left',
+      lineColor: [0, 0, 0],
+      lineWidth: 0.1
+    },
+    bodyStyles: {
+      fontStyle: 'normal',
+      fillColor: false,
+      textColor: 0,
+      lineColor: [0, 0, 0],
+      lineWidth: 0.1
+    },
+    head: [['Field', 'Details']],
     body: [
       ['Event Title', info.title || 'N/A'],
-      ['Mode', info.mode || 'N/A'],
-      ['Type', info.type || 'N/A'],
-      ['Venue', info.venue || 'N/A'],
-      ['Start Date', event.startDate || 'N/A'],
-      ['End Date', event.endDate || 'N/A'],
-      ['Department', info.selectedDepartment || 'N/A']
+      ['Department', info.selectedDepartment || 'N/A'],
+      ['Venue / Mode / Type',
+        `${info.venue || 'N/A'} , ${info.mode || 'N/A'} , ${info.type || 'N/A'}`],
+      ['Start Date - End Date',
+        `${event.startDate || 'N/A'} - ${event.endDate || 'N/A'}`],
+      ['Google Form', formLinks[id] || 'N/A'],
+      ['Feedback Form', feedbackLinks[id] || 'N/A']
     ]
   });
+const leadCoordinator = event.faculty_name || 'Not Assigned';
 
-  let y = doc.lastAutoTable.finalY + 10;
-  doc.setFontSize(12);
+const facultyCoordinators = Array.isArray(event?.eventData?.eventInfo?.facultyCoordinators)
+  ? event.eventData.eventInfo.facultyCoordinators.join(', ')
+  : 'Not Assigned';
+
+// Extend the table with coordinators
+autoTable(doc, {
+  startY: doc.lastAutoTable.finalY + 10,
+  margin: { left: marginX, right: marginX },
+  styles: {
+    fontSize: 12,
+    font: 'times',
+    lineColor: [0, 0, 0],
+    lineWidth: 0.1,
+    fillColor: false
+  },
+  headStyles: {
+    fontStyle: 'bold',
+    fillColor: false,
+    textColor: 0,
+    halign: 'left',
+    lineColor: [0, 0, 0],
+    lineWidth: 0.1
+  },
+  bodyStyles: {
+    fontStyle: 'normal',
+    fillColor: false,
+    textColor: 0,
+    lineColor: [0, 0, 0],
+    lineWidth: 0.1
+  },
+  head: [['Incharge', 'Names']],
+  body: [
+    ['Lead Coordinator', leadCoordinator],
+    ['Faculty Coordinators', facultyCoordinators]
+  ]
+});
+
+y = doc.lastAutoTable.finalY + 10;
+
+
+  // Circular Content
   const circularContent = doc.splitTextToSize(
     circularTexts[id] || 'No content provided.',
-    180
+    170
   );
-  doc.text('Circular Content:', 14, y);
-  doc.text(circularContent, 14, y + 8);
-  y += 8 + circularContent.length * 5;
 
-  doc.text('Google Form: ' + (formLinks[id] || 'N/A'), 14, y + 8);
-  doc.text('Feedback Form: ' + (feedbackLinks[id] || 'N/A'), 14, y + 16);
+  doc.setFont('times', 'bold');
+  doc.text('Circular Content:', marginX, y);
+  y += 8;
+
+  doc.setFont('times', 'normal');
+  doc.text(circularContent, marginX, y);
 
   doc.save(`circular_${id}.pdf`);
 };
@@ -223,55 +328,118 @@ const generateReportCompletion = async (event) => {
   const id = event.eventId;
   const info = event.eventData?.eventInfo || {};
 
-  // 🔁 Normalize key like in circular report
   const key = `${(info.selectedCollege || '').trim().toLowerCase()}_${(info.selectedDepartment || '').trim().toLowerCase()}`;
   const logoUrl = eventReportLogos[id] || uploadedHeaderLogos[key];
 
-  // 🔍 Helpful debug logs
-  console.log("📄 [ReportCompletion] eventInfo:", info);
-  console.log("📌 [ReportCompletion] Key Used:", key);
-  console.log("🖼️ [ReportCompletion] Header Logo URL:", logoUrl);
-  console.log("🔍 UploadedHeaderLogos keys:", Object.keys(uploadedHeaderLogos));
-
   await renderLogo(doc, logoUrl);
 
-  doc.setFontSize(14);
+  doc.setFontSize(12);
+  doc.setFont('times', 'bold');
   doc.text(info.selectedCollege || 'College Name', 105, 45, { align: 'center' });
 
-  doc.setFontSize(16);
-  doc.text('Event Report Completion', 14, 60);
+  doc.setFont('times', 'bold');
+  doc.text('Event Report Completion', 105, 55, { align: 'center' });
 
   autoTable(doc, {
-    startY: 70,
+    startY: 65,
+    margin: { left: 20, right: 20 },
+    styles: {
+      fontSize: 12,
+      font: 'times',
+      lineColor: [0, 0, 0],
+      lineWidth: 0.1,
+      fillColor: false,
+      halign: 'left'
+    },
+    headStyles: {
+      fontStyle: 'bold',
+      textColor: 0
+    },
+    bodyStyles: {
+      fontStyle: 'normal',
+      textColor: 0
+    },
     head: [['Field', 'Value']],
     body: [
       ['Title', info.title || 'N/A'],
       ['Type', info.type || 'N/A'],
-      ['Venue', info.venue || 'N/A'],
-      ['Start Date', event.startDate || 'N/A'],
-      ['End Date', event.endDate || 'N/A']
+      ['Venue / Mode / Type',
+        `${info.venue || 'N/A'}, ${info.mode || 'N/A'}, ${info.type || 'N/A'}`],
+      ['Start Date - End Date',
+        `${event.startDate || 'Unknown'} - ${event.endDate || 'Unknown'}`]
     ]
   });
 
   let y = doc.lastAutoTable.finalY + 10;
   const exp = expenses[id] || {};
-  doc.setFontSize(12);
-  doc.text(`Estimated Expense: ₹${exp.estimated || 'N/A'}`, 14, y);
-  doc.text(`Actual Expense: ₹${exp.actual || 'N/A'}`, 14, y + 8);
+  const budgetItems = event.eventData?.financialPlanning?.budget || [];
+
+  const estimatedTotal = budgetItems.reduce(
+    (sum, item) => sum + (parseFloat(item.amount) || 0),
+    0
+  );
+
+  const calculatedActualTotal = Object.values(exp.actualItems || {}).reduce(
+    (sum, item) => sum + (parseFloat(item.actualAmount) || 0),
+    0
+  );
+
+  doc.setFont('times', 'bold');
+  doc.text('Expense Breakdown', 20, y);
+
+  autoTable(doc, {
+    startY: y + 6,
+    margin: { left: 20, right: 20 },
+    styles: {
+      fontSize: 12,
+      font: 'times',
+      lineColor: [0, 0, 0],
+      lineWidth: 0.1,
+      fillColor: false,
+      halign: 'left'
+    },
+    headStyles: {
+      fontStyle: 'bold',
+      textColor: 0
+    },
+    bodyStyles: {
+      fontStyle: 'normal',
+      textColor: 0
+    },
+    head: [['Particular', 'Estimated (Rs.)', 'Actual (Rs.)']],
+    body: [
+      ...budgetItems.map(item => [
+        item.particular || 'N/A',
+        `Rs. ${parseFloat(item.amount || 0).toFixed(2)}`,
+        `Rs. ${parseFloat(exp.actualItems?.[item.particular]?.actualAmount || 0).toFixed(2)}`
+      ]),
+      [
+        { content: 'Total', colSpan: 1, styles: { fontStyle: 'bold' } },
+        { content: `Rs. ${estimatedTotal.toFixed(2)}`, styles: { fontStyle: 'bold' } },
+        { content: `Rs. ${calculatedActualTotal.toFixed(2)}`, styles: { fontStyle: 'bold' } }
+      ]
+    ]
+  });
+
+  let lastY = doc.lastAutoTable.finalY;
 
   const imgData = images[id] || [];
   if (imgData.length > 0) {
-    let imgY = y + 20;
-    doc.text('Photographs:', 14, imgY);
+    let imgY = lastY + 15;
+    doc.setFont('times', 'bold');
+    doc.text('Photographs', 20, imgY);
     imgY += 8;
 
     imgData.forEach((img, i) => {
-      const x = 14 + ((i % 3) * 60);
+      const x = 20 + ((i % 3) * 60);
       const rowY = imgY + Math.floor(i / 3) * 50;
       doc.addImage(img, 'JPEG', x, rowY, 50, 40);
     });
   } else {
-    doc.text('No images uploaded.', 14, y + 30);
+    doc.setFont('times', 'bold');
+    doc.text('Photographs', 20, lastY + 15);
+    doc.setFont('times', 'normal');
+    doc.text('No images uploaded.', 20, lastY + 23);
   }
 
   doc.save(`report_completion_${id}.pdf`);
@@ -280,25 +448,24 @@ const generateReportCompletion = async (event) => {
   const saveReportData = async () => {
     const id = selectedEvent.eventId;
     try {
-      await axios.put(
-        `http://localhost:5000/api/events/${id}/report`,
-        {
-          report: {
-            googleForm: formLinks[id],
-            feedbackForm: feedbackLinks[id],
-            circularText: circularTexts[id],
-            expenses: expenses[id],
-            images: images[id] || [],
-            headerLogo: eventReportLogos[id] || ''
-          }
-        },
-        { withCredentials: true }
-      );
+      await axios.put(`http://localhost:5000/api/events/${id}/report`, {
+        report: {
+          googleForm: formLinks[id],
+          feedbackForm: feedbackLinks[id],
+          circularText: circularTexts[id],
+          expenses: expenses[id],
+          images: images[id] || [],
+          headerLogo: eventReportLogos[id] || ''
+        }
+      }, {
+        withCredentials: true
+      });
       alert('✅ Report saved');
     } catch {
       alert('❌ Failed to save');
     }
   };
+
 return (
   <div className="p-8 bg-gradient-to-br from-gray-100 to-white min-h-screen font-sans">
     <h2 className="text-4xl font-bold text-center text-gray-800 mb-10 tracking-wide">
@@ -446,72 +613,218 @@ return (
           )}
 
           {/* --- Report Completion Tab --- */}
-          {activeTab === 'report' && (
-            <div className="space-y-5">
-              <input
-                type="number"
-                placeholder="Estimated Expense"
-                className="w-full border border-gray-300 px-4 py-2 rounded-xl shadow-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
-                value={expenses[selectedEvent.eventId]?.estimated || ''}
-                onChange={(e) =>
-                  setExpenses({
-                    ...expenses,
-                    [selectedEvent.eventId]: {
-                      ...expenses[selectedEvent.eventId],
-                      estimated: e.target.value,
-                    },
-                  })
-                }
-              />
-              <input
-                type="number"
-                placeholder="Actual Expense"
-                className="w-full border border-gray-300 px-4 py-2 rounded-xl shadow-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
-                value={expenses[selectedEvent.eventId]?.actual || ''}
-                onChange={(e) =>
-                  setExpenses({
-                    ...expenses,
-                    [selectedEvent.eventId]: {
-                      ...expenses[selectedEvent.eventId],
-                      actual: e.target.value,
-                    },
-                  })
-                }
-              />
+         {activeTab === 'report' && (
+  <div className="space-y-5">
+    {/* Expense Breakdown Table */}
+    <div>
+      <h4 className="text-lg font-semibold mb-2 text-gray-700">
+        Expense Breakdown
+      </h4>
+      <div className="overflow-x-auto border rounded-lg">
+        <table className="min-w-full text-sm text-left border-collapse">
+          <thead className="bg-gray-100 text-gray-700 font-semibold">
+            <tr>
+              <th className="p-3 border">Particular</th>
+              <th className="p-3 border">Estimated (₹)</th>
+              <th className="p-3 border">Actual (₹)</th>
+              <th className="p-3 border">Remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(selectedEvent.eventData?.financialPlanning?.budget || []).map(
+              (item, idx) => {
+                const particular = item.particular || `Item ${idx + 1}`;
+                const est = item.amount?.toString() || '0';
+                const actual = expenses[selectedEvent.eventId]?.actualItems?.[particular]?.actualAmount || '';
+                const remark = expenses[selectedEvent.eventId]?.actualItems?.[particular]?.remark || '';
 
-              
-              {/* Uploaded Images */}
-              {(images[selectedEvent.eventId] || []).length > 0 && (
-                <div>
-                  <h4 className="text-lg font-semibold mb-2 text-gray-700">
-                    Uploaded Images
-                  </h4>
-                  <div className="grid grid-cols-3 gap-4">
-                    {images[selectedEvent.eventId].map((img, i) => (
-                      <div
-                        key={i}
-                        className="border rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all"
-                      >
-                        <img
-                          src={img}
-                          alt={`Upload ${i + 1}`}
-                          className="w-full h-32 object-cover"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                return (
+                  <tr key={idx} className="border-t">
+                    <td className="p-3 border">{particular}</td>
+                    <td className="p-3 border">₹ {est}</td>
+                    <td className="p-2 border">
+                      <input
+                        type="number"
+                        className="w-full border px-2 py-1 rounded"
+                        value={actual}
+                        onChange={(e) => {
+                          const updated = {
+                            ...expenses[selectedEvent.eventId],
+                            actualItems: {
+                              ...(expenses[selectedEvent.eventId]?.actualItems || {}),
+                              [particular]: {
+                                actualAmount: e.target.value,
+                                remark: remark
+                              }
+                            }
+                          };
+                          setExpenses((prev) => ({
+                            ...prev,
+                            [selectedEvent.eventId]: updated
+                          }));
+                        }}
+                      />
+                    </td>
+                    <td className="p-2 border">
+                      <input
+                        type="text"
+                        className="w-full border px-2 py-1 rounded"
+                        value={remark}
+                        onChange={(e) => {
+                          const updated = {
+                            ...expenses[selectedEvent.eventId],
+                            actualItems: {
+                              ...(expenses[selectedEvent.eventId]?.actualItems || {}),
+                              [particular]: {
+                                actualAmount: actual,
+                                remark: e.target.value
+                              }
+                            }
+                          };
+                          setExpenses((prev) => ({
+                            ...prev,
+                            [selectedEvent.eventId]: updated
+                          }));
+                        }}
+                      />
+                    </td>
+                  </tr>
+                );
+              }
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-              <button
-                onClick={() => generateReportCompletion(selectedEvent)}
-                className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-6 py-2 rounded-xl shadow-md transition-all"
-              >
-                <FaFilePdf className="inline mr-2" />
-                Download Report PDF
-              </button>
-            </div>
-          )}
+    <div className="grid md:grid-cols-2 gap-4">
+      <input
+  type="number"
+  placeholder="Total Estimated Expense"
+  className="w-full border border-gray-300 px-4 py-2 rounded-xl shadow-sm bg-gray-100 cursor-not-allowed"
+ value={
+  (
+    selectedEvent?.eventData?.financialPlanning?.budget?.reduce(
+      (sum, item) => sum + (parseFloat(item.amount) || 0),
+      0
+    ) || 0
+  ).toFixed(2)
+}
+
+  readOnly
+/>
+
+
+     <input
+  type="number"
+  placeholder="Total Actual Expense"
+  className="w-full border border-gray-300 px-4 py-2 rounded-xl shadow-sm focus:outline-none bg-gray-100"
+  value={expenses[selectedEvent.eventId]?.actual || ''}
+  readOnly
+/>
+
+
+    </div>
+{/* Image Upload Section */}
+<div>
+  <h4 className="text-lg font-semibold mb-2 text-gray-700">Upload Event Images</h4>
+
+  <input
+    type="file"
+    accept="image/*"
+    multiple
+    onChange={(e) => {
+      const files = Array.from(e.target.files);
+
+      files.forEach((file) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImages((prev) => ({
+            ...prev,
+            [selectedEvent.eventId]: [
+              ...(prev[selectedEvent.eventId] || []),
+              reader.result,
+            ],
+          }));
+        };
+        reader.readAsDataURL(file);
+      });
+    }}
+    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4
+               file:rounded-full file:border-0 file:text-sm file:font-semibold
+               file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+  />
+</div>
+
+   {(images[selectedEvent.eventId] || []).length > 0 && (
+  <div>
+    <h4 className="text-lg font-semibold mb-2 text-gray-700">Uploaded Images</h4>
+    <div className="grid grid-cols-3 gap-4">
+      {images[selectedEvent.eventId].map((img, i) => (
+        <div
+          key={i}
+          className="relative border rounded-lg overflow-hidden shadow-sm group hover:shadow-lg transition-all"
+        >
+          <img
+            src={img}
+            alt={`Upload ${i + 1}`}
+            className="w-full h-32 object-cover"
+          />
+
+          {/* Replace Button */}
+          <label className="absolute top-1 left-1 bg-yellow-400 text-white text-xs px-2 py-1 rounded cursor-pointer hidden group-hover:block">
+            Replace
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                  setImages((prev) => {
+                    const updated = [...(prev[selectedEvent.eventId] || [])];
+                    updated[i] = reader.result;
+                    return {
+                      ...prev,
+                      [selectedEvent.eventId]: updated,
+                    };
+                  });
+                };
+                reader.readAsDataURL(file);
+              }}
+            />
+          </label>
+
+          {/* Delete Button */}
+          <button
+            onClick={() => {
+              setImages((prev) => ({
+                ...prev,
+                [selectedEvent.eventId]: prev[selectedEvent.eventId].filter((_, idx) => idx !== i),
+              }));
+            }}
+            className="absolute top-1 right-1 bg-red-500 text-white text-xs px-2 py-1 rounded hidden group-hover:block"
+          >
+            Delete
+          </button>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+    <button
+      onClick={() => generateReportCompletion(selectedEvent)}
+      className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-6 py-2 rounded-xl shadow-md transition-all"
+    >
+      <FaFilePdf className="inline mr-2" />
+      Download Report PDF
+    </button>
+  </div>
+)}
+
 
           {/* Save Button */}
           <button

@@ -52,6 +52,15 @@ useEffect(() => {
 
   fetchFacultyNames();
 }, []);
+useEffect(() => {
+  // Preload saved coordinators when editing
+  if (Array.isArray(data.facultyCoordinators)) {
+    setFacultyState(prev => ({
+      ...prev,
+      selectedCoordinators: data.facultyCoordinators
+    }));
+  }
+}, [data.facultyCoordinators]);
 
   useEffect(() => {
     setField('departments', colleges[data.selectedCollege] || []);
@@ -75,14 +84,24 @@ useEffect(() => {
 
 
 useEffect(() => {
-    if (data.startTime && data.endTime) {
-      const [startH, startM] = data.startTime.split(':').map(Number);
-      const [endH, endM] = data.endTime.split(':').map(Number);
-      const diff = (endH * 60 + endM) - (startH * 60 + startM);
-      const hours = diff > 0 ? (diff / 60).toFixed(2) : 0;
-      setField('numHours', hours);
-    }
-  }, [data.startTime, data.endTime]);
+  const parseTime = (time12) => {
+    if (!time12) return null;
+    const [time, ampm] = time12.split(' ');
+    const [h, m] = time.split(':').map(Number);
+    const hour24 = ampm === 'PM' && h !== 12 ? h + 12 : ampm === 'AM' && h === 12 ? 0 : h;
+    return hour24 * 60 + m;
+  };
+
+  const start = parseTime(data.startTime);
+  const end = parseTime(data.endTime);
+
+  if (start != null && end != null) {
+    const diff = end - start;
+    const hours = diff > 0 ? (diff / 60).toFixed(2) : 0;
+    setField('numHours', hours);
+  }
+}, [data.startTime, data.endTime]);
+
 
   const handleSpeakerChange = (index, field, value) => {
     const updated = [...(data.speakers || [])];
@@ -115,6 +134,25 @@ const handleChange = (e) => {
     showSuggestions: true,
     filteredSuggestions: filtered,
   }));
+};
+const to12HourFormat = (time24) => {
+  if (!time24) return '';
+  const [hourStr, minute] = time24.split(':');
+  let hour = parseInt(hourStr, 10);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  hour = hour % 12 || 12;
+  return `${hour}:${minute} ${ampm}`;
+};
+const handleStartTimeChange = (e) => {
+  const time24 = e.target.value; // "14:30"
+  const formatted = to12HourFormat(time24); // "2:30 PM"
+  setField('startTime', formatted);
+};
+
+const handleEndTimeChange = (e) => {
+  const time24 = e.target.value;
+  const formatted = to12HourFormat(time24);
+  setField('endTime', formatted);
 };
 
 const handleSelect = (name) => {
@@ -284,25 +322,25 @@ const handleRemove = (name) => {
     </div>
 
     {/* 5. Start Time, End Time, No. of Hours */}
-    <div>
-      <label className='block mb-1 font-medium text-gray-700'>Start Time</label>
-      <input
-         type='time'
-            value={data.startTime || ''}
-            onChange={e => setField('startTime', e.target.value)}
-        className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-      />
-    </div>
+   <div>
+  <label className='block mb-1 font-medium text-gray-700'>Start Time</label>
+  <input
+    type='time'
+    onChange={handleStartTimeChange}
+    className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+  />
+  <p className='text-sm text-gray-600 mt-1'>Selected: {data.startTime || 'N/A'}</p>
+</div>
 
-    <div>
-      <label className='block mb-1 font-medium text-gray-700'>End Time</label>
-      <input
-         type='time'
-            value={data.endTime || ''}
-            onChange={e => setField('endTime', e.target.value)}
-        className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
-      />
-    </div>
+<div>
+  <label className='block mb-1 font-medium text-gray-700'>End Time</label>
+  <input
+    type='time'
+    onChange={handleEndTimeChange}
+    className='w-full rounded border border-gray-400 p-2 text-gray-700 shadow-sm'
+  />
+  <p className='text-sm text-gray-600 mt-1'>Selected: {data.endTime || 'N/A'}</p>
+</div>
 
    <div>
   <label className='block mb-1 font-medium text-gray-700'>No. of Hours</label>
@@ -320,31 +358,33 @@ const handleRemove = (name) => {
 <div className="w-full max-w-md">
   <label className="block mb-1 font-medium text-gray-700">Funding Source</label>
   <select
-    value={data.fundingSource}
-    onChange={e => {
-      const selected = e.target.value;
-      setField('fundingSource', selected);
-      if (selected !== 'Others') {
-        setField('otherFunding', ''); // Clear otherFunding if not "Others"
-      }
-    }}
-    className="w-full rounded border border-gray-400 p-2 text-gray-800 shadow-sm focus:ring-2 focus:ring-blue-500"
-  >
-    <option value="">Select</option>
-    <option value="Management">Management</option>
-    <option value="Funding Agency">Funding Agency</option>
-    <option value="Others">Others</option>
-  </select>
+  value={data.fundingSource} // ✅ this auto-selects "Others"
+  onChange={e => {
+    const selected = e.target.value;
+    setField('fundingSource', selected);
+    if (selected !== 'Others') {
+      setField('otherFunding', ''); // ✅ clear only if not "Others"
+    }
+  }}
+  className="w-full rounded border border-gray-400 p-2 text-gray-800 shadow-sm focus:ring-2 focus:ring-blue-500"
+>
+  <option value="">Select</option>
+  <option value="Management">Management</option>
+  <option value="Funding Agency">Funding Agency</option>
+  <option value="Others">Others</option>
+</select>
+
 
   {data.fundingSource === 'Others' && (
-    <input
-      type="text"
-      value={data.otherFunding}
-      onChange={e => setField('otherFunding', e.target.value)}
-      placeholder="Specify Other Funding Source"
-      className="mt-2 w-full rounded border border-gray-400 p-2 text-gray-800 shadow-sm focus:ring-2 focus:ring-blue-500"
-    />
-  )}
+  <input
+    type="text"
+    value={data.otherFunding}
+    onChange={e => setField('otherFunding', e.target.value)}
+    placeholder="Specify Other Funding Source"
+    className="mt-2 w-full rounded border border-gray-400 p-2 text-gray-800 shadow-sm focus:ring-2 focus:ring-blue-500"
+  />
+)}
+
 </div>
 
 
@@ -362,18 +402,17 @@ const handleRemove = (name) => {
 {/* Faculty Coordinators */}
 <div className='relative'>
   <label className='block mb-1 font-medium text-gray-700'>Faculty Coordinators</label>
-<input
-  type='text'
-  onChange={handleChange}
-  className='w-full rounded border border-gray-400 p-2 text-black bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500'
-  placeholder='Type a name...'
-  value={facultyState.input || ''}
-/>
-
+  <input
+    type='text'
+    value={facultyState.input}
+    onChange={handleChange}
+    className='w-full rounded border border-gray-400 p-2 text-black bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500'
+    placeholder='Type a name...'
+  />
 
   {facultyState.showSuggestions && (
     <ul className='absolute z-10 mt-1 max-h-40 w-full overflow-y-auto rounded border border-gray-300 bg-white shadow'>
-      {facultyState.filteredSuggestions && facultyState.filteredSuggestions.length > 0 ? (
+      {facultyState.filteredSuggestions.length > 0 ? (
         facultyState.filteredSuggestions.map((fac, idx) => (
           <li
             key={idx}
@@ -389,25 +428,25 @@ const handleRemove = (name) => {
     </ul>
   )}
 
-  <div className='mt-2 flex flex-wrap gap-2'>
-    {(facultyState.selectedCoordinators || []).map((name, idx) => (
-      <span
+  {/* Display selected coordinators as removable tags */}
+  <div className="mt-2 flex flex-wrap gap-2">
+    {facultyState.selectedCoordinators.map((name, idx) => (
+      <div
         key={idx}
-        className='flex items-center gap-2 rounded-full bg-blue-100 px-3 py-1 text-blue-800'
+        className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full"
       >
-        {name}
+        <span>{name}</span>
         <button
-          type='button'
+          type="button"
           onClick={() => handleRemove(name)}
-          className='font-bold text-red-500 hover:text-red-700'
+          className="ml-2 text-red-500 hover:text-red-700"
         >
-          ×
+          &times;
         </button>
-      </span>
+      </div>
     ))}
   </div>
 </div>
-
 
 
   </div>

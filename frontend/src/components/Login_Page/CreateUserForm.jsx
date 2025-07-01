@@ -38,7 +38,7 @@ const [uploadedHeaders, setUploadedHeaders] = useState([]); // ✅ fix
 
   const [headerForm, setHeaderForm] = useState({
     college_name: '',
-    department: '',
+
     logo: null
   });
 
@@ -204,11 +204,11 @@ useEffect(() => {
 
   const handleHeaderFormChange = e => {
     const { name, value, files } = e.target;
-    setHeaderForm(prev => ({
-      ...prev,
-      [name]: files ? files[0] : value,
-      ...(name === 'college_name' && { department: '' })
-    }));
+   setHeaderForm(prev => ({
+  ...prev,
+  [name]: files ? files[0] : value
+}));
+
   };
 
   const handleHeaderSubmit = async e => {
@@ -218,7 +218,6 @@ useEffect(() => {
 
     const formData = new FormData();
     formData.append('college_name', headerForm.college_name);
-    formData.append('department', headerForm.department);
     formData.append('logo', headerForm.logo);
 
     try {
@@ -232,15 +231,13 @@ useEffect(() => {
       if (!res.ok) return setHeaderError(data.error || 'Failed to upload header');
 
       setHeaderMessage('✅ Header uploaded successfully!');
-      setHeaderForm({ college_name: '', department: '', logo: null });
+      setHeaderForm({ college_name: '', logo: null });
 
       setUploadedHeaders(prev => Array.isArray(prev) ? [...prev, {
   college_name: data.college_name || headerForm.college_name,
-  department: data.department || headerForm.department,
   logoUrl: data.logoUrl
 }] : [{
   college_name: data.college_name || headerForm.college_name,
-  department: data.department || headerForm.department,
   logoUrl: data.logoUrl
 }]);
 
@@ -335,93 +332,97 @@ useEffect(() => {
       )}
 
       {/* Upload College Header */}
-      {activeTab === 'header' && user?.role === 'admin' && (
-        <>
-          {headerError && <p className="text-red-600 text-center mb-4 font-medium">{headerError}</p>}
-          {headerMessage && <p className="text-green-600 text-center mb-4 font-medium">{headerMessage}</p>}
-        <form onSubmit={handleHeaderSubmit} className="space-y-6 text-lg">
-            <div>
-              <label className="block text-gray-800 font-semibold mb-1">College</label>
-              <select
-                name="college_name"
-                value={headerForm.college_name}
-                onChange={handleHeaderFormChange}
-                required
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 shadow-inner focus:outline-none focus:ring-2 focus:ring-green-500"
-              >
-                <option value="">Select College</option>
-                {Object.keys(colleges).map(college => (
-                  <option key={college} value={college}>{college}</option>
-                ))}
-              </select>
+    {/* Upload College Header */}
+{activeTab === 'header' && user?.role === 'admin' && (
+  <>
+    {headerError && <p className="text-red-600 text-center mb-4 font-medium">{headerError}</p>}
+    {headerMessage && <p className="text-green-600 text-center mb-4 font-medium">{headerMessage}</p>}
+    
+    <form onSubmit={handleHeaderSubmit} className="space-y-6 text-lg">
+      <div>
+        <label className="block text-gray-800 font-semibold mb-1">College</label>
+        <select
+          name="college_name"
+          value={headerForm.college_name}
+          onChange={handleHeaderFormChange}
+          required
+          className="w-full px-4 py-3 rounded-xl border border-gray-300 shadow-inner focus:outline-none focus:ring-2 focus:ring-green-500"
+        >
+          <option value="">Select College</option>
+          {Object.keys(colleges).map(college => (
+            <option key={college} value={college}>{college}</option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-gray-800 font-semibold mb-1">Logo (PNG/JPG)</label>
+        <input
+          type="file"
+          name="logo"
+          accept=".png,.jpg,.jpeg"
+          onChange={handleHeaderFormChange}
+          required
+          className="w-full px-4 py-2 border border-gray-300 rounded-xl bg-white shadow-inner"
+        />
+      </div>
+
+      <button
+        type="submit"
+        className="w-full bg-gradient-to-r from-green-600 to-green-800 hover:from-green-700 hover:to-green-900 text-white text-lg font-semibold py-3 rounded-xl shadow-lg transition"
+      >
+        🏫 Upload Header
+      </button>
+    </form>
+
+    {uploadedHeaders.length > 0 && (
+      <div className="mt-10 px-4">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">📌 Uploaded Headers</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {uploadedHeaders.map((header, index) => (
+            <div key={index} className="border p-4 rounded-xl shadow-sm bg-white text-center relative">
+              <img src={header.logoUrl} alt="Logo" className="h-24 mx-auto mb-3 object-contain" />
+              <p className="text-gray-800 font-semibold">🏫 {header.college_name}</p>
+
+              {editHeaderIndex === index ? (
+                <div className="mt-3 space-y-2">
+                  <input
+                    type="file"
+                    onChange={e => setEditLogoFile(e.target.files[0])}
+                    className="w-full text-sm"
+                    accept=".png,.jpg,.jpeg"
+                  />
+                  <button
+                    onClick={() => handleUpdateHeader(index)}
+                    className="w-full bg-green-600 text-white px-3 py-1 rounded-full text-sm hover:bg-green-700"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setEditHeaderIndex(null)}
+                    className="w-full text-red-500 text-sm mt-1"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <div className="absolute top-2 right-2 flex gap-2">
+                  <button onClick={() => setEditHeaderIndex(index)} className="text-blue-600 hover:text-blue-800">
+                    <PencilSquareIcon className="h-5 w-5" />
+                  </button>
+                  <button onClick={() => handleDeleteHeader(header.college_name)} className="text-red-600 hover:text-red-800">
+                    <TrashIcon className="h-5 w-5" />
+                  </button>
+                </div>
+              )}
             </div>
-
-            {headerForm.college_name && (
-              <div>
-                <label className="block text-gray-800 font-semibold mb-1">Department</label>
-                <select
-                  name="department"
-                  value={headerForm.department}
-                  onChange={handleHeaderFormChange}
-                  required
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 shadow-inner focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
-                  <option value="">Select Department</option>
-                  {colleges[headerForm.college_name].map(dept => (
-                    <option key={dept} value={dept}>{dept}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <div>
-              <label className="block text-gray-800 font-semibold mb-1">Logo (PNG/JPG)</label>
-              <input
-                type="file"
-                name="logo"
-                accept=".png,.jpg,.jpeg"
-                onChange={handleHeaderFormChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-xl bg-white shadow-inner"
-              />
-            </div>
-            <button type="submit" className="w-full bg-gradient-to-r from-green-600 to-green-800 hover:from-green-700 hover:to-green-900 text-white text-lg font-semibold py-3 rounded-xl shadow-lg transition">
-              🏫 Upload Header
-            </button>
-          </form>
-          {uploadedHeaders.length > 0 && (
-        <div className="mt-10 px-4">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">📌 Uploaded Headers</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {uploadedHeaders.map((header, index) => (
-              <div key={index} className="border p-4 rounded-xl shadow-sm bg-white text-center relative">
-                <img src={header.logoUrl} alt="Logo" className="h-24 mx-auto mb-3 object-contain" />
-                <p className="text-gray-800 font-semibold">🏫 {header.college_name}</p>
-                <p className="text-gray-600">📚 {header.department}</p>
-
-                {editHeaderIndex === index ? (
-                  <div className="mt-3 space-y-2">
-                    <input type="file" onChange={e => setEditLogoFile(e.target.files[0])} className="w-full text-sm" accept=".png,.jpg,.jpeg" />
-                    <button onClick={() => handleUpdateHeader(index)} className="w-full bg-green-600 text-white px-3 py-1 rounded-full text-sm hover:bg-green-700">Save</button>
-                    <button onClick={() => setEditHeaderIndex(null)} className="w-full text-red-500 text-sm mt-1">Cancel</button>
-                  </div>
-                ) : (
-                  <div className="absolute top-2 right-2 flex gap-2">
-                    <button onClick={() => setEditHeaderIndex(index)} className="text-blue-600 hover:text-blue-800">
-                      <PencilSquareIcon className="h-5 w-5" />
-                    </button>
-                    <button onClick={() => handleDeleteHeader(header.college_name)} className="text-red-600 hover:text-red-800">
-                      <TrashIcon className="h-5 w-5" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+          ))}
         </div>
-      )}
-        </>
-      )}
+      </div>
+    )}
+  </>
+)}
+
       
 
       {/* User List */}

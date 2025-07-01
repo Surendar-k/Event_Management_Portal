@@ -8,6 +8,9 @@ const authMiddleware = require("../middleware/authMiddleware");
 const eventController = require("../controllers/eventController");
 const { requireRole } = require("../middleware/requireRole"); // ✅ FIX
 const db = require("../config/db"); // ✅ ADD THIS at the top
+const fs = require("fs");
+const util = require("util");
+const unlinkAsync = util.promisify(fs.unlink);
 
 const headerStorage = multer.diskStorage({
   destination: function (_, __, cb) {
@@ -38,10 +41,10 @@ router.post(
   requireRole(["admin"]),
   headerUpload.single("logo"),
   async (req, res) => {
-    const { college_name, department } = req.body;
+    const { college_name } = req.body;
     const logo = req.file;
 
-    if (!college_name || !department || !logo) {
+    if (!college_name || !logo) {
       return res.status(400).json({ error: "All fields are required" });
     }
 
@@ -65,7 +68,7 @@ router.post(
         "INSERT INTO event_info (faculty_id, eventinfo, header_image_url) VALUES (?, ?, ?)",
         [
           req.session.user.faculty_id,
-          JSON.stringify({ college_name, department }),
+          JSON.stringify({ college_name }),
           imageUrl,
         ]
       );
@@ -74,7 +77,7 @@ router.post(
         message: "Header uploaded successfully",
         logoUrl: imageUrl,
         college_name,
-        department,
+        
       });
     } catch (err) {
       console.error("❌ Upload header error:", err);
@@ -108,14 +111,14 @@ router.get(
         }
 
         const collegeKey = (eventInfo.college_name || '').trim().toLowerCase();
-        const deptKey = (eventInfo.department || '').trim().toLowerCase();
-        const key = `${collegeKey}_${deptKey}`; // ✅ normalized composite key
+       
+        const key = `${collegeKey}`; // ✅ normalized composite key
 
         return {
           key, // ✅ return the key used by frontend
           logoUrl: row.header_image_url,
           college_name: eventInfo.college_name || '',
-          department: eventInfo.department || ''
+          
         };
       });
 
@@ -143,15 +146,29 @@ router.put(
     const imageUrl = `http://localhost:5000/uploads/headers/${logo.filename}`;
 
     try {
-      // ✅ Update logo URL in DB
+      // 1️⃣ Get existing logo from DB
+      const [rows] = await db.query(
+        "SELECT header_image_url FROM event_info WHERE JSON_EXTRACT(eventinfo, '$.college_name') = ?",
+        [college_name]
+      );
+
+      if (rows.length === 0) {
+        return res.status(404).json({ error: "Header not found for the given college" });
+      }
+
+      // 2️⃣ Delete the old file from disk
+      const oldLogoUrl = rows[0].header_image_url;
+      const oldFilePath = path.join(__dirname, "..", "uploads", "headers", path.basename(oldLogoUrl));
+
+      await unlinkAsync(oldFilePath).catch((err) => {
+        console.warn("⚠️ Could not delete old logo:", err.message);
+      });
+
+      // 3️⃣ Update DB with new image URL
       const [result] = await db.query(
         "UPDATE event_info SET header_image_url = ? WHERE JSON_EXTRACT(eventinfo, '$.college_name') = ?",
         [imageUrl, college_name]
       );
-
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ error: "Header not found for the given college" });
-      }
 
       res.json({
         message: "Header updated successfully",
@@ -163,6 +180,7 @@ router.put(
     }
   }
 );
+
 router.delete(
   "/admin/uploaded-headers/:college_name",
   authMiddleware.isAuthenticated,
@@ -171,15 +189,29 @@ router.delete(
     const { college_name } = req.params;
 
     try {
-      // ✅ Delete entry based on college name
+      // 1️⃣ Fetch the existing record to get the image URL
+      const [rows] = await db.query(
+        "SELECT header_image_url FROM event_info WHERE JSON_EXTRACT(eventinfo, '$.college_name') = ?",
+        [college_name]
+      );
+
+      if (rows.length === 0) {
+        return res.status(404).json({ error: "Header not found for the given college" });
+      }
+
+      const logoUrl = rows[0].header_image_url;
+      const filePath = path.join(__dirname, "..", "uploads", "headers", path.basename(logoUrl));
+
+      // 2️⃣ Delete the record from DB
       const [result] = await db.query(
         "DELETE FROM event_info WHERE JSON_EXTRACT(eventinfo, '$.college_name') = ?",
         [college_name]
       );
 
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ error: "Header not found for the given college" });
-      }
+      // 3️⃣ Delete the file from disk
+      await unlinkAsync(filePath).catch((err) => {
+        console.warn("⚠️ File deletion failed:", err.message);
+      });
 
       res.json({ message: "Header deleted successfully" });
     } catch (err) {
@@ -188,6 +220,7 @@ router.delete(
     }
   }
 );
+
 
 
 // ========== Auth Routes ==========

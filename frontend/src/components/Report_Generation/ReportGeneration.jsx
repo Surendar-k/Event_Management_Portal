@@ -32,8 +32,8 @@ const ReportGeneration = () => {
       const headerMap = {};
       res.data.forEach(header => {
         const college = (header.college_name || '').trim().toLowerCase();
-        const dept = (header.department || '').trim().toLowerCase();
-        const key = `${college}_${dept}`;
+      
+        const key = `${college}`;
         headerMap[key] = header.logoUrl;
       });
       setUploadedHeaderLogos(headerMap);
@@ -201,13 +201,8 @@ const generateCircularReport = async (event) => {
   const doc = new jsPDF();
   const id = event.eventId;
   const info = event?.eventData?.eventInfo || {};
-console.log('event:', event);
-console.log('eventData:', event.eventData);
-console.log('eventInfo:', event.eventData?.eventInfo);
-console.log('selectedCoordinators:', event.eventData?.eventInfo?.selectedCoordinators);
-console.log('tasks:', event.eventData?.tasks);
 
-  const key = `${(info.selectedCollege || '').trim().toLowerCase()}_${(info.selectedDepartment || '').trim().toLowerCase()}`;
+  const key = `${(info.selectedCollege || '').trim().toLowerCase()}`;
   const logoUrl = eventReportLogos[id] || uploadedHeaderLogos[key];
 
   const marginX = 20;
@@ -216,17 +211,27 @@ console.log('tasks:', event.eventData?.tasks);
   await renderLogo(doc, logoUrl);
   y = 45;
 
-  doc.setFont('times', 'normal');
-  doc.setFontSize(12);
-  doc.text(info.selectedCollege || 'College Name', 105, y, { align: 'center' });
 
+
+// Circular Date (top right corner - after logo)
+const savedCircularDate = event?.report?.circularDate;
+const circularDate = savedCircularDate
+  ? new Date(savedCircularDate).toLocaleDateString('en-GB')
+  : new Date().toLocaleDateString('en-GB');
+
+doc.setFont('times', 'italic');
+doc.setFontSize(11);
+doc.text(`Circular Date: ${circularDate}`, doc.internal.pageSize.width - marginX, y, {
+  align: 'right'
+});
   y += 15;
-doc.setFont('times', 'bold');
-doc.text('Event Circular Report', 105, y, { align: 'center' });
+  doc.setFont('times', 'bold');
+  doc.text('Event Circular Report', 105, y, { align: 'center' });
 
   y += 10;
   doc.setFont('times', 'normal');
 
+  // Event basic info
   autoTable(doc, {
     startY: y,
     margin: { left: marginX, right: marginX },
@@ -252,65 +257,121 @@ doc.text('Event Circular Report', 105, y, { align: 'center' });
       lineColor: [0, 0, 0],
       lineWidth: 0.1
     },
+     columnStyles: {
+    0: { cellWidth: 85 }, // Column 1 (Field / Incharge / Date)
+    1: { cellWidth: 85 }  // Column 2 (Details / Names / From Time)
+  },
     head: [['Field', 'Details']],
     body: [
       ['Event Title', info.title || 'N/A'],
-      ['Department', info.selectedDepartment || 'N/A'],
-      ['Venue / Mode / Type',
-        `${info.venue || 'N/A'} , ${info.mode || 'N/A'} , ${info.type || 'N/A'}`],
-      ['Start Date - End Date',
-        `${event.startDate || 'N/A'} - ${event.endDate || 'N/A'}`],
-      ['Google Form', formLinks[id] || 'N/A'],
+      ['Organising Department', info.selectedDepartment || 'N/A'],
+      ['Venue / Mode / Type', `${info.venue || 'N/A'} , ${info.mode || 'N/A'} , ${info.type || 'N/A'}`],
+      ['Start Date - End Date', `${event.startDate || 'N/A'} - ${event.endDate || 'N/A'}`],
+      ['Registration Form', formLinks[id] || 'N/A'],
       ['Feedback Form', feedbackLinks[id] || 'N/A']
     ]
   });
-const leadCoordinator = event.faculty_name || 'Not Assigned';
 
-const facultyCoordinators = Array.isArray(event?.eventData?.eventInfo?.facultyCoordinators)
-  ? event.eventData.eventInfo.facultyCoordinators.join(', ')
-  : 'Not Assigned';
+  
 
-// Extend the table with coordinators
-autoTable(doc, {
-  startY: doc.lastAutoTable.finalY + 10,
-  margin: { left: marginX, right: marginX },
-  styles: {
-    fontSize: 12,
-    font: 'times',
-    lineColor: [0, 0, 0],
-    lineWidth: 0.1,
-    fillColor: false
+  // Coordinators section
+  const leadCoordinator = event.faculty_name || 'Not Assigned';
+  const facultyCoordinators = Array.isArray(info.facultyCoordinators)
+    ? info.facultyCoordinators.join(', ')
+    : 'Not Assigned';
+
+  autoTable(doc, {
+    startY: doc.lastAutoTable.finalY + 10,
+    margin: { left: marginX, right: marginX },
+    styles: {
+      fontSize: 12,
+      font: 'times',
+      lineColor: [0, 0, 0],
+      lineWidth: 0.1,
+      fillColor: false
+    },
+    headStyles: {
+      fontStyle: 'bold',
+      fillColor: false,
+      textColor: 0,
+      halign: 'left',
+      lineColor: [0, 0, 0],
+      lineWidth: 0.1
+    },
+    bodyStyles: {
+      fontStyle: 'normal',
+      fillColor: false,
+      textColor: 0,
+      lineColor: [0, 0, 0],
+      lineWidth: 0.1
+    },
+     columnStyles: {
+    0: { cellWidth: 85 }, // Column 1 (Field / Incharge / Date)
+    1: { cellWidth: 85 }  // Column 2 (Details / Names / From Time)
   },
-  headStyles: {
-    fontStyle: 'bold',
-    fillColor: false,
-    textColor: 0,
-    halign: 'left',
-    lineColor: [0, 0, 0],
-    lineWidth: 0.1
+    head: [['Incharge', 'Names']],
+    body: [
+      ['Lead Coordinator', leadCoordinator],
+      ['Faculty Coordinators', facultyCoordinators]
+    ]
+  });
+// Technical Session Section
+const sessions = event?.eventData?.agenda?.sessions || [];
+
+if (Array.isArray(sessions) && sessions.length > 0) {
+  const sessionHeadingY = doc.lastAutoTable?.finalY + 10;
+
+  doc.setFont('times', 'bold');
+  doc.setFontSize(13);
+  doc.text('Technical Sessions', marginX, sessionHeadingY);
+
+  autoTable(doc, {
+    startY: sessionHeadingY + 2,
+    margin: { left: marginX, right: marginX },
+    styles: {
+      fontSize: 12,
+      font: 'times',
+      lineColor: [0, 0, 0],
+      lineWidth: 0.1,
+      fillColor: false
+    },
+    headStyles: {
+      fontStyle: 'bold',
+      fillColor: false,
+      textColor: 0,
+      halign: 'left',
+      lineColor: [0, 0, 0],
+      lineWidth: 0.1
+    },
+    bodyStyles: {
+      fontStyle: 'normal',
+      fillColor: false,
+      textColor: 0,
+      lineColor: [0, 0, 0],
+      lineWidth: 0.1
+    },
+      columnStyles: {
+    0: { cellWidth: 34 },
+    1: { cellWidth: 34 },
+    2: { cellWidth: 34 },
+    3: { cellWidth: 34 },
+    4: { cellWidth: 34 }
   },
-  bodyStyles: {
-    fontStyle: 'normal',
-    fillColor: false,
-    textColor: 0,
-    lineColor: [0, 0, 0],
-    lineWidth: 0.1
-  },
-  head: [['Incharge', 'Names']],
-  body: [
-    ['Lead Coordinator', leadCoordinator],
-    ['Faculty Coordinators', facultyCoordinators]
-  ]
-});
+    head: [['Date', 'From Time', 'To Time', 'Topic', 'Speaker']],
+    body: sessions.map(session => [
+      session.sessionDate || 'N/A',
+      session.fromTime || 'N/A',
+      session.toTime || 'N/A',
+      session.topic || 'N/A',
+      session.speakerName || 'N/A'
+    ])
+  });
+}
 
-y = doc.lastAutoTable.finalY + 10;
+  // Circular content section
+  y = doc.lastAutoTable.finalY + 10;
 
-
-  // Circular Content
-  const circularContent = doc.splitTextToSize(
-    circularTexts[id] || 'No content provided.',
-    170
-  );
+  const circularContent = doc.splitTextToSize(circularTexts[id] || 'The requirements and other details are given above.', 170);
 
   doc.setFont('times', 'bold');
   doc.text('Circular Content:', marginX, y);
@@ -318,7 +379,24 @@ y = doc.lastAutoTable.finalY + 10;
 
   doc.setFont('times', 'normal');
   doc.text(circularContent, marginX, y);
+// Signature footer section
+const pageHeight = doc.internal.pageSize.height;
+const footerY = pageHeight - 20; // 40 units from bottom
 
+doc.setFont('times', 'normal');
+doc.setFontSize(12);
+
+// Signature Lines
+doc.line(marginX, footerY, marginX + 50, footerY); // HoD
+doc.line(85, footerY, 85 + 50, footerY); // Principal
+doc.line(150, footerY, 150 + 40, footerY); // CSO
+
+// Labels
+doc.text('HoD', marginX + 15, footerY + 7);
+doc.text('Principal', 85 + 10, footerY + 7);
+doc.text('CSO', 150 + 10, footerY + 7);
+
+  // Save PDF
   doc.save(`circular_${id}.pdf`);
 };
 
@@ -586,7 +664,7 @@ return (
               {/* Header Preview */}
               {(() => {
                 const info = selectedEvent.eventData?.eventInfo || {};
-                const key = `${info.college_name}_${info.department}`;
+                const key = `${info.college_name}`;
                 const logo =
                   eventReportLogos[selectedEvent.eventId] ||
                   uploadedHeaderLogos[key];

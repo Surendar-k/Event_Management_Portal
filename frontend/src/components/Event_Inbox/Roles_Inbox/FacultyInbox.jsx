@@ -133,7 +133,10 @@ const FacultyInbox = () => {
         <p className='text-center text-lg text-gray-500'>No matching events found.</p>
       ) : (
         <div className='space-y-10'>
-          {filteredEvents.map((ev, index) => (
+        {filteredEvents
+  .filter(ev => Object.keys(ev.approvals || {}).length > 0) // ✅ Filter only events with approvals
+  .map((ev, index) => (
+
             <div
               key={ev.id}
               className={`rounded-4xl border border-gray-200 bg-gradient-to-br from-white via-gray-100 to-gray-200 p-6 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.01] ${eventColors[index % eventColors.length]}`}

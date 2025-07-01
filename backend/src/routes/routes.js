@@ -11,6 +11,26 @@ const db = require("../config/db"); // ✅ ADD THIS at the top
 const fs = require("fs");
 const util = require("util");
 const unlinkAsync = util.promisify(fs.unlink);
+const brochureStorage = multer.diskStorage({
+  destination: function (_, __, cb) {
+    cb(null, path.join(__dirname, "..", "uploads", "brochures")); // Folder for brochures
+  },
+  filename: function (_, file, cb) {
+    const uniqueName = Date.now() + "-" + file.originalname;
+    cb(null, uniqueName);
+  }
+});
+
+const brochureUpload = multer({
+  storage: brochureStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype !== "application/pdf") {
+      return cb(new Error("Only PDF files allowed"));
+    }
+    cb(null, true);
+  }
+});
 
 const headerStorage = multer.diskStorage({
   destination: function (_, __, cb) {
@@ -85,9 +105,6 @@ router.post(
     }
   }
 );
-
-// GET all header images (admin only)
-
 router.get(
   '/admin/uploaded-headers',
   authMiddleware.isAuthenticated,
@@ -129,7 +146,6 @@ router.get(
     }
   }
 );
-
 router.put(
   "/admin/uploaded-headers/:college_name",
   authMiddleware.isAuthenticated,
@@ -180,7 +196,6 @@ router.put(
     }
   }
 );
-
 router.delete(
   "/admin/uploaded-headers/:college_name",
   authMiddleware.isAuthenticated,
@@ -240,6 +255,7 @@ router.post(
 router.post(
   "/submit-event",
   authMiddleware.isAuthenticated,
+   brochureUpload.single("brochure"), 
   eventController.saveEventInfo
 );
 
@@ -265,6 +281,7 @@ router.delete(
 router.put(
   "/events/:eventId",
   authMiddleware.isAuthenticated,
+   brochureUpload.single("brochure"),
   eventController.saveEventInfo
 );
 router.get(

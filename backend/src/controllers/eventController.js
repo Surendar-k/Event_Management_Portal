@@ -23,7 +23,7 @@ const tryParse = (val, fallback = {}) => {
   }
 }
 
-//FIXME: if already exists update not insert
+
 exports.saveEventInfo = async (req, res) => {
   try {
     const {
@@ -36,39 +36,75 @@ exports.saveEventInfo = async (req, res) => {
       approvals,
       reviews,
       event_id
-    } = req.body
+    } = req.body;
 
-    const faculty_id = req.session.user?.faculty_id
-    const role = req.session.user?.role
-    const canApprove = ['hod', 'dean', 'principal'].includes(role)
+    const brochureFile = req.file;
+    const brochureUrl = brochureFile
+      ? `http://localhost:5000/uploads/brochures/${brochureFile.filename}`
+      : null;
+
+    // Add brochure URL to eventinfo
+   if (brochureUrl) {
+  eventinfo.brochureUrl = brochureUrl;
+} else if (event_id) {
+  // Preserve the old brochureUrl when editing and no new file uploaded
+  const [existing] = await db.execute(
+    'SELECT * FROM event_info WHERE event_id = ?',
+    [event_id]
+  );
+  if (existing.length > 0) {
+    const oldBrochureUrl = parseJSONField(existing[0].eventinfo).brochureUrl;
+    if (oldBrochureUrl) {
+      eventinfo.brochureUrl = oldBrochureUrl;
+    }
+  }
+}
+
+
+    const faculty_id = req.session.user?.faculty_id;
+    const role = req.session.user?.role;
+    const canApprove = ['hod', 'dean', 'principal'].includes(role);
 
     if (!faculty_id && !canApprove) {
-      return res.status(401).json({error: 'Unauthorized'})
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     if (event_id) {
+      // ✅ Update existing event
       const [existing] = await db.execute(
         'SELECT * FROM event_info WHERE event_id = ?',
         [event_id]
-      )
+      );
       if (existing.length === 0)
-        return res.status(404).json({error: 'Event not found'})
+        return res.status(404).json({ error: 'Event not found' });
 
-      const old = existing[0]
+      const old = existing[0];
 
-      const updatedEventInfo = {...parseJSONField(old.eventinfo), ...eventinfo}
-      const updatedAgenda = {...parseJSONField(old.agenda), ...agenda}
+      const updatedEventInfo = {
+        ...parseJSONField(old.eventinfo),
+        ...eventinfo
+      };
+
+      // Ensure brochureUrl is added/updated
+      if (brochureUrl) {
+        updatedEventInfo.brochureUrl = brochureUrl;
+      }
+
+      const updatedAgenda = {
+        ...parseJSONField(old.agenda),
+        ...agenda
+      };
       const updatedFinance = {
         ...parseJSONField(old.financialplanning),
         ...financialplanning
-      }
+      };
       const updatedFood = {
         ...parseJSONField(old.foodandtransport),
         ...foodandtransport
-      }
-      const updatedChecklist = checklist ?? parseJSONField(old.checklist, [])
-      const updatedApprovals = approvals ?? parseJSONField(old.approvals, {})
-      const updatedReviews = reviews ?? parseJSONField(old.reviews, {})
+      };
+      const updatedChecklist = checklist ?? parseJSONField(old.checklist, []);
+      const updatedApprovals = approvals ?? parseJSONField(old.approvals, {});
+      const updatedReviews = reviews ?? parseJSONField(old.reviews, {});
 
       await db.execute(
         `UPDATE event_info SET
@@ -86,14 +122,18 @@ exports.saveEventInfo = async (req, res) => {
           JSON.stringify(updatedReviews),
           event_id
         ]
-      )
+      );
 
-      return res.json({message: 'Event updated successfully', event_id})
+      return res.json({ message: 'Event updated successfully', event_id });
     } else {
+      // ✅ Insert new event
       if (!faculty_id) {
-        return res
-          .status(403)
-          .json({error: 'Only faculty can create new events'})
+        return res.status(403).json({ error: 'Only faculty can create new events' });
+      }
+
+      // Add brochureUrl to new eventinfo if available
+      if (brochureUrl) {
+        eventinfo.brochureUrl = brochureUrl;
       }
 
       const [result] = await db.execute(
@@ -112,18 +152,18 @@ exports.saveEventInfo = async (req, res) => {
           JSON.stringify(approvals ?? {}),
           JSON.stringify(reviews ?? {})
         ]
-      )
+      );
 
       return res.json({
         message: 'Event created successfully',
         event_id: result.insertId
-      })
+      });
     }
   } catch (error) {
-    console.error('❌ Error saving event info:', error)
-    res.status(500).json({error: 'Internal server error'})
+    console.error('❌ Error saving event info:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-}
+};
 
 
 

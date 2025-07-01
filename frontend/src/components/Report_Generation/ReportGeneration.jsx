@@ -406,14 +406,16 @@ const generateReportCompletion = async (event) => {
   const id = event.eventId;
   const info = event.eventData?.eventInfo || {};
 
-  const key = `${(info.selectedCollege || '').trim().toLowerCase()}_${(info.selectedDepartment || '').trim().toLowerCase()}`;
+
+  const key = `${(info.selectedCollege || '').trim().toLowerCase()}`;
   const logoUrl = eventReportLogos[id] || uploadedHeaderLogos[key];
+
 
   await renderLogo(doc, logoUrl);
 
   doc.setFontSize(12);
   doc.setFont('times', 'bold');
-  doc.text(info.selectedCollege || 'College Name', 105, 45, { align: 'center' });
+  
 
   doc.setFont('times', 'bold');
   doc.text('Event Report Completion', 105, 55, { align: 'center' });
@@ -437,6 +439,10 @@ const generateReportCompletion = async (event) => {
       fontStyle: 'normal',
       textColor: 0
     },
+        columnStyles: {
+    0: { cellWidth: 85 }, // Column 1 (Field / Incharge / Date)
+    1: { cellWidth: 85 }  // Column 2 (Details / Names / From Time)
+  },
     head: [['Field', 'Value']],
     body: [
       ['Title', info.title || 'N/A'],
@@ -484,6 +490,10 @@ const generateReportCompletion = async (event) => {
       fontStyle: 'normal',
       textColor: 0
     },
+        columnStyles: {
+    0: { cellWidth: 85 }, // Column 1 (Field / Incharge / Date)
+    
+  },
     head: [['Particular', 'Estimated (Rs.)', 'Actual (Rs.)']],
     body: [
       ...budgetItems.map(item => [
@@ -508,17 +518,52 @@ const generateReportCompletion = async (event) => {
     doc.text('Photographs', 20, imgY);
     imgY += 8;
 
-    imgData.forEach((img, i) => {
-      const x = 20 + ((i % 3) * 60);
-      const rowY = imgY + Math.floor(i / 3) * 50;
-      doc.addImage(img, 'JPEG', x, rowY, 50, 40);
-    });
+imgData.forEach((img, i) => {
+  const x = 20 + ((i % 4) * 45); // 4 images per row
+  const rowY = imgY + Math.floor(i / 4) * 45; // space between rows
+  doc.addImage(img, 'JPEG', x, rowY, 40, 35); // width: 40, height: 35
+});
+
   } else {
     doc.setFont('times', 'bold');
     doc.text('Photographs', 20, lastY + 15);
     doc.setFont('times', 'normal');
     doc.text('No images uploaded.', 20, lastY + 23);
-  }
+  }if (doc.lastAutoTable.finalY > doc.internal.pageSize.height - 50) {
+  doc.addPage();
+}
+// Boxed Signature Footer Section (2x2 table)
+// Boxed Signature Footer Section with space for "Sign" above the label
+const footerTopY = doc.internal.pageSize.height - 60;
+const cellHeight = 20;
+const cellWidth = 85;
+const startX = 20;
+
+doc.setFont('times', 'normal');
+doc.setFontSize(12);
+
+const labels = [
+  ['Faculty Coordinator', 'HoD'],
+  ['Principal', 'CSO']
+];
+
+labels.forEach((row, rowIndex) => {
+  row.forEach((label, colIndex) => {
+    const x = startX + colIndex * cellWidth;
+    const y = footerTopY + rowIndex * cellHeight;
+
+    // Draw rectangle
+    doc.rect(x, y, cellWidth, cellHeight);
+
+    // Draw 'Sign' text above label
+    doc.text('', x + cellWidth / 2, y + 8, { align: 'center' });
+
+    // Draw designation below
+    doc.text(label, x + cellWidth / 2, y + 16, { align: 'center' });
+  });
+});
+
+
 
   doc.save(`report_completion_${id}.pdf`);
 };

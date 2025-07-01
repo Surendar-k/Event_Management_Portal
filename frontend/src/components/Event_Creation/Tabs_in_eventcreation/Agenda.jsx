@@ -9,7 +9,8 @@ const Agenda = ({ data, onChange, eventStartDate, eventEndDate }) => {
     topic: '',
     speakerName: ''
   });
-
+  const [showPreview, setShowPreview] = useState(false);
+  
   const handleChange = (field, value) => {
     onChange({ ...data, [field]: value });
   };
@@ -93,31 +94,56 @@ const Agenda = ({ data, onChange, eventStartDate, eventEndDate }) => {
         </p>
       </section>
 
-      {/* Brochure Upload Section */}
-      <section className='rounded-lg border border-gray-300 bg-gray-50 p-8 shadow-sm'>
-        <h2 className='mb-4 border-b border-[#575757] pb-2 text-2xl font-bold text-gray-900'>
-          Proposed Event Brochure/Poster (PDF upload)
-        </h2>
-        <div className='flex items-center gap-4'>
-          <label
-            htmlFor='brochure-upload'
-            className='cursor-pointer rounded-lg bg-black px-6 py-2 font-semibold text-white shadow transition select-none hover:bg-gray-900'
-          >
-            Choose File
-          </label>
-          <input
-            id='brochure-upload'
-            type='file'
-            accept='application/pdf'
-            onChange={handleBrochureUpload}
-            className='hidden'
-          />
-          <span className='text-gray-700 italic'>
-            {data.brochure ? data.brochure.name : 'No file chosen'}
-          </span>
-        </div>
-      </section>
+     <section className='rounded-lg border border-gray-300 bg-gray-50 p-8 shadow-sm'>
+      <h2 className='mb-4 border-b border-[#575757] pb-2 text-2xl font-bold text-gray-900'>
+        Proposed Event Brochure/Poster (PDF upload)
+      </h2>
 
+      <div className='flex items-center gap-4 mb-4'>
+        <label
+          htmlFor='brochure-upload'
+          className='cursor-pointer rounded-lg bg-black px-6 py-2 font-semibold text-white shadow transition select-none hover:bg-gray-900'
+        >
+          Choose File
+        </label>
+        <input
+          id='brochure-upload'
+          type='file'
+          accept='application/pdf'
+          onChange={handleBrochureUpload}
+          className='hidden'
+        />
+        <span className='text-gray-700 italic'>
+          {data.brochure ? data.brochure.name : data.brochureUrl ? 'Brochure uploaded' : 'No file chosen'}
+        </span>
+
+        {(data.brochure || data.brochureUrl) && (
+          <button
+            type='button'
+            onClick={() => setShowPreview(prev => !prev)}
+            className='ml-2 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 transition'
+          >
+            {showPreview ? 'Hide Preview' : 'Preview Brochure'}
+          </button>
+        )}
+      </div>
+
+      {showPreview && (
+  <div className='mt-4 border rounded shadow-inner'>
+    <embed
+      src={
+        data.brochure instanceof File
+          ? URL.createObjectURL(data.brochure)
+          : data.brochureUrl
+      }
+      type="application/pdf"
+      width="100%"
+      height="500px"
+    />
+  </div>
+)}
+
+    </section>
       {/* Technical Session Details Section */}
       <section className='rounded-lg border border-gray-300 bg-gray-50 p-8 shadow-sm'>
         <h2 className='mb-4 border-b border-[#575757] pb-2 text-2xl font-bold text-gray-900'>

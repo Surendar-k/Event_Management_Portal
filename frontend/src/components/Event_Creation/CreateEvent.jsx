@@ -108,44 +108,55 @@ const handleSaveAll = async () => {
       ? eventInfo.otherFunding
       : eventInfo.fundingSource;
 
-  const payload = {
-    eventinfo: {
-      ...eventInfo,
-      fundingSource // overwrite with actual value
-    },
-    agenda,
-    financialplanning: financialPlanning,
-    foodandtransport: foodAndTransport,
-    checklist,
-    ...(isEditMode && { event_id: parseInt(eventId) }),
+  // Prepare FormData
+  const formData = new FormData();
+  const finalEventInfo = {
+    ...eventInfo,
+    fundingSource, // overwrite with actual value
   };
+
+  formData.append("eventinfo", JSON.stringify(finalEventInfo));
+  formData.append("agenda", JSON.stringify(agenda));
+  formData.append("financialplanning", JSON.stringify(financialPlanning));
+  formData.append("foodandtransport", JSON.stringify(foodAndTransport));
+  formData.append("checklist", JSON.stringify(checklist));
+
+  // Include brochure if present
+  if (agenda.brochure) {
+    formData.append("brochure", agenda.brochure);
+  }
+
+  // Include event ID if editing
+  if (isEditMode) {
+    formData.append("event_id", parseInt(eventId));
+  }
 
   const url = isEditMode
     ? `http://localhost:5000/api/events/${eventId}`
-    : 'http://localhost:5000/api/submit-event';
+    : "http://localhost:5000/api/submit-event";
 
-  const method = isEditMode ? 'PUT' : 'POST';
+  const method = isEditMode ? "PUT" : "POST";
 
   try {
     const res = await fetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(payload),
+      credentials: "include",
+      body: formData,
     });
 
     const result = await res.json();
 
     if (res.ok) {
-      alert(isEditMode ? 'Event updated successfully!' : 'Event created successfully!');
+      alert(isEditMode ? "Event updated successfully!" : "Event created successfully!");
     } else {
       alert(`Save failed: ${result.error}`);
     }
   } catch (err) {
-    console.error('Save failed:', err);
-    alert('An error occurred while saving the event.');
+    console.error("Save failed:", err);
+    alert("An error occurred while saving the event.");
   }
 };
+
 
   const renderActiveTab = () => {
     switch (activeTab) {

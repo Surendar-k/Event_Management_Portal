@@ -167,53 +167,54 @@ exports.saveEventInfo = async (req, res) => {
 
 
 
-exports.getEventsByUser = async (req, res) => {
-  const user = req.session.user;
-  if (!user) return res.status(401).json({ error: 'Unauthorized' });
+  exports.getEventsByUser = async (req, res) => {
+    const user = req.session.user;
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
-  const { faculty_id } = user;
+    const { faculty_id } = user;
 
-  try {
-    // Get only events created by the logged-in user
-  const [rows] = await db.execute(
-  `SELECT ei.*, lu.faculty_name, lu.role 
-   FROM event_info ei 
-   JOIN login_users lu ON ei.faculty_id = lu.faculty_id 
-   WHERE ei.faculty_id = ?`,
-  [faculty_id]
-);
+    try {
+      // Get only events created by the logged-in user
+    const [rows] = await db.execute(
+    `SELECT ei.*, lu.faculty_name, lu.role 
+    FROM event_info ei 
+    JOIN login_users lu ON ei.faculty_id = lu.faculty_id 
+    WHERE ei.faculty_id = ?`,
+    [faculty_id]
+  );
 
-const events = rows.map(r => {
-  const eventInfo = tryParse(r.eventinfo, {});
+  const events = rows.map(r => {
+    const eventInfo = tryParse(r.eventinfo, {});
 
-  return {
-    eventId: r.event_id,
-    status: r.status,
-    approvals: tryParse(r.approvals, {}),
-    creatorRole: r.role || 'Unknown',
-    faculty_name: r.faculty_name || 'Unknown',
-    startDate: eventInfo.startDate || 'Unknown',  // ✅ from eventInfo
-    endDate: eventInfo.endDate || 'Unknown',      // ✅ from eventInfo
-    VenueType: eventInfo.venue || eventInfo.location || 'Unknown',  // fallback if `location` missing
-    report: tryParse(r.report, {}),
-    eventData: {
-      eventInfo: eventInfo,
-      agenda: tryParse(r.agenda, {}),
-      financialPlanning: tryParse(r.financialplanning, {}),
-      foodTransport: tryParse(r.foodandtransport, {}),
-      checklist: tryParse(r.checklist, []),
-      reviews: tryParse(r.reviews, {})
+    return {
+      eventId: r.event_id,
+      status: r.status,
+      approvals: tryParse(r.approvals, {}),
+      creatorRole: r.role || 'Unknown',
+      faculty_name: r.faculty_name || 'Unknown',
+      startDate: eventInfo.startDate || 'Unknown',  // ✅ from eventInfo
+      endDate: eventInfo.endDate || 'Unknown',      // ✅ from eventInfo
+      VenueType: eventInfo.venue || eventInfo.location || 'Unknown',  // fallback if `location` missing
+      report: tryParse(r.report, {}),
+      
+      eventData: {
+        eventInfo: eventInfo,
+        agenda: tryParse(r.agenda, {}),
+        financialPlanning: tryParse(r.financialplanning, {}),
+        foodTransport: tryParse(r.foodandtransport, {}),
+        checklist: tryParse(r.checklist, []),
+        reviews: tryParse(r.reviews, {})
+      }
+    };
+  });
+
+
+      res.json(events);
+    } catch (err) {
+      console.error('❌ Error fetching events by creator:', err);
+      res.status(500).json({ error: 'Failed to fetch user-created events' });
     }
   };
-});
-
-
-    res.json(events);
-  } catch (err) {
-    console.error('❌ Error fetching events by creator:', err);
-    res.status(500).json({ error: 'Failed to fetch user-created events' });
-  }
-};
 
 
 

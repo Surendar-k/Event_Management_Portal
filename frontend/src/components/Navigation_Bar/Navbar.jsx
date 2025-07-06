@@ -74,9 +74,9 @@ const Navbar = () => {
       <div className="mb-4 flex items-center gap-4 sm:mb-0">
         <img src={ksrLogo} alt="Sri Shanmugha Educational Institutions Logo" className="h-14 w-14 rounded-full shadow-md" />
         <div>
-          <h1 className="text-2xl font-extrabold tracking-wide text-white drop-shadow-md">
-            Sri Shanmugha Educational Institutions
-          </h1>
+            <h1 className="text-2xl font-extrabold tracking-wide text-white drop-shadow-md">
+              Sri Shanmugha Educational Institutions
+            </h1>
           <p className="text-sm text-blue-200 font-light">Faculty & Admin Panel</p>
         </div>
       </div>
@@ -99,55 +99,64 @@ const Navbar = () => {
         ))}
       </ul>
 
-      {/* Profile + Logout */}
-      <div className="relative mt-5 flex items-center gap-4 sm:mt-0">
-        <div className="text-right leading-tight hidden sm:block">
-          <p className="text-sm font-semibold text-white">{email}</p>
-          <p className="text-xs text-orange-200 capitalize">{role}</p>
-        </div>
+     {/* Profile + Logout */}
+<div className="relative mt-5 flex items-center gap-4 sm:mt-0">
+  {/* Email & Role */}
+  <div className="text-right leading-tight hidden sm:block">
+    <p className="text-sm font-semibold text-white">{email}</p>
+    <p className="text-xs text-orange-200 capitalize">{role}</p>
 
-        <div
-          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-orange-700 text-lg font-bold text-white uppercase shadow-md hover:scale-110 transition"
-          onClick={toggleProfile}
-        >
-          {email?.charAt(0)}
-        </div>
+   
+  </div>
 
-        {showProfile && user && (
+  {/* Profile Icon */}
+  <div
+    className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-orange-700 text-lg font-bold text-white uppercase shadow-md hover:scale-110 transition"
+    onClick={toggleProfile}
+  >
+    {email?.charAt(0)}
+  </div>
+
+  {/* Profile Popup */}
+  {showProfile && user && (
+    <div
+      ref={profileRef}
+      className="absolute top-16 right-2 z-50 w-72 rounded-xl border border-white/20 bg-white/90 backdrop-blur-md p-5 text-gray-800 shadow-2xl"
+    >
+      <h2 className="mb-4 text-lg font-bold text-gray-900 border-b border-gray-300 pb-2">
+        👤 Profile Info
+      </h2>
+      <div className="flex flex-col gap-3 text-sm">
+        {[
+          { label: 'Name', value: user.faculty_name },
+          { label: 'Designation', value: user.designation },
+          { label: 'Department', value: user.department },
+          { label: 'Institution', value: user.institution_name },
+          { label: 'Faculty ID', value: user.faculty_id },
+        ].map(({ label, value }) => (
           <div
-            ref={profileRef}
-            className="absolute top-16 right-2 z-50 w-72 rounded-xl border border-white/20 bg-white/90 backdrop-blur-md p-5 text-gray-800 shadow-2xl"
+            key={label}
+            className="flex flex-wrap items-center gap-2 rounded-md bg-white/60 px-3 py-2 text-gray-900 shadow-sm"
           >
-            <h2 className="mb-4 text-lg font-bold text-gray-900 border-b border-gray-300 pb-2">
-              👤 Profile Info
-            </h2>
-            <div className="flex flex-col gap-3 text-sm">
-              {[
-                { label: 'Name', value: user.faculty_name },
-                { label: 'Designation', value: user.designation },
-                { label: 'Department', value: user.department },
-                { label: 'Institution', value: user.institution_name },
-                { label: 'Faculty ID', value: user.faculty_id },
-              ].map(({ label, value }) => (
-                <div
-                  key={label}
-                  className="flex flex-wrap items-center gap-2 rounded-md bg-white/60 px-3 py-2 text-gray-900 shadow-sm"
-                >
-                  <span className="w-28 font-semibold text-orange-700">{label}:</span>
-                  <span className="break-words text-gray-800">{value}</span>
-                </div>
-              ))}
-            </div>
+            <span className="w-28 font-semibold text-orange-700">{label}:</span>
+            <span className="break-words text-gray-800">{value}</span>
+            
           </div>
-        )}
-
-        <button
-          onClick={handleLogout}
-          className="ml-2 rounded-md bg-gradient-to-br from-red-600 to-red-800 px-4 py-2 text-sm font-semibold text-white shadow-md hover:scale-105 transition"
-        >
-          Logout
-        </button>
+        ))}
+         {/* Logout Button moved here */}
+    <button
+      onClick={handleLogout}
+      className="mt-1 rounded-md bg-gradient-to-br from-red-600 to-red-800 px-3 py-1 text-xs font-semibold text-white shadow hover:scale-105 transition"
+    >
+      Logout
+    </button>
+        
       </div>
+      
+    </div>
+  )}
+</div>
+
     </nav>
   );
 };

@@ -419,6 +419,18 @@ const generateReportCompletion = async (event) => {
 
   doc.setFont('times', 'bold');
   doc.text('Event Report Completion', 105, 55, { align: 'center' });
+// ✅ Add current date at top-right
+  const currentDate = new Date();
+  const formattedDate = currentDate.toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const rightMargin = 20;
+  doc.setFontSize(10);
+  doc.setFont('times', 'normal');
+  doc.text(`Date: ${formattedDate}`, pageWidth - rightMargin, 55, { align: 'right' });
 
   autoTable(doc, {
     startY: 65,

@@ -1,223 +1,249 @@
-import React, { useState, useMemo, useEffect } from 'react'
-import {FaCheckCircle,FaUniversity,FaMapMarkerAlt,FaBuilding, FaArrowLeft,FaBusAlt,FaSearch, FaBullseye, FaFlagCheckered, FaCalendarAlt, FaChalkboardTeacher, FaClipboardList, FaFilePdf, FaFileExcel, FaMoneyBill, FaUtensils, FaImages } from 'react-icons/fa';
+  import React, { useState, useMemo, useEffect } from 'react'
+  import {FaCheckCircle,FaUniversity,FaMapMarkerAlt,FaBuilding, FaArrowLeft,FaBusAlt,FaSearch, FaBullseye, FaFlagCheckered, FaCalendarAlt, FaChalkboardTeacher, FaClipboardList, FaFilePdf, FaFileExcel, FaMoneyBill, FaUtensils, FaImages } from 'react-icons/fa';
 
-import ExportButtons from './ExportButtons';
+  import ExportButtons from './ExportButtons';
 
-import axios from 'axios'
+  import axios from 'axios'
 
-const ManageEvents = () => {
-  const [events, setEvents] = useState([])
-
-
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [collegeFilter, setCollegeFilter] = useState('')
-  const [startDateFilter, setStartDateFilter] = useState('')
-  const [endDateFilter, setEndDateFilter] = useState('')
-  const [selectedEvent, setSelectedEvent] = useState(null)
+  const ManageEvents = () => {
+    const [events, setEvents] = useState([])
 
 
+    const [searchTerm, setSearchTerm] = useState('')
+    const [statusFilter, setStatusFilter] = useState('all')
+    const [collegeFilter, setCollegeFilter] = useState('')
+    const [startDateFilter, setStartDateFilter] = useState('')
+    const [endDateFilter, setEndDateFilter] = useState('')
+    const [selectedEvent, setSelectedEvent] = useState(null)
 
-const getStatus = (event) => {
-  const today = new Date();
-  return new Date(event.endDate) < today ? 'completed' : 'upcoming';
-};
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const res = await axios.get('http://localhost:5000/api/events/by-user', {
-          withCredentials: true // required for session cookies
-        });
-        setEvents(res.data);
-      } catch (err) {
-        console.error('Error fetching events:', err);
-        // eslint-disable-next-line no-undef
-        setError(err.response?.data?.error || 'Failed to load events');
+
+  const getStatus = (event) => {
+    const today = new Date();
+    return new Date(event.endDate) < today ? 'completed' : 'upcoming';
+  };
+
+    useEffect(() => {
+      const fetchEvents = async () => {
+        try {
+          const res = await axios.get('http://localhost:5000/api/events/by-user', {
+            
+            withCredentials: true // required for session cookies
+          });
+        
+          setEvents(res.data);
+          
+        } catch (err) {
+          console.error('Error fetching events:', err);
+          // eslint-disable-next-line no-undef
+          setError(err.response?.data?.error || 'Failed to load events');
+        }
+      };
+
+      fetchEvents();
+    }, []);
+    const colleges = Array.from(new Set(events.map(e => e.college)))
+  const filteredEvents = useMemo(() => {
+    return events.filter(event => {
+      const title = (event?.eventData?.eventInfo?.title || '').toLowerCase();
+      const search = (searchTerm || '').toLowerCase();
+
+      if (search && !title.includes(search)) return false;
+
+      const status = getStatus(event);
+      if (statusFilter !== 'all' && statusFilter !== status) return false;
+
+      const college = event?.eventData?.eventInfo?.college || '';
+      if (collegeFilter && college !== collegeFilter) return false;
+
+      const eventStartDateStr = event?.eventData?.eventInfo?.startDate;
+      const eventStartDate = eventStartDateStr ? new Date(eventStartDateStr) : null;
+
+      if (startDateFilter && eventStartDate && eventStartDate < new Date(startDateFilter)) {
+        return false;
       }
-    };
 
-    fetchEvents();
-  }, []);
-  const colleges = Array.from(new Set(events.map(e => e.college)))
-const filteredEvents = useMemo(() => {
-  return events.filter(event => {
-    const title = (event?.eventData?.eventInfo?.title || '').toLowerCase();
-    const search = (searchTerm || '').toLowerCase();
+      if (endDateFilter && eventStartDate && eventStartDate > new Date(endDateFilter)) {
+        return false;
+      }
 
-    if (search && !title.includes(search)) return false;
-
-    const status = getStatus(event);
-    if (statusFilter !== 'all' && statusFilter !== status) return false;
-
-    const college = event?.eventData?.eventInfo?.college || '';
-    if (collegeFilter && college !== collegeFilter) return false;
-
-    const eventStartDateStr = event?.eventData?.eventInfo?.startDate;
-    const eventStartDate = eventStartDateStr ? new Date(eventStartDateStr) : null;
-
-    if (startDateFilter && eventStartDate && eventStartDate < new Date(startDateFilter)) {
-      return false;
-    }
-
-    if (endDateFilter && eventStartDate && eventStartDate > new Date(endDateFilter)) {
-      return false;
-    }
-
-    return true;
-  });
-}, [
-  searchTerm,
-  statusFilter,
-  collegeFilter,
-  startDateFilter,
-  endDateFilter,
-  events
-]);
-const handleDelete = async (eventIdToDelete) => {
-  const confirmDelete = window.confirm('Are you sure you want to delete this event?');
-  if (!confirmDelete) return;
-
-  try {
-    const res = await axios.delete(`http://localhost:5000/api/events/${eventIdToDelete}`, {
-      withCredentials: true, // sends session cookie
+      return true;
     });
+    
+  }, [
+    searchTerm,
+    statusFilter,
+    collegeFilter,
+    startDateFilter,
+    endDateFilter,
+    events
+  ]);
+  const handleDelete = async (eventIdToDelete) => {
+    const confirmDelete = window.confirm('Are you sure you want to delete this event?');
+    if (!confirmDelete) return;
 
-    if (res.status === 200) {
-      alert('✅ Event deleted successfully!');
-      // remove the deleted event from state
-      setEvents(prevEvents => prevEvents.filter(e =>
-        e.eventId !== eventIdToDelete && e.id !== eventIdToDelete && e.event_id !== eventIdToDelete
-      ));
-    } else {
-      alert('⚠️ Failed to delete the event.');
+    try {
+      const res = await axios.delete(`http://localhost:5000/api/events/${eventIdToDelete}`, {
+        withCredentials: true, // sends session cookie
+      });
+
+      if (res.status === 200) {
+        alert('✅ Event deleted successfully!');
+        // remove the deleted event from state
+        setEvents(prevEvents => prevEvents.filter(e =>
+          e.eventId !== eventIdToDelete && e.id !== eventIdToDelete && e.event_id !== eventIdToDelete
+        ));
+      } else {
+        alert('⚠️ Failed to delete the event.');
+      }
+    } catch (error) {
+      console.error('❌ Error deleting event:', error);
+      alert('An error occurred while deleting the event.');
     }
-  } catch (error) {
-    console.error('❌ Error deleting event:', error);
-    alert('An error occurred while deleting the event.');
+  };
+
+  
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    setSelectedEvent(prev => ({
+      ...prev,
+      uploadedImages: [...prev.uploadedImages, ...files],
+    }));
+  };
+
+
+  if (!selectedEvent) {
+      return (
+        <div className="mx-auto mt-10 max-w-8xl text-lg rounded-2xl border p-6 shadow-xl bg-gradient-to-r from-black-100 via-white to-black-100 border-gray-300">
+
+        <h1 className='mb-10 text-center text-5xl font-extrabold tracking-tight text-gray-800'>
+    Manage My Events
+  </h1>
+
+
+          {/* Filters */}
+        <div className='mb-10 flex flex-col gap-4 rounded-xl bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 p-6 shadow-md md:flex-row md:items-center'>
+
+          <div className='flex flex-1 items-center rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-white shadow-inner'>
+              <FaSearch className='mr-3 text-gray-300' />
+              <input
+                type='text'
+                placeholder='Search event title...'
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className='w-full bg-transparent text-white placeholder-gray-400 outline-none'
+              />
+            </div>
+
+            <select
+              className='rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-white shadow-md'
+              value={statusFilter}
+              onChange={e => setStatusFilter(e.target.value)}
+            >
+              <option value='all' className='text-white'>
+                All Statuses
+              </option>
+              <option value='upcoming' className='text-white'>
+                Upcoming
+              </option>
+              <option value='completed' className='text-white'>
+                Completed
+              </option>
+            </select>
+
+            <select
+              className='mb-4 rounded border px-3 py-2 text-white bg-transparent md:mb-0'
+              value={collegeFilter}
+              onChange={e => setCollegeFilter(e.target.value)}
+            >
+              <option value='' className='text-black'>
+                All Colleges
+              </option>
+              {colleges.map((col, idx) => (
+    <option key={`${col}-${idx}`} value={col} className='text-black'>
+      {col}
+    </option>
+  ))}
+
+            </select>
+
+            <div className='flex items-center gap-2 text-white'>
+              <label className='text-sm font-medium' htmlFor='startDateFilter'>
+                From:
+              </label>
+              <input
+                type='date'
+                id='startDateFilter'
+                value={startDateFilter}
+                onChange={e => setStartDateFilter(e.target.value)}
+              className='rounded-md border border-gray-600 bg-white px-3 py-1 text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-300'
+              />
+            </div>
+
+            <div className='flex items-center gap-2 text-white'>
+              <label className='text-sm font-medium' htmlFor='endDateFilter'>
+                To:
+              </label>
+              <input
+                type='date'
+                id='endDateFilter'
+                value={endDateFilter}
+                onChange={e => setEndDateFilter(e.target.value)}
+              className='rounded-md border border-gray-600 bg-white px-3 py-1 text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-300'
+              />
+            </div>
+          </div>
+
+          {/* Event List */}
+          <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+            {filteredEvents.length > 0 ? (
+            filteredEvents.map((event, index) => {
+    const status = getStatus(event);
+  const { approvals, } = event;
+                return (
+                  <div
+                  
+                  key={event.id || index}
+        onClick={() =>
+    setSelectedEvent({
+      ...event,
+      ...event.eventData?.eventInfo,
+      ...event.eventData?.additionalInfo, // if needed
+
+      checklist: event.eventData?.checklist || [],
+      uploadedImages: event.eventData?.uploadedImages || [],
+
+      // Basic Info
+      technicalSetup: event.eventData?.eventInfo?.technicalSetup || {},
+      speakers: event.eventData?.eventInfo?.speakers || [],
+      fundingSource: event.eventData?.eventInfo?.fundingSource || '',
+      college: event.eventData?.eventInfo?.selectedCollege || '',
+      department: event.eventData?.eventInfo?.selectedDepartment || '',
+facultyCoordinators: (() => {
+  const info = event.eventData?.eventInfo;
+  const val = info?.selectedCoordinators || info?.facultyCoordinators;
+
+  if (Array.isArray(val)) {
+    return val.length > 0 ? val.join(', ') : 'N/A';
   }
-};
+
+  if (typeof val === 'string') {
+    return val.trim() !== '' ? val : 'N/A';
+  }
 
  
-const handleImageUpload = (e) => {
-  const files = Array.from(e.target.files);
-  setSelectedEvent(prev => ({
-    ...prev,
-    uploadedImages: [...prev.uploadedImages, ...files],
-  }));
-};
+  return 'N/A';
+})(),
 
 
-if (!selectedEvent) {
-    return (
-      <div className="mx-auto mt-10 max-w-8xl text-lg rounded-2xl border p-6 shadow-xl bg-gradient-to-r from-black-100 via-white to-black-100 border-gray-300">
-
-       <h1 className='mb-10 text-center text-5xl font-extrabold tracking-tight text-gray-800'>
-  Manage My Events
-</h1>
 
 
-        {/* Filters */}
-       <div className='mb-10 flex flex-col gap-4 rounded-xl bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 p-6 shadow-md md:flex-row md:items-center'>
 
-         <div className='flex flex-1 items-center rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-white shadow-inner'>
-            <FaSearch className='mr-3 text-gray-300' />
-            <input
-              type='text'
-              placeholder='Search event title...'
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-               className='w-full bg-transparent text-white placeholder-gray-400 outline-none'
-            />
-          </div>
 
-          <select
-            className='rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-white shadow-md'
-            value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}
-          >
-            <option value='all' className='text-white'>
-              All Statuses
-            </option>
-            <option value='upcoming' className='text-white'>
-              Upcoming
-            </option>
-            <option value='completed' className='text-white'>
-              Completed
-            </option>
-          </select>
-
-          <select
-            className='mb-4 rounded border px-3 py-2 text-white bg-transparent md:mb-0'
-            value={collegeFilter}
-            onChange={e => setCollegeFilter(e.target.value)}
-          >
-            <option value='' className='text-black'>
-              All Colleges
-            </option>
-            {colleges.map((col, idx) => (
-  <option key={`${col}-${idx}`} value={col} className='text-black'>
-    {col}
-  </option>
-))}
-
-          </select>
-
-          <div className='flex items-center gap-2 text-white'>
-            <label className='text-sm font-medium' htmlFor='startDateFilter'>
-              From:
-            </label>
-            <input
-              type='date'
-              id='startDateFilter'
-              value={startDateFilter}
-              onChange={e => setStartDateFilter(e.target.value)}
-             className='rounded-md border border-gray-600 bg-white px-3 py-1 text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-300'
-            />
-          </div>
-
-          <div className='flex items-center gap-2 text-white'>
-            <label className='text-sm font-medium' htmlFor='endDateFilter'>
-              To:
-            </label>
-            <input
-              type='date'
-              id='endDateFilter'
-              value={endDateFilter}
-              onChange={e => setEndDateFilter(e.target.value)}
-             className='rounded-md border border-gray-600 bg-white px-3 py-1 text-gray-800 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-300'
-            />
-          </div>
-        </div>
-
-        {/* Event List */}
-        <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-          {filteredEvents.length > 0 ? (
-           filteredEvents.map((event, index) => {
-  const status = getStatus(event);
- const { approvals, } = event;
-              return (
-                <div
-                 key={event.id || index}
-      onClick={() =>
-  setSelectedEvent({
-    ...event,
-    ...event.eventData?.eventInfo,
-    ...event.eventData?.additionalInfo, // if needed
-
-    checklist: event.eventData?.checklist || [],
-    uploadedImages: event.eventData?.uploadedImages || [],
-
-    // Basic Info
-    technicalSetup: event.eventData?.eventInfo?.technicalSetup || {},
-    speakers: event.eventData?.eventInfo?.speakers || [],
-    fundingSource: event.eventData?.eventInfo?.fundingSource || '',
-    college: event.eventData?.eventInfo?.selectedCollege || '',
-    department: event.eventData?.eventInfo?.selectedDepartment || '',
-    facultyCoordinators: event.eventData?.eventInfo?.selectedCoordinators?.join(', ') || '',
-    scope: event.eventData?.eventInfo?.scope || '',
-    venue: event.eventData?.eventInfo?.venue || '',
-    venueType: event.eventData?.eventInfo?.venueType || '',
+  leadCoordinator: event.faculty_name || 'N/A',
+      scope: event.eventData?.eventInfo?.scope || '',
+      venue: event.eventData?.eventInfo?.venue || '',
+      venueType: event.eventData?.eventInfo?.venueType || '',
     venueCategory: event.eventData?.eventInfo?.venueCategory || '',
     audience: event.eventData?.eventInfo?.audience || '',
     startDate: event.eventData?.eventInfo?.startDate || '',

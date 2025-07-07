@@ -30,15 +30,16 @@ const setField = (key, value) => {
 
 
 
-  const updateNested = (key, subKey, value) => {
-    onChange({
-      ...data,
-      [key]: {
-        ...data[key],
-        [subKey]: value
-      }
-    });
-  };
+ const updateNested = (key, subKey, value) => {
+  onChange(prev => ({
+    ...prev,
+    [key]: {
+      ...(prev[key] || {}),
+      [subKey]: value,
+    },
+  }));
+};
+
 const [facultyState, setFacultyState] = useState({
   input: '',
   showSuggestions: false,

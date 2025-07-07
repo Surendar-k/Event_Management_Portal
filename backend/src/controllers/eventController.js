@@ -80,10 +80,11 @@ exports.saveEventInfo = async (req, res) => {
 
       const old = existing[0];
 
-      const updatedEventInfo = {
-        ...parseJSONField(old.eventinfo),
-        ...eventinfo
-      };
+     const parsedNewEventInfo = tryParse(eventinfo);
+const updatedEventInfo = {
+  ...parseJSONField(old.eventinfo),
+  ...parsedNewEventInfo
+};
 
       // Ensure brochureUrl is added/updated
       if (brochureUrl) {

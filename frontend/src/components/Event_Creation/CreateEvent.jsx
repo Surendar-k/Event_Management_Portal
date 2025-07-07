@@ -54,52 +54,52 @@ const CreateEvent = () => {
   const [financialPlanning, setFinancialPlanning] = useState(defaultState.financialPlanning);
   const [foodAndTransport, setFoodAndTransport] = useState(defaultState.foodAndTransport);
 const [loginName, setLoginName] = useState('');
+const [loadedEventId, setLoadedEventId] = useState(null);
 
-  useEffect(() => {
-    const resetToDefault = () => {
-      setEventInfo(defaultState.eventInfo);
-      setStartDate(defaultState.startDate);
-      setEndDate(defaultState.endDate);
-      setAgenda(defaultState.agenda);
-      setChecklist(defaultState.checklist);
-      setFinancialPlanning(defaultState.financialPlanning);
-      setFoodAndTransport(defaultState.foodAndTransport);
-      
-    };
+useEffect(() => {
+  const resetToDefault = () => {
+    setEventInfo(defaultState.eventInfo);
+    setStartDate(defaultState.startDate);
+    setEndDate(defaultState.endDate);
+    setAgenda(defaultState.agenda);
+    setChecklist(defaultState.checklist);
+    setFinancialPlanning(defaultState.financialPlanning);
+    setFoodAndTransport(defaultState.foodAndTransport);
+  };
 
-    if (isEditMode) {
-      const fetchEventData = async () => {
-        try {
-          const res = await fetch(`http://localhost:5000/api/events/${eventId}`, {
-            credentials: 'include',
-          });
+  if (isEditMode && eventId !== loadedEventId) {
+    const fetchEventData = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/events/${eventId}`, {
+          credentials: 'include',
+        });
         const data = await res.json();
-    
 
-          if (res.ok && data.eventinfo) {
-            setEventInfo(data.eventinfo);
-            setStartDate(data.eventinfo?.startDate || '');
-            setEndDate(data.eventinfo?.endDate || '');
-            setAgenda({ ...(data.agenda || {}), sessions: data.agenda?.sessions || [] });
-            setChecklist(Array.isArray(data.checklist) ? data.checklist : []);
-            setFinancialPlanning(data.financialplanning || {});
-            setFoodAndTransport(data.foodandtransport || defaultState.foodAndTransport);
-          } else {
-            console.error('Invalid structure received for event data');
-            resetToDefault();
-          }
-        } catch (err) {
-          console.error('Error fetching event:', err);
+        if (res.ok && data.eventinfo) {
+          setEventInfo(data.eventinfo);
+          setStartDate(data.eventinfo?.startDate || '');
+          setEndDate(data.eventinfo?.endDate || '');
+          setAgenda({ ...(data.agenda || {}), sessions: data.agenda?.sessions || [] });
+          setChecklist(Array.isArray(data.checklist) ? data.checklist : []);
+          setFinancialPlanning(data.financialplanning || {});
+          setFoodAndTransport(data.foodandtransport || defaultState.foodAndTransport);
+          setLoadedEventId(eventId); // ✅ mark as loaded
+        } else {
+          console.error('Invalid structure received for event data');
           resetToDefault();
         }
-      };
+      } catch (err) {
+        console.error('Error fetching event:', err);
+        resetToDefault();
+      }
+    };
 
-      fetchEventData();
-    } else {
-      // Create mode: Clear all data
-      resetToDefault();
-    }
-  }, [eventId]);
+    fetchEventData();
+  } else if (!isEditMode) {
+    resetToDefault();
+  }
+}, [eventId, isEditMode, loadedEventId]);
+
 
 const handleSaveAll = async () => {
   // Safely resolve the funding source
@@ -109,12 +109,22 @@ const fundingSource =
     : eventInfo.fundingSource;
 console.log('eventInfo:', eventInfo);
 console.log('Resolved fundingSource:', fundingSource);
+const finalFundingSource = (() => {
+  const fs = eventInfo.fundingSource;
+  const other = eventInfo.otherFunding;
+
+  if (fs === 'Others') {
+    return other && other.trim() !== '' ? other.trim() : 'Others';
+  }
+
+  return fs || '';
+})();
 
   // Prepare FormData
   const formData = new FormData();
   const finalEventInfo = {
     ...eventInfo,
-    fundingSource, // overwrite with actual value
+   fundingSource: finalFundingSource, // overwrite with actual value
   };
 
   formData.append("eventinfo", JSON.stringify(finalEventInfo));

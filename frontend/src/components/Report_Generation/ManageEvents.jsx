@@ -103,13 +103,6 @@
   };
 
   
-  const handleImageUpload = (e) => {
-    const files = Array.from(e.target.files);
-    setSelectedEvent(prev => ({
-      ...prev,
-      uploadedImages: [...prev.uploadedImages, ...files],
-    }));
-  };
 
 
   if (!selectedEvent) {
@@ -736,31 +729,7 @@ return (
   </Section>
 )}
 
-    {/* Uploaded Images */}
-    <Section title='Images' icon={<FaImages />}>
-      <input
-        type='file'
-        multiple
-        accept='image/*'
-        onChange={handleImageUpload}
-        className='mb-4'
-      />
-      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3'>
-        {selectedEvent?.uploadedImages?.length > 0 ? (
-  selectedEvent.uploadedImages.map((file, i) => (
-    <img
-      key={i}
-      src={URL.createObjectURL(file)}
-      alt={`Uploaded ${i + 1}`}
-      className='h-44 w-full rounded-md object-cover shadow-md transition-transform duration-300 hover:scale-105'
-    />
-  ))
-) : (
-  <p className='text-gray-500'>No images uploaded yet.</p>
-)}
-
-      </div>
-    </Section>
+  
   </div>
 )
 

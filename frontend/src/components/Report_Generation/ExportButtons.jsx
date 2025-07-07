@@ -170,13 +170,10 @@ const exportToPDF = async () => {
   const collegeKey = `${(info.selectedCollege || '').trim().toLowerCase()}`;
   const logoUrl = eventReportLogos[id] || uploadedHeaderLogos[collegeKey];
 
-  console.log('🧠 Using collegeKey:', collegeKey);
-  console.log('🎯 Matching logo URL:', logoUrl);
 
   await renderLogo(doc, logoUrl);
   currentY = 45;
-
- const renderTable = (title, cols, rows) => {
+const renderTable = (title, cols, rows) => {
   if (currentY > 250) {
     doc.addPage();
     currentY = 20;
@@ -189,6 +186,26 @@ const exportToPDF = async () => {
 
   const y = currentY + 4;
   const marginX = 14;
+  const totalTableWidth = 182; // 210 A4 - 2*14 margin
+
+  let columnStyles = {};
+
+  if (['Event Information', 'Participants', 'Technical Setup'].includes(title)) {
+    // 2 columns: 50% / 50%
+    columnStyles = {
+      0: { cellWidth: totalTableWidth * 0.5 },
+      1: { cellWidth: totalTableWidth * 0.5 },
+    };
+  } else if (['Funding', 'Budget'].includes(title)) {
+    // 3 columns: 35% / 30% / 35%
+    columnStyles = {
+      0: { cellWidth: totalTableWidth * 0.35 },
+      1: { cellWidth: totalTableWidth * 0.30 },
+      2: { cellWidth: totalTableWidth * 0.35 },
+    };
+  } else {
+    columnStyles = {}; // Let it auto-calculate
+  }
 
   autoTable(doc, {
     startY: y,
@@ -217,7 +234,7 @@ const exportToPDF = async () => {
       lineColor: [0, 0, 0],
       lineWidth: 0.1,
     },
-   
+    columnStyles,
   });
 
   currentY = (doc.lastAutoTable?.finalY || currentY + 4) + 6;

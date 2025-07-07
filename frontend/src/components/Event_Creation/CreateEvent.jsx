@@ -103,10 +103,12 @@ const [loginName, setLoginName] = useState('');
 
 const handleSaveAll = async () => {
   // Safely resolve the funding source
-  const fundingSource =
-    eventInfo.fundingSource === 'Others'
-      ? eventInfo.otherFunding
-      : eventInfo.fundingSource;
+const fundingSource =
+  eventInfo.fundingSource === 'Others' && eventInfo.otherFunding
+    ? eventInfo.otherFunding
+    : eventInfo.fundingSource;
+console.log('eventInfo:', eventInfo);
+console.log('Resolved fundingSource:', fundingSource);
 
   // Prepare FormData
   const formData = new FormData();

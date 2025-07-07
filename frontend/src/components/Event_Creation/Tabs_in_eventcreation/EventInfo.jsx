@@ -21,7 +21,14 @@ const EventInfo = ({
   data={},
   onChange
 }) => {
-  const setField = (key, value) => onChange({ ...data, [key]: value });
+const setField = (key, value) => {
+  onChange(prev => ({
+    ...prev,
+    [key]: value
+  }));
+};
+
+
 
   const updateNested = (key, subKey, value) => {
     onChange({
@@ -357,13 +364,18 @@ const handleRemove = (name) => {
    {/* 6. Funding Source */}
 <div className="w-full max-w-md">
   <label className="block mb-1 font-medium text-gray-700">Funding Source</label>
-  <select
-  value={data.fundingSource} // ✅ this auto-selects "Others"
+<select
+  value={data.fundingSource || ''} // <-- ensure controlled
   onChange={e => {
     const selected = e.target.value;
+    console.log("Dropdown selected:", selected);
+
+    // ✅ Set fundingSource in parent state
     setField('fundingSource', selected);
+
+    // ✅ If not "Others", clear otherFunding
     if (selected !== 'Others') {
-      setField('otherFunding', ''); // ✅ clear only if not "Others"
+      setField('otherFunding', null);
     }
   }}
   className="w-full rounded border border-gray-400 p-2 text-gray-800 shadow-sm focus:ring-2 focus:ring-blue-500"
@@ -373,6 +385,7 @@ const handleRemove = (name) => {
   <option value="Funding Agency">Funding Agency</option>
   <option value="Others">Others</option>
 </select>
+
 
 
   {data.fundingSource === 'Others' && (

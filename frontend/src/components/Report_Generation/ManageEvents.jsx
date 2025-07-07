@@ -30,7 +30,7 @@
             
             withCredentials: true // required for session cookies
           });
-        
+         console.log('🎯 Raw Events Fetched:', res.data); // ✅ log here
           setEvents(res.data);
           
         } catch (err) {
@@ -216,7 +216,7 @@
       // Basic Info
       technicalSetup: event.eventData?.eventInfo?.technicalSetup || {},
       speakers: event.eventData?.eventInfo?.speakers || [],
-      fundingSource: event.eventData?.eventInfo?.fundingSource || '',
+    fundingSource: event.eventData?.eventInfo?.fundingSource || 'N/A',
       college: event.eventData?.eventInfo?.selectedCollege || '',
       department: event.eventData?.eventInfo?.selectedDepartment || '',
 facultyCoordinators: (() => {

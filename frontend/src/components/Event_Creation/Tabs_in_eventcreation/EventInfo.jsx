@@ -539,7 +539,7 @@ const handleRemove = (name) => {
         <option value=''>Select</option>
         <option value='Students'>Students</option>
         <option value='Faculty'>Faculty</option>
-        <option value='Both'>Both</option>
+        <option value='Both'>Both Students & Faculty</option>
       </select>
     </div>
 
@@ -646,7 +646,7 @@ const handleRemove = (name) => {
               <option value=''>Select</option>
               <option>Handheld</option>
               <option>Collar</option>
-              <option>Both</option>
+              <option>Both Handheld & Collar</option>
               <option>Not Required</option>
             </select>
           </div>
